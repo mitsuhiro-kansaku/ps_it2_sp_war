@@ -1,0 +1,198 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<!--見積回答（一覧）-->
+<title>#customSpringMessage('QUOT_REPLY')</title><!--見積回答-->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$quotRespSearchCondition)
+
+#parse("./common/common_js.vm")
+
+function onLoad() {
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+    var isShowInputEach = "#jsEscape($isShowInputEach)";
+    //都度品、参考見積の場合
+    if (isShowInputEach == 'true'){
+        top.iframeChange("${flowExecutionUrl}&_eventId=answerInputEach","pageid","SPRES030");
+    }
+    //価格登録品の場合
+    var isShowInputPrice = "#jsEscape($isShowInputPrice)";
+    if (isShowInputPrice == 'true'){
+        top.iframeChange("${flowExecutionUrl}&_eventId=answerInputPrice","pageid","SPRES030Input");
+    }
+    var isEditInputEach = "#jsEscape($isEditInputEach)";
+    //都度品、参考見積の場合
+    if (isEditInputEach == 'true'){
+        top.iframeChange("${flowExecutionUrl}&_eventId=edit","pageid","SPRES030");
+    }
+}
+
+function openDetail(quotReqSeq,type) {
+    if(type==2){
+        //価格登録品の場合
+        poppage('${flowExecutionUrl}&_eventId=detailPrice&&quotReqSeq='+quotReqSeq,'DETAIL','800','700');
+    }else{
+        //都度品、参考見積の場合
+        poppage('${flowExecutionUrl}&_eventId=detail&&quotReqSeq='+quotReqSeq,'DETAIL','800','700');
+    }
+}
+
+function openAction(quotReqSeq,quotReqInd,lastUpdDate,isNew) {
+   if(quotReqInd == '1' || quotReqInd == '4'){
+        var eventName = isNew==true?'answerInputEachValidate':'editValidate';
+        //都度品、参考見積の場合
+        buttonDisable();
+        parent.iframeChange("${flowExecutionUrl}&_eventId="+eventName,"quotReqSeq",quotReqSeq,"lastUpdDate",lastUpdDate,"DATAAREA");//parent.iframeChange("${flowExecutionUrl}&_eventId=answerInputEachValidate","quotReqSeq",quotReqSeq,"lastUpdDate",lastUpdDate,"DATAAREA");
+   }
+   if(quotReqInd == '2'){
+        //価格登録品の場合
+        buttonDisable();
+        parent.iframeChange("${flowExecutionUrl}&_eventId=answerInputPriceValidate","quotReqSeq",quotReqSeq,"DATAAREA");
+   }
+}
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLEFIX',1, 4);"><!-- テーブル幅と固定内容を設定(テーブルID,ヘッダ固定行数,固定列数)-->
+#if($!errorMessage && $!errorMessage!="")
+<div id="error" name="error" class="error">
+    $!errorMessage
+</div>
+#end
+<table id="TABLEFIX" class="ListArea" width=" 100% ">
+    <thead>
+    #if($!quotRespList.quotRespItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall" >No.</th><!--No.-->
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')<!--詳細--></th>
+            <th  class="BoxHeaderCenter FontSmall"><img border="0" src="../../image/mrkAttache.gif" /></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('ACTION')<!--処理--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.CORRECT_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.CORRECT_CD')">
+                #customSpringMessage('CORRECT_NAME')</th> ## 訂正区分
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.APL_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.APL_VERSION')">
+                #customSpringMessage('REVISION_NUMBER')<!--履歴番号--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.ANS_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.ANS_FLG')">
+                #customSpringMessage('STATUS')<!--状態--></th>
+             <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_RESP.QUOT_WITHDRAW_ID" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_RESP.QUOT_WITHDRAW_ID')">
+                #customSpringMessage('REFUSE')<!--辞退--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_ADO.QUOT_ADO_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_ADO.QUOT_ADO_IND')">
+                #customSpringMessage('QUOT_ADO_EDI')<!--採否--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.APL_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.APL_NO')">
+                #customSpringMessage('QUOT_REQ_NO')<!--見積依頼番号--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.QUOT_REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.QUOT_REQ_DATE')">
+                #customSpringMessage('QUOT_REQ_DATE')<!--見積依頼日--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.QUOT_RESP_LIMIT_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.QUOT_RESP_LIMIT_DATE')">
+                #customSpringMessage('QUOT_ANS_LIMIT')<!--回答期限--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.BUYER_COMPANY_NAME')">
+                #customSpringMessage('BUYER_COMPANY')<!--発注企業--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.TITLE_NAME')">
+                #customSpringMessage('TITLE_NAME')<!--件名--></th>
+            <th class="BoxHeaderCenter FontSmall">
+                #customSpringMessage('REQ_DELIV_DATE')#customSpringMessage('FROM')<!--希望納期（自）--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('REQ_DELIV_DATE')#customSpringMessage('TO')<!--希望納期（至）--></th>
+
+        </tr>
+    </thead>
+
+    <tbody>
+    #set($integer = 0)
+  #foreach($!quotRespItem in  $!quotRespList.quotRespItemList)
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+                <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+                <td CLASS="BoxDetailCenter">
+                    <img id="DetailButton_0" class="Icon" src="../../image/btnDetailDisp.gif"  onclick="openDetail('#jsEscapeInHTML($!quotRespItem.quotReqIdentify.quotReqSeq)','#jsEscapeInHTML($!quotRespItem.quotReqInd)');">
+                </td>
+                <td CLASS="BoxDetailCenter">
+                    #if($!quotRespItem.attachFlg != '' && ($integer < $integer.parseInt($!quotRespItem.attachFlg)))
+                    <IMG BORDER="0" src="../../image/mrkAttache.gif">
+                    #end
+                </td>
+                <td class="BoxDetailCenter">
+                    #if($!quotRespItem.status =='0')
+                    <input type="button" class="MiniButton" value="#customSpringMessage('QUOT_INPUT')" onclick="openAction('#jsEscapeInHTML($!quotRespItem.quotReqIdentify.quotReqSeq)','#jsEscapeInHTML($!quotRespItem.quotReqInd)','#jsEscapeInHTML($!quotRespItem.quotReqIdentify.lastUpdDate)',true);">
+                    #end
+                    #if($!quotRespItem.status =='2')
+                    <input type="button" class="MiniButton" value="#customSpringMessage('QUOT_INPUT')" onclick="openAction('#jsEscapeInHTML($!quotRespItem.quotReqIdentify.quotReqSeq)','#jsEscapeInHTML($!quotRespItem.quotReqInd)','#jsEscapeInHTML($!quotRespItem.quotReqIdentify.lastUpdDate)',false);">
+                    #end
+                </td>
+            #if($!quotRespItem.ind=='1')
+                <td class="BoxDetailCenter FontMiniAnkBold">#out($!quotRespItem.ind_PageValue)</td>
+            #elseif($!quotRespItem.ind=='2')
+                <td class="BoxDetailCenter FontMiniAnkBold">#out($!quotRespItem.ind_PageValue)</td>
+            #elseif($!quotRespItem.ind=='3')
+                <td class="BoxDetailCenter FontMiniAnkBold Red">#out($!quotRespItem.ind_PageValue)</td>
+            #elseif($!quotRespItem.ind=='4')
+                <td class="BoxDetailCenter FontMiniAnkBold Green">#out($!quotRespItem.ind_PageValue)</td>
+            #else
+                <td class="BoxDetailCenter FontMiniAnkBold"></td>
+            #end
+                <td class="BoxDetailCenter FontList">
+                    #out($!quotRespItem.historyNumber)
+                </td>
+                <td class="BoxDetailCenter FontMiniAnkBold">#out($!quotRespItem.status_PageValue)</td>
+                <td class="BoxDetailCenter FontMiniAnkBold">#out($!quotRespItem.dismissInd_PageValue)</td>
+            #if($!quotRespItem.adoFlg=='1')
+                <td class="BoxDetailCenter FontMiniAnkBold Red">#out($!quotRespItem.adoFlg_PageValue)</td>
+            #elseif($!quotRespItem.adoFlg=='2')
+                <td class="BoxDetailCenter FontMiniAnkBold">#out($!quotRespItem.adoFlg_PageValue)</td>
+            #else
+                <td class="BoxDetailCenter FontMiniAnkBold"></td>
+            #end
+                <td class="BoxDetailLeft FontSlipNo">#out($!quotRespItem.aplNo)</td>
+                <td class="BoxDetailCenter FontList">#out($!quotRespItem.quotReqDate.dateOfymdFormat)</td>
+                <td class="BoxDetailCenter FontList">#out($!quotRespItem.quotRespLimitDate.dateOfymdFormat)</td>
+                <td class="BoxDetailLeft FontList">#out($!quotRespItem.custName)</td>
+                <td class="BoxDetailLeft FontList">#out($!quotRespItem.titleName)</td>
+                <td class="BoxDetailCenter FontList">#out($!quotRespItem.hopeDelivDateFrom.dateOfymdFormat)</td>
+                <td class="BoxDetailCenter FontList">#out($!quotRespItem.hopeDelivDateTo.dateOfymdFormat)</td>
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+<table id="WAIT" class="NoBorder" style="display:none;width:100%;">
+    <tr>
+        <td style="text-align:center;">
+        <br><br>
+            <img src="../../image/wait.gif">
+            <br>
+            <span class="FontMini">
+                <br>
+            </span>
+        </td>
+    </tr>
+</table>
+<input type="hidden" name="rowno">
+</body>
+</html>

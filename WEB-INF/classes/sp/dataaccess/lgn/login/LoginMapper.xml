@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.lgn.login.LoginMapper">
+   <select id="getSystemBaseLanguage" resultType="String">
+        SELECT M_COND.COND_VALUE
+        FROM M_COND
+        WHERE M_COND.COND_KEY = 'SYSTEM_BASE_LANGUAGE'
+   </select>
+   <select id="getCountLoginUser" parameterType="fw.domain.sp.login.LoginUserInformation" resultType="int">
+        SELECT COUNT(S_USER_ID)
+        FROM M_S_USER
+        WHERE S_USER_ID= #{userId}
+              AND PASSWORD= #{password}
+              AND TERM_FLG= '0'
+   </select>
+   <resultMap type="fw.domain.sp.login.SessionInformation" id="SessionInformation_Map">
+       <id property="authConnection.newInfo" column="UTL_NEW_INFO_FLG" />
+       <id property="authConnection.newDownload" column="UTL_NEW_DOWNLOAD_FLG" />
+       <id property="authConnection.orderMng" column="UTL_ORDER_MNG_FLG" />
+       <id property="authConnection.orderDownload" column="UTL_ORDER_DOWNLOAD_FLG" />
+       <id property="authConnection.delivMng" column="UTL_DELIV_MNG_FLG" />
+       <id property="authConnection.shipMng" column="UTL_SHIP_MNG_FLG" />
+       <id property="authConnection.moneyDsp" column="UTL_MONEY_DSP_FLG" />
+       <id property="authConnection.newAllChk" column="UTL_NEW_ALL_CHK_FLG" />
+       <id property="authConnection.administratorAuth" column="SUP_USER_MNG_FLG" />
+    </resultMap>
+   <select id="getLoginUserInformation" resultMap="SessionInformation_Map">
+        SELECT M_S_USER.S_USER_ID as "loginUserId",
+               M_S_USER.PASSWORD as "password",
+               M_S_USER.VENDOR_CD as "vendorCd",
+<!-- TODO 14/11/08 del パスワード暗号化 daiko t.watanabe start --><!-- 
+               M_S_USER.VALID_START_DATE,
+               M_S_USER.VALID_END_DATE,
+ --><!-- TODO 14/11/08 del パスワード暗号化 daiko t.watanabe end -->
+               M_S_USER.USE_LANGUAGE_IND as "useLanguageInd",
+               M_S_USER.UTL_NEW_INFO_FLG,
+               M_S_USER.UTL_NEW_DOWNLOAD_FLG,
+               M_S_USER.UTL_ORDER_MNG_FLG,
+               M_S_USER.UTL_ORDER_DOWNLOAD_FLG,
+               M_S_USER.UTL_DELIV_MNG_FLG,
+               M_S_USER.UTL_SHIP_MNG_FLG,
+               M_S_USER.UTL_MONEY_DSP_FLG,
+               M_S_USER.UTL_NEW_ALL_CHK_FLG,
+               M_S_USER.SUP_USER_MNG_FLG,
+<!-- TODO 14/11/08 add パスワード暗号化 daiko t.watanabe start -->
+               M_S_USER.LAST_LOGIN_DATE as "lastLoginDate",
+               M_S_USER.PW_SALT as "passwordSalt",
+               M_S_USER.PW_CHANGED_TIME as "passwordChangedTime",
+               M_S_USER.PW_LOCKED_TIME as "passwordLockedTime",
+               M_S_USER.PW_FAILED_COUNT as "passwordFailedCount",
+<!-- TODO 14/11/08 add パスワード暗号化 daiko t.watanabe end -->
+<!-- TODO 14/11/08 del パスワード暗号化 daiko t.watanabe start --><!-- 
+               M_S_USER.TERM_FLG,
+ --><!-- TODO 14/11/08 del パスワード暗号化 daiko t.watanabe end -->
+               M_S_USER.LAST_UPD_DATE as "lastUpdDate",
+               M_S_USER.MAIL_ADDR as "mailAddress",
+               CASE WHEN M_S_USER_LANG.S_USER_NAME IS NOT NULL
+               THEN M_S_USER_LANG.S_USER_NAME
+               ELSE M_S_USER_LANG_A.S_USER_NAME
+               END
+               as "loginUserName" 
+        FROM M_S_USER
+        LEFT JOIN M_S_USER_LANG
+        ON M_S_USER.S_USER_ID = M_S_USER_LANG.S_USER_ID
+           AND M_S_USER_LANG.LANGUAGE_IND = M_S_USER.USE_LANGUAGE_IND
+        LEFT JOIN M_S_USER_LANG M_S_USER_LANG_A
+        ON M_S_USER.S_USER_ID = M_S_USER_LANG_A.S_USER_ID
+           AND M_S_USER_LANG_A.LANGUAGE_IND = #{systemBaseLanguage} 
+        WHERE M_S_USER.S_USER_ID= #{loginUserInformation.userId}
+           AND M_S_USER.TERM_FLG = '0'
+           AND M_S_USER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate()}'
+           AND M_S_USER.VALID_END_DATE &gt;= '${@fw.common.util.AppUtil@getSysDate()}'
+           AND EXISTS (SELECT 1 FROM M_VENDOR
+                        INNER JOIN M_SUPPLIER
+                           ON M_VENDOR.VENDOR_CD = M_SUPPLIER.VENDOR_CD
+                          AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate()}'
+                          AND M_SUPPLIER.VALID_END_DATE &gt;= '${@fw.common.util.AppUtil@getSysDate()}'
+                          AND M_SUPPLIER.TERM_FLG = '0'
+                        WHERE M_S_USER.VENDOR_CD = M_VENDOR.VENDOR_CD)
+   </select>
+
+   <select id="getBuyerCompanyList" resultType="fw.domain.sp.login.BuyerCompanyListDetail">
+        SELECT DISTINCT
+               M_COMPANY.COMPANY_CD as "companyCd",
+               M_COMPANY.COMPANY_USE_LANGUAGE_IND as "companyUseLanguage",
+               CASE WHEN M_COMPANY_LANG.COMPANY_NAME IS NOT NULL
+                    THEN M_COMPANY_LANG.COMPANY_NAME
+               ELSE
+                    M_COMPANY_LANG_A.COMPANY_NAME
+               END
+               as "companyName"
+        FROM M_SUPPLIER
+        INNER JOIN M_COMPANY
+        ON (M_SUPPLIER.COMPANY_CD= M_COMPANY.COMPANY_CD
+        OR M_SUPPLIER.COMPANY_CD = '${@fw.common.constant.ApplicationConstant@COMPANY_CD_ALL}')
+        LEFT JOIN M_COMPANY_LANG
+        ON M_COMPANY.COMPANY_CD= M_COMPANY_LANG.COMPANY_CD
+        AND M_COMPANY_LANG.LANGUAGE_IND= #{sessionInformation.useLanguageInd}
+        LEFT JOIN M_COMPANY_LANG M_COMPANY_LANG_A
+        ON M_COMPANY.COMPANY_CD= M_COMPANY_LANG_A.COMPANY_CD
+        AND M_COMPANY_LANG_A.LANGUAGE_IND= #{systemBaseLanguage}
+        WHERE M_SUPPLIER.VENDOR_CD= #{sessionInformation.vendorCd}
+              AND M_SUPPLIER.TERM_FLG= '0'
+              AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate()}'
+              AND M_SUPPLIER.VALID_END_DATE &gt;= '${@fw.common.util.AppUtil@getSysDate()}'
+              AND M_COMPANY.TERM_FLG= '0'
+   </select>
+
+   <select id="getBuyerCompanyListAll" resultType="fw.domain.sp.login.BuyerCompanyListDetail">
+        SELECT M_COMPANY.COMPANY_CD as "companyCd",
+               M_COMPANY.COMPANY_USE_LANGUAGE_IND as "companyUseLanguage",
+               CASE WHEN M_COMPANY_LANG.COMPANY_NAME IS NOT NULL
+                    THEN M_COMPANY_LANG.COMPANY_NAME
+               ELSE
+                    M_COMPANY_LANG_A.COMPANY_NAME
+               END
+               as "companyName"
+        FROM M_COMPANY
+        LEFT JOIN M_COMPANY_LANG
+        ON M_COMPANY.COMPANY_CD= M_COMPANY_LANG.COMPANY_CD
+        AND M_COMPANY_LANG.LANGUAGE_IND= #{sessionInformation.useLanguageInd}
+        LEFT JOIN M_COMPANY_LANG M_COMPANY_LANG_A
+        ON M_COMPANY.COMPANY_CD= M_COMPANY_LANG_A.COMPANY_CD
+        AND M_COMPANY_LANG_A.LANGUAGE_IND= #{systemBaseLanguage}
+        WHERE M_COMPANY.TERM_FLG= '0'
+   </select>
+<!-- TODO 14/11/08 add パスワード暗号化 daiko t.watanabe start -->
+    <update id="updateLoginSuccessful" parameterType="fw.domain.sp.login.SessionInformation">
+        UPDATE M_S_USER SET
+               LAST_LOGIN_DATE = #{loginDate},
+               PW_LOCKED_TIME  = #{passwordLockedTime},
+               PW_FAILED_COUNT = #{passwordFailedCount}
+         WHERE S_USER_ID = #{loginUserId}
+    </update>
+
+    <update id="updateLoginFailed" parameterType="fw.domain.sp.login.SessionInformation">
+        UPDATE M_S_USER SET
+               PW_LOCKED_TIME  = #{passwordLockedTime},
+               PW_FAILED_COUNT = #{passwordFailedCount}
+         WHERE S_USER_ID = #{loginUserId}
+    </update>
+<!-- TODO 14/11/08 add パスワード暗号化 daiko t.watanabe end -->
+</mapper>

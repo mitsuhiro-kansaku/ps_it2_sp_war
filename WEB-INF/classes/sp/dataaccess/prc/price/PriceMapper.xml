@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.prc.price.PriceMapper">
+         <resultMap type="fw.domain.slip.price.register.purprice.PriceDetail" id="PriceDetail_Map">
+            <result column="LAST_UPD_DATE" property="buyerPrice.managementInfo.registerDate.reqDate.dateOfymd"/>
+           <result column="TERM_FLG" property="buyerPrice.termFlg"/>
+           <result column="ITEM_CD" property="buyerPrice.identify.item.itemCd"/>
+           <result column="ITEM_CLASS_L" property="buyerPrice.identify.item.itemClass.itemClassL"/>
+           <result column="ITEM_CLASS_M" property="buyerPrice.identify.item.itemClass.itemClassM"/>
+           <result column="ITEM_CLASS_S" property="buyerPrice.identify.item.itemClass.itemClassS"/>
+           <result column="CATALOG_IND" property="buyerPrice.managementInfo.catalogInd"/>
+           <result column="SUP_CD" property="buyerPrice.identify.supplierFrom.supCd"/>
+           <result column="VALID_START_DATE" property="buyerPrice.identify.validityPeriod.period.startDate.dateOfymd"/>
+           <result column="VALID_END_DATE" property="buyerPrice.identify.validityPeriod.period.endDate.dateOfymd"/>
+           <result column="UPDATE_NO" property="buyerPrice.managementInfo.historyNo.historyNo"/>
+           <result column="MNG_IND" property="buyerPrice.managementInfo.priceManagementInd.priceManagementInd"/>
+           <result column="AUTO_ORDER_FLG" property="buyerPrice.orderDeliv.autoOrderFlg.autoOrderFlg"/>
+           <result column="BUYER_SECTION_CD" property="buyerPrice.identify.buyerCompany.buyerSectionCd"/>
+           <result column="BUYER_USER_SECTION_CD" property="buyerPrice.managementInfo.buyerUserSectionCd"/>
+           <result column="BUYER_USER_ID" property="buyerPrice.managementInfo.buyerUser.buyerUserId"/>
+           <result column="PRICE_MNG_USER_ID" property="buyerPrice.managementInfo.priceMngUser.priceMngUserId"/>
+           <result column="PIECE_FLG" property="buyerPrice.orderDeliv.autoTerminateFlg.autoTerminateFlg"/>
+           <result column="ORDER_LT" property="buyerPrice.orderDeliv.standardDelivDayCount.standardDelivDayCount.dayCount"/>
+           <result column="KATASHIKI" property="buyerPrice.identify.item.katashiki"/>
+           <result column="MANUFACT_CD" property="buyerPrice.identify.item.manufact.manufactCd"/>
+           <result column="ORDER_UNIT" property="buyerPrice.orderDeliv.custUnitVol.custUnitVol.vol"/>
+           <result column="MIN_ORDER_VOL" property="buyerPrice.orderDeliv.minCustVol.minCustVol.vol"/>
+           <result column="PRICE_LIST_NO" property="buyerPrice.supple.priceNo"/>
+           <result column="NEXT_UPD_YM" property="buyerPrice.revision.lastUpdYm.lastUpdYm.dateOfym"/>
+           <result column="UPDATE_CYCLE" property="buyerPrice.revision.updateCycle.updateCycle"/>
+           <result column="QUOT_REQ_NO" property="buyerPrice.managementInfo.quotReqNo.quotReqNo"/>
+           <result column="INSPECT_IND" property="buyerPrice.orderDeliv.inspectInd.inspectInd"/>
+           <result column="TAX_IND" property="buyerPrice.supItem.amountTypePrice.taxCalculationInd.taxInd.taxInd"/>
+           <result column="CONSUMPT_IND" property="buyerPrice.supItem.amountTypePrice.taxCalculationInd.consumptInd.consumptInd"/>
+           <result column="GREEN_FLG" property="buyerPrice.supple.green.greenPur"/>
+           <result column="GREEN_LABEL" property="buyerPrice.supple.green.priceLabel"/>
+           <result column="GREEN_FILE_NAME" property="buyerPrice.supple.green.greenItemAttach.fileName"/>
+           <result column="GREEN_FILE" property="buyerPrice.supple.green.greenItemAttach.data"/>
+           <result column="CATALOG_FLG" property="buyerPrice.supItem.kind.materialType.materialType"/>
+           <result column="CONNECT_TYPE" property="buyerPrice.orderDeliv.connectType.connectTypeInd"/>
+           <result column="PUR_STOP_FROM" property="buyerPrice.managementInfo.purStopFlag.purStopPeriod.purStopPeriodStart.dateOfymd"/>
+           <result column="PUR_STOP_TO" property="buyerPrice.managementInfo.purStopFlag.purStopPeriod.purStopPeriodEnd.dateOfymd"/>
+           <result column="PRICE_REMARKS" property="buyerPrice.supple.buyerPriceRemarks"/>
+           <result column="REF_URL" property="buyerPrice.supple.refUrl"/>
+           <result column="IMG_FILE_NAME" property="buyerPrice.supple.imgFile.fileName"/>
+           <result column="IMG_FILE" property="buyerPrice.supple.imgFile.data"/>
+           <result column="CURRENCY_CD" property="buyerPrice.identify.supplierFrom.currency.currencyCd"/>
+           <result column="APP_PRICE_REG_ROUTE" property="buyerPrice.managementInfo.approute.appRouteNo"/>
+           <result column="APP_PRICE_REG_ROUTE_NAME" property="buyerPrice.managementInfo.approute.appRouteName"/>
+           <result column="BUYER_COMPANY_CD" property="buyerPrice.identify.buyerCompany.buyerCompanyCd"/>
+           <result column="PUR_PRICE_JNL_SEQ" property="buyerPrice.purPriceJnlSeq"/>
+           <result column="BUY_PRICE" property="buyerPrice.buyPrice.amount"/>
+           <result column="UNIT_CD" property="buyerPrice.identify.item.unit.unitCd"/>
+        </resultMap>
+    <!-- 価格詳細情報を取得 -->
+    <select id="searchPriceDetail" parameterType="fw.domain.slip.price.pricemasterlist.PriceIdentify"
+                                            resultMap="PriceDetail_Map">
+        SELECT
+                M_PUR_PRICE.LAST_UPD_DATE          <!--最終更新日時-->
+              , M_PUR_PRICE.TERM_FLG               <!--廃止フラグ-->
+              , M_PUR_PRICE.ITEM_CD                <!--品名コード-->
+              , M_ITEM.ITEM_CLASS_L                <!--分類名-->
+              , M_ITEM.ITEM_CLASS_M                <!--分類名-->
+              , M_ITEM.ITEM_CLASS_S                <!--分類名-->
+              , M_PUR_PRICE.CATALOG_IND            <!--カタログ区分-->
+              , M_PUR_PRICE.SUP_CD                 <!--取引先コード-->
+              , M_PUR_PRICE.VALID_START_DATE       <!--有効期間（開始）-->
+              , M_PUR_PRICE.VALID_END_DATE         <!--有効期間（終了）-->
+              , M_PUR_PRICE.UPDATE_NO              <!--改訂番号-->
+              , M_PUR_PRICE.MNG_IND               <!--価格管理区分-->
+              , M_PUR_PRICE.AUTO_ORDER_FLG         <!--自動発注フラグ-->
+              , M_PUR_PRICE.BUYER_SECTION_CD       <!--購買部門コード-->
+              , M_PUR_PRICE.BUYER_USER_SECTION_CD  <!--購買担当部門コード-->
+              , M_PUR_PRICE.BUYER_USER_ID          <!--購買担当者ID-->
+              , M_PUR_PRICE.PRICE_MNG_USER_ID      <!--価格管理者ID-->
+              , M_PUR_PRICE.PIECE_FLG              <!--自動打切フラグ-->
+              , M_PUR_PRICE.ORDER_LT               <!--標準納入日数-->
+              , M_ITEM.KATASHIKI                  <!--型式-->
+              , M_ITEM.MANUFACT_CD                 <!--メーカーコード-->
+              , M_PUR_PRICE.ORDER_UNIT             <!--発注単位-->
+              , M_PUR_PRICE.MIN_ORDER_VOL          <!--最小発注数量-->
+              , M_PUR_PRICE.PRICE_LIST_NO          <!--価格表№-->
+              , M_PUR_PRICE.NEXT_UPD_YM            <!--次回見直時期-->
+              , M_PUR_PRICE.UPDATE_CYCLE          <!--価格改定サイクル-->
+              , M_PUR_PRICE.QUOT_REQ_NO            <!--見積依頼番号-->
+              , M_PUR_PRICE.INSPECT_IND           <!--検査区分-->
+              , M_PUR_PRICE.TAX_IND               <!--課税区分-->
+              , M_PUR_PRICE.CONSUMPT_IND           <!--消費税区分-->
+              , M_PUR_PRICE.GREEN_FLG              <!--グリーン品フラグ-->
+              , M_PUR_PRICE.GREEN_LABEL           <!--グリーン購入判断基準-->
+              , M_PUR_PRICE.GREEN_FILE_NAME       <!--グリーン品添付ファイル名-->
+              <!-- +++++ 強化-00296-000 2013/04/02 ADD SBO_jiang START +++++ -->
+              , M_PUR_PRICE.GREEN_FILE       <!--グリーン品添付ファイル-->
+              <!-- +++++ 強化-00296-000 2013/04/02 ADD SBO_jiang END +++++ -->
+              , M_PUR_PRICE.CATALOG_FLG            <!--カタログ種別-->
+              , M_PUR_PRICE.CONNECT_TYPE          <!--接続種別-->
+              , M_PUR_PRICE.PUR_STOP_FROM          <!--購入停止期間（開始）-->
+              , M_PUR_PRICE.PUR_STOP_TO          <!--購入停止期間（終了）-->
+              , M_PUR_PRICE.PRICE_REMARKS          <!--購買価格説明-->
+              , M_PUR_PRICE.REF_URL                <!--参照先URL-->
+              , M_PUR_PRICE.IMG_FILE_NAME          <!--画像ファイル名-->
+               <!-- +++++ 強化-00296-000 2013/04/02 ADD SBO_jiang START +++++ -->
+              , M_PUR_PRICE.IMG_FILE          <!--画像ファイル-->
+              <!-- +++++ 強化-00296-000 2013/04/02 ADD SBO_jiang END +++++ -->
+              , M_PUR_PRICE.CURRENCY_CD             <!--通貨コード-->
+              , M_PUR_PRICE.PUR_PRICE_JNL_SEQ       <!--購買価格変更SEQ-->
+              , M_PUR_PRICE.APP_PRICE_REG_ROUTE     <!-- 承認ルート番号 -->
+              , M_PUR_PRICE.APP_PRICE_REG_ROUTE_NAME <!-- 承認ルート名 -->
+              , M_PUR_PRICE.BUYER_COMPANY_CD         <!-- 購買会社コード -->
+              , M_PUR_PRICE.BUY_PRICE              <!--  購入単価 -->
+              , M_ITEM.UNIT_CD                         <!--  単位コード -->
+         FROM M_PUR_PRICE
+         LEFT JOIN M_ITEM ON                      <!--品名マスタ-->
+             ( M_ITEM.COMPANY_CD = M_PUR_PRICE.BUYER_COMPANY_CD
+             OR M_ITEM.COMPANY_CD = '${@fw.common.constant.ApplicationConstant@COMPANY_CD_ALL}'
+              )
+         AND M_ITEM.ITEM_CD = M_PUR_PRICE.ITEM_CD
+         AND M_ITEM.TERM_FLG = '0'
+         WHERE
+             M_PUR_PRICE.BUYER_COMPANY_CD = #{buyerCompanyCd}
+         AND M_PUR_PRICE.BUYER_SECTION_CD = #{buyerSectionCd}
+         AND M_PUR_PRICE.ITEM_CD = #{itemCd}
+         AND M_PUR_PRICE.SUP_CD = #{supCd}
+         AND M_PUR_PRICE.VALID_START_DATE = #{validStartDate.dateOfymd}
+         AND M_PUR_PRICE.VALID_END_DATE = #{validEndDate.dateOfymd}
+
+    </select>
+</mapper>

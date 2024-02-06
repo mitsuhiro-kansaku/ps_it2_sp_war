@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('PRICE_REQ_ADO')</title> <!-- 価格改定回答 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+
+#set($searchCondition=$priceRevisionRespSearchCondition)
+#parse("./common/common_js.vm")
+
+// 初期化
+function onLoad() {
+    parentButtonEnable();
+    TableSort.init();
+    dataLoadHasPage();
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    paging();
+    setCheckedColor();
+    // 回答処理が成功の場合
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $priceRevisionRespParam1 = ["#customSpringMessage('PRICE_REQ_ADO')"])
+        alert('#customMessageArgs("I005",$priceRevisionRespParam1)');
+        parent.execSearch();
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+    #if($priceRevisionRespList.priceRevisionRespItemList.size()!=0)
+        window.parent.getObj("commitbtn").style.display = "";
+    #end
+    if(isSuccess != 'true'){
+     var isShowInfo = "#jsEscape($!isShowInfo)";
+     if (isShowInfo == 'true'){
+         top.iframeChange("${flowExecutionUrl}&_eventId=showUploadResult");
+     }    }
+}
+
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    var checkName = document.getElementsByName('Chk');
+    #foreach ( $item in $priceRevisionRespList.priceRevisionRespItemList )
+        var checkName = "_priceRevisionSeqList[$velocityCount]";
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           ## ----- 強化-01172-000 2013/04/28 ADD SBO_KANGJW START -----
+           ##parent.document.Body.PageNo.value = oldPage;
+           ## ----- 強化-01172-000 2013/04/28 ADD SBO_KANGJW END -----
+           ## +++++ 強化-01172-000 2013/04/28 ADD SBO_KANGJW START +++++
+           parent.document.Body.PageNo.value = parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)');
+           ## +++++ 強化-01172-000 2013/04/28 ADD SBO_KANGJW END +++++
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+        #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+        #end
+
+        #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+        #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+        #end
+    #end
+}
+
+
+## ----- IT2-01209-000 2013/04/16 DEL SBO_jiang START -----
+##function chkHead(target) {
+##           #set($rows = $priceRevisionRespList.priceRevisionRespItemList.size())
+##            var rows = #out($rows);
+##            if(target.checked) {
+##                for(var m = 0; m<rows; m++){
+##                    if(getObj('_priceRevisionSeqList['+m+']')){
+##                        getObj('_priceRevisionSeqList['+m+']').checked = true;
+##                    }
+##                }
+##            } else {
+##                for(var m = 0; m<rows; m++){
+##                    if(getObj('_priceRevisionSeqList['+m+']')){
+##                        getObj('_priceRevisionSeqList['+m+']').checked = false;
+##                    }
+##                }
+##            }
+##}
+## ----- IT2-01209-000 2013/04/16 DEL SBO_jiang END -----
+function chkHead(target) {
+            #set($rows = $priceRevisionRespList.priceRevisionRespItemList.size())
+            var rows = #jsEscape($rows);
+            if(target.checked) {
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_priceRevisionSeqList['+m+']')){
+                        getObj('_priceRevisionSeqList['+m+']').checked = true;
+                        getObj('priceRevisionSeqList['+m+'].checkStatus').value="1";
+                        $('tr:[id=Row_' + m + ']').css("background-color","#ffff99");
+                    }
+                }
+
+            } else {
+
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_priceRevisionSeqList['+m+']')){
+                        getObj('_priceRevisionSeqList['+m+']').checked = false;
+                        getObj('priceRevisionSeqList['+m+'].checkStatus').value="0";
+                        if (Number(m) % 2 != 0) {
+                            $('tr:[id=Row_' + m + ']').css("background-color","#ffffff");
+                        } else {
+                            $('tr:[id=Row_' + m + ']').css("background-color","#dce4ef");
+                        }
+                    }
+                }
+            }
+
+
+}
+
+function setCheckedColor(){
+    #set($rows = $priceRevisionRespList.priceRevisionRespItemList.size())
+    var rows = #jsEscape($rows);
+    var allSelected = true;
+    var hasOneSelected= false ;
+    for(var m = 0; m<rows; m++){
+        if(getObj('_priceRevisionSeqList['+m+']')){
+            if(getObj('_priceRevisionSeqList['+m+']').checked){
+                hasOneSelected = true;
+                getObj('Row_' + m).style.backgroundColor = "#ffff99";
+            }else{
+                allSelected = false;
+            }
+        }
+    }
+    if(allSelected&&hasOneSelected){
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = true;
+    }else{
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+
+
+}
+
+function checkOne(onecheck,index){
+    #set($rows = $priceRevisionRespList.priceRevisionRespItemList.size())
+    var rows = #jsEscape($rows);
+    if(onecheck.checked){
+        $('tr:[id=Row_' + index + ']').css("backgroundColor","#ff9");
+        getObj('priceRevisionSeqList[' + index + '].checkStatus').value="1";
+        var allSelected = true;
+        var hasOneSelected= false ;
+        for(var m = 0; m<rows; m++){
+            if(getObj('_priceRevisionSeqList['+m+']')){
+                if(getObj('_priceRevisionSeqList['+m+']').checked){
+                    hasOneSelected = true;
+                }else{
+                    allSelected = false;
+                }
+            }
+        }
+        if(allSelected){
+             if(getObj("ParentCheck"))
+              getObj("ParentCheck").checked = true;
+        }else{
+            if(getObj("ParentCheck"))
+              getObj("ParentCheck").checked = false;
+        }
+    }else{
+        getObj('priceRevisionSeqList[' + index + '].checkStatus').value="0";
+        if (index % 2 == 0) {
+            $('tr:[id=Row_' + index + ']').css("backgroundColor","#dce4ef");
+        } else {
+            $('tr:[id=Row_' + index + ']').css("backgroundColor","#fff");
+        }
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+}
+
+function update() {
+    //parent.getObj("ERRORAREA").src="../../layout/error.vm";
+    var count=0;
+    #foreach ( $item in $priceRevisionRespList.priceRevisionRespItemList )
+        var checkName = "_priceRevisionSeqList[$velocityCount]";
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count==0){
+        #set( $mPriceRevisionReply = "#customSpringMessage('PRICE_REQ_ADO')" );
+        ## 2013.02.07 DEL DAIKO_WANG
+        ## alert('#customMessageArgs("I010",[$mPriceRevisionReply])');
+        ## 2013.02.07 ADD DAIKO_WANG
+        alert("#nothingSelectedMessage()");
+
+    }else{
+        #set( $priceRevisionRespParam2 = ["#customSpringMessage('PRICE_REQ_ADO')","#customSpringMessage('REQ_REPLY')"])
+        if( !confirm("#customMessageArgs("W001",$priceRevisionRespParam2)") ) {
+            return;
+        }
+        buttonDisable();
+        parentButtonDisable();
+        getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=answer";
+        getObj("BodyForm").submit();
+    }
+}
+
+function clearfile(no) {
+    var file = document.getElementById("priceRevisionRespItemList["+no+"].priceRevisionListAttachFile.file");
+    $(file).val("");
+    var html = file.outerHTML;
+    $(file).replaceWith(html);
+}
+
+function cleartemp(no) {
+   var file = document.getElementById("priceRevisionRespItemList["+no+"].attachQuotAttachFile.file");
+    $(file).val("");
+    var html = file.outerHTML;
+    $(file).replaceWith(html);
+}
+
+function downloadReq(seqNo) {
+  if(seqNo!=""){
+    iframeChange('${flowExecutionUrl}&_eventId=downloadReq&&seqNo='+seqNo);
+  }
+}
+
+function downloadResp(seqNo) {
+  if(seqNo!=""){
+    iframeChange('${flowExecutionUrl}&_eventId=downloadResp&&seqNo='+seqNo);
+  }
+}
+
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE', 1, 2);" >
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form name="BodyForm" id="BodyForm" method="post" enctype="multipart/form-data">
+<table id="TABLE" class="ListArea" width="100%">
+    <thead>
+        #if($priceRevisionRespList.priceRevisionRespItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall"><input name="ParentCheck" id="ParentCheck" type="checkbox" onclick="chkHead(this);"></th><!--全選択/全選択解除-->
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.ANS_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.ANS_FLG')">
+            #customSpringMessage('STATUS')<!-- 状態 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.PRICE_REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.PRICE_REQ_DATE')">
+            #customSpringMessage('REVISION_REQ_DATE')<!-- 改定依頼日 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.TITLE_NAME')">
+            #customSpringMessage('TITLE_NAME')<!-- 件名 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.BUYER_COMPANY_NAME')">
+            #customSpringMessage('BUYER_COMPANY')<!-- 発注企業 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.BUYER_SECTION_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.BUYER_SECTION_NAME')">
+            #customSpringMessage('ORDER_SECTION')<!-- 発注部門 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ.BUYER_USER_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ.BUYER_USER_NAME')">
+            #customSpringMessage('ORDER_USER')<!-- 発注担当者 -->
+            </th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('PRICE_LIST')</th><!-- 価格改定表 -->
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('PRICE_REVISION_LIST')</th><!-- 回答価格改定表 -->
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('ATTACH_QUOT_FILE_NAME')</th><!-- 回答添付ファイル -->
+        </tr>
+    </thead>
+
+    <tbody id="Tbody">
+     #foreach($!priceRevisionRespItem in $priceRevisionRespList.priceRevisionRespItemList)
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+            <td id="CheckCol_$velocityCount" class="BoxDetailCenter">
+                #if($!priceRevisionRespItem.status=='0')
+                      #if($priceRevisionRespItem.priceRevisionIdentify.checkStatus=='1')
+                            <input name="priceRevisionRespItemList[$velocityCount].priceRevisionIdentify.checkStatus" id="priceRevisionSeqList[$velocityCount].checkStatus" type="hidden" value = "1">
+                            <input class="Icon" name="Chk" id="_priceRevisionSeqList[$velocityCount]" checked  type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #else
+                            <input name="priceRevisionRespItemList[$velocityCount].priceRevisionIdentify.checkStatus" id="priceRevisionSeqList[$velocityCount].checkStatus" type="hidden" value = "">
+                            <input class="Icon" name="Chk" id="_priceRevisionSeqList[$velocityCount]" type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #end
+                #end
+            </td>
+            <td id="Stat_0" class="BoxDetailCenter FontMiniAnkBold">#out($!priceRevisionRespItem.status_PageValue)</td><!-- 状態 -->
+            <td class="BoxDetailCenter FontList">#out($!priceRevisionRespItem.revisionReqDate.dateOfymdFormat)</td><!-- 改定依頼日 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevisionRespItem.titleName)</td><!-- 件名 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevisionRespItem.buyerCompany)</td><!-- 発注企業 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevisionRespItem.buyerSection)</td><!-- 発注企業 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevisionRespItem.orderUser)</td><!-- 発注担当者 -->
+            <td class="BoxDetailLeft FontList"><a href="#" onclick="downloadReq('#jsEscapeInHTML($!priceRevisionRespItem.priceListSeq)');">#out($!priceRevisionRespItem.priceListName)</a></td><!-- 価格改定表 -->
+            #if($!priceRevisionRespItem.status=='0')
+              <td class="BoxDetailLeft FontList"><!-- 回答価格改定表 -->
+               #if($!priceRevisionRespItemList[$velocityCount].priceRevisionListAttachFile.fileName!='')
+                   #out($!priceRevisionRespItemList[$velocityCount].priceRevisionListAttachFile.fileName)
+               #end
+                     <input type="file"
+                      id="priceRevisionRespItemList[$velocityCount].priceRevisionListAttachFile.file"
+                      name="priceRevisionRespItemList[$velocityCount].priceRevisionListAttachFile.file"
+                      class="Small" size="80">
+                     &nbsp;
+                     <input type="button" id="clear_$velocityCount" onclick="clearfile($velocityCount);" value="#customSpringMessage('ACTION_CLEAR')"><!--クリア-->
+              </td>
+              <td class="BoxDetailLeft FontList"><!-- 回答添付ファイル -->
+               #if($!priceRevisionRespItemList[$velocityCount].attachQuotAttachFile.fileName!='')
+                   #out($!priceRevisionRespItemList[$velocityCount].attachQuotAttachFile.fileName)
+               #end
+                     <input type="file"
+                      id="priceRevisionRespItemList[$velocityCount].attachQuotAttachFile.file"
+                      name="priceRevisionRespItemList[$velocityCount].attachQuotAttachFile.file"
+                      class="Small" size="80">
+                     &nbsp;
+                     <input type="button" onclick="cleartemp($velocityCount);" value="#customSpringMessage('ACTION_CLEAR')"><!--クリア-->
+              </td>
+            #else
+              <td class="BoxDetailLeft FontList"><!-- 回答価格改定表 -->
+                     <a href="#" onclick="downloadResp('#jsEscapeInHTML($!priceRevisionRespItem.priceRevisionListAttachFile.seqNo)');">#out($!priceRevisionRespItem.priceRevisionListAttachFile.fileName)</a>
+              </td>
+              <td class="BoxDetailLeft FontList"><!-- 回答添付ファイル -->
+                     <a href="#" onclick="downloadResp('#jsEscapeInHTML($!priceRevisionRespItem.attachQuotAttachFile.seqNo)');">#out($!priceRevisionRespItem.attachQuotAttachFile.fileName)</a>
+              </td>
+            #end
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+</form>
+</body>
+</html>

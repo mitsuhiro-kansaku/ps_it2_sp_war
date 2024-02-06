@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.AcceptanceConfirmedUpdMapper">
+
+    <select id="getNumberForUnacknowledged" resultType="Integer">
+        SELECT 
+            COUNT(S_NEW_RCV.ACC_CD)
+        FROM 
+            S_NEW_RCV
+        INNER JOIN S_DELIVERY ON
+            S_NEW_RCV.ACC_CD = S_DELIVERY.ACC_CD
+        AND S_NEW_RCV.CUST_CD = S_DELIVERY.CUST_CD
+        AND S_NEW_RCV.ORDER_NO = S_DELIVERY.ORDER_NO
+        AND S_NEW_RCV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        WHERE
+            S_DELIVERY.DELIVERY_SEQ = #{shipmentSeq}
+        AND S_DELIVERY.DELIV_KEY_NO = #{delivKeyNo}
+        AND S_NEW_RCV.DPO_FLG = '1'
+    </select>
+
+</mapper>

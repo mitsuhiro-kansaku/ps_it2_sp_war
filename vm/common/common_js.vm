@@ -1,0 +1,269 @@
+/**
+*エラーメセッジを設定
+@param errorDiv ＤＩＶ名
+@param errorMsg　 エラーメセッジ
+@param iframeName　FRAME名
+*/
+function setErrorMessage(errorDiv,errorMsg,iframeName) {
+    if (undefined != parent.getObj(errorDiv)) {
+        parent.getObj("TR_ERROR").style.display = "";
+        parent.getObj(errorDiv).innerHTML=errorMsg;
+        parent.document.getElementById(iframeName).contentWindow.document.body.innerText = "";
+    } else {
+        document.getElementById(iframeName).contentWindow.document.body.innerText = "";
+    }
+}
+
+var maxSearchHeight = 120;
+var minSearchHeight = 30;
+
+parent.backUrl="${flowExecutionUrl}&_eventId=back";
+top.homeUrl="${flowExecutionUrl}&_eventId=home";
+top.document.title = document.title;
+
+//body画面
+function bodyLoad() {
+    ## Chrome対策（検索エリアが縮んでしまう）
+    ## comment by lizhe for tableFix 2013/02/01
+    ## getObj("Adjust").style.width = getObj("SEARCH_AREA2").offsetWidth;
+    document.getElementById("SEARCH_AREA").style.height = maxSearchHeight;
+    changeFontSize();
+    setFocus();
+    setFocusForInput();
+    if(typeof(pinName)!="undefined"){
+        setPin(getCookie(pinName));
+    }
+}
+
+//data画面(ページがある)
+function dataLoadHasPage(){
+    changeFontSize();
+    paging();
+    setSortImg();
+    //TableSort.init();
+}
+
+function setFocus(){
+    with(document.body)
+    {
+        scrollLeft = getAttribute("scrollLeft");
+        scrollTop = getAttribute("scrollTop");
+
+        if(0 == scrollTop){
+            var inputs=document.getElementsByTagName("input");
+            for(var i=0;i<inputs.length;i++){
+                if(inputs[i].type=="text"){
+                try {
+                    inputs[i].focus();
+                 }catch (e) {
+                 }
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function changeFontSize() {
+    changeFontSize0();
+    var dataArea=getObj("DATAAREA");
+    if(dataArea){
+        dataArea.contentWindow.changeFontSize();
+    }
+}
+
+//ピンを止めると、検索エリアを開いた状態に固定できます。
+function pin(prm) {
+    if(typeof(pinName)!="undefined"){
+        setCookie(pinName,prm);
+        setPin(prm);
+    }
+}
+
+function setPin(prm){
+    if( prm=="1" ) {
+        setDisplay("PIN0",false);
+        setDisplay("PIN1",true);
+    } else {
+        setDisplay("PIN0",true);
+        setDisplay("PIN1",false);
+    }
+}
+
+//新規作成
+function openDetailNew() {
+    var form=getObj("BodyForm");
+    form.action="${flowExecutionUrl}&_eventId=new";
+
+    if(typeof(newPageId)!='undefined'){
+        var hidden = document.createElement("input");
+        hidden.type="hidden";
+        hidden.name="pageid";
+        hidden.value=newPageId;
+        form.appendChild(hidden);
+    }
+    form.submit();
+}
+
+var srtDownImg="<img STYLE='margin-left:3px;' height=10 width=10 src='../../image/srtDown.gif' >";
+var srtUpImg="<img STYLE='margin-left:3px;' height=10 width=10 src='../../image/srtUp.gif' >";
+
+function setSortImg(){
+	// 正規表現文字列
+	var regex = new RegExp(/^to_number\(.*\)$/);
+
+    #if($searchCondition.searchCondition.columnOrder.chooseList)
+        #foreach($!item in $!searchCondition.searchCondition.columnOrder.chooseList.itemList)
+            var columnId = "#jsEscape($!item.itemName)";
+		    // 文字列項目のソートキーをto_numberで数値に変換している場合、to_numberを除去してIDでObjectを取得する（正規表現でチェック）
+		    if (regex.test(columnId)) {
+                columnId = columnId.replace(/^to_number\(/, '').replace(/\)$/, '');
+		    }
+		    var columnName = getObj(columnId);
+            #if($searchCondition.searchCondition.columnOrder.chooseList.singleColumnSorting)
+                #set($colomuCount = "")
+            #else
+                #set($colomuCount = " " + $foreach.count)
+        #end
+            if (columnName != null) {
+                #if($item.ascOrder)
+                    columnName.innerHTML= columnName.innerHTML+srtUpImg+"#out($!colomuCount)";
+                #else
+                    columnName.innerHTML= columnName.innerHTML+srtDownImg+"#out($!colomuCount)";
+                #end
+            }
+        #end
+    #end
+}
+
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        #if("0" != $!searchCondition.searchCondition.page.totalPages)
+            parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+            for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+                parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+            }
+        #end
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow','1')");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow','"+(pageNow-1)+"')");
+        #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+        #end
+
+        #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow','"+(pageNow+1)+"')");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow','#jsEscape($!{searchCondition.searchCondition.page.totalPages})')");
+        #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+        #end
+    #end
+}
+
+
+function getFileName()
+{
+    var url = this.location.href;
+    var pos = url.lastIndexOf("/");
+    if(pos == -1)
+        pos = url.lastIndexOf("\\");
+    var filename = url.substr(pos+1);
+    return filename;
+}
+
+function checkBoxsIsSelect(checkName){
+    if(checkName == null){
+        checkName = 'Chk';
+    }
+    var count = 0;
+    var checkBoxs = document.getElementsByName(checkName);
+    for(var i=0;i<checkBoxs.length;i++){
+        var checkBox = checkBoxs[i];
+        if(checkBox.checked){
+            count++;
+        }
+    }
+    if(count==0){
+        alert("#nothingSelectedMessage()");
+        return false;
+    }
+    return true;
+}
+
+//text,textarea,checkbox,file,radiobuttonは一番の場合、focusにする。
+function setFocusForInput(){
+    $(":input").each(function() {
+        var isText = false;
+        if($(this).attr("type") == "text" && $(this).css("border") != '0px'){
+            isText = true;
+        }
+
+        var isTextarea = false;
+        if($(this).attr("type") == "textarea"){
+            isTextarea = true;
+        }
+
+        var isCheckbox = false;
+        if($(this).attr("type") == "checkbox"){
+            isCheckbox = true;
+        }
+
+        var isRadiobutton = false;
+        if($(this).attr("type") == "radiobutton"){
+            isRadiobutton = true;
+        }
+
+        var isFile = false;
+        if($(this).attr("type") == "file"){
+            isFile = true;
+        }
+
+        var isPassword = false;
+        if($(this).attr("type") == "password"){
+            isPassword = true;
+        }
+
+        var notReadonly = true;
+        if($(this).attr("readonly") == 'readonly'){
+            notReadonly = false;
+        }
+
+        var notDisabled = true;
+        if($(this).attr("disabled") == 'disabled'){
+            notDisabled = false;
+        }
+
+
+        if($(this).attr("id") != 'sts'
+            && notDisabled
+            && notReadonly
+            && (isText || isTextarea || isCheckbox || isRadiobutton || isFile || isPassword)){
+             try {
+                   $(this).focus();
+                 }catch (e) {
+                 }
+                 return false;
+        }
+    });
+}

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#springMessage('M_LIBRALY')</title><!-- ライブラリ-->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#set($searchCondition=$searchCondition)
+#parse("./common/common_js.vm")
+function onLoad() {
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+       return;
+    }
+}
+function downloadFile(helpNo,companyCd) {
+    parent.iframeChange("${flowExecutionUrl}&_eventId=download","helpNo",helpNo,"companyCd",companyCd,"HIDDENAREA");
+}
+//-->
+</script>
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE',1,2);">
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+#if($itemList.size()>0)
+<table id="TABLE" class="ListArea" width="100%">
+    <thead>
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="M_LIBRALY_LANG.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','M_LIBRALY_LANG.TITLE_NAME')">
+                <span class="BoxHeaderSortItem">
+                    #springMessage('LIBRALY_TITLE_NAME')
+                </span>
+            </th><!--ライブラリ件名-->
+            <th label="case" class="BoxHeaderCenter FontSmall" id="M_LIBRALY_LANG.REG_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','M_LIBRALY_LANG.REG_DATE')">
+                <span class="BoxHeaderSortItem">
+                    #springMessage('REG_DATE')
+                </span>
+            </th><!-- 登録日時-->
+            <th class="BoxHeaderCenter FontSmall">#springMessage('DESCRIPTION')</th><!-- 説明-->
+            <th label="case" class="BoxHeaderCenter FontSmall" id="M_LIBRALY.FILE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','M_LIBRALY.FILE_NAME')">
+                <span class="BoxHeaderSortItem">
+                    #springMessage('FILE_NAME')
+                </span>
+            </th><!--ファイル名 -->
+            <th label="case" class="BoxHeaderCenter FontSmall" id="M_COMPANY_LANG.COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','M_COMPANY_LANG.COMPANY_NAME')">
+                <span class="BoxHeaderSortItem">
+                    #springMessage('BUYER_COMPANY')
+                </span>
+            </th><!--発注企業 -->
+        </tr>
+    </thead>
+    <tbody>
+    #foreach($!item in $!itemList)
+        #if($velocityCount % 2 != 0)
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $velocityCount = $velocityCount + 1 )$velocityCount</td>
+            <td class="BoxDetailLeft FontList"><span class="FontList">#out($!item.titleName)</span></td>
+            <td class="BoxDetailLeft FontList"><span class="FontList">#out($!item.regDate.dateOfymdDispYMD)</span></td>
+            <td class="BoxDetailLeft FontList"><span class="FontList">#out($!item.description)</span></td>
+            <td class="BoxDetailLeft FontList"><span class="FontList"><a href="#" onclick="downloadFile('#jsEscapeInHTML($!item.libraryIdentify.helpNo)','#jsEscapeInHTML($!item.libraryIdentify.companyCd)');">#out($!item.fileName)</a></span></td>
+            <td class="BoxDetailLeft FontList"><span class="FontList">#out($!item.buyerCompany)</span></td>
+        </tr>
+    #end
+    </tbody>
+</table>
+#end
+<table id="WAIT" class="NoBorder" style="display:none;width:100%;"><tr><td style="text-align:center;"><br><br>
+<img src="../../image/wait.gif"><br><span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')</span></td></tr></table><!--問い合わせ中...-->
+</body>
+</html>

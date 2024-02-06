@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.NewOrderMapper">
+
+    <select id="searchExclusive" resultType="String">
+        SELECT
+               S_NEW_ORDER.ACC_CD
+          FROM S_NEW_ORDER
+         WHERE S_NEW_ORDER.ORDER_SEQ = #{orderSeq}
+           AND S_NEW_ORDER.LAST_UPD_DATE = #{lastUpdDate}
+    </select>
+
+</mapper>

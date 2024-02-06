@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.ShipmentAvailableStatusMapper">
+
+    <select id="findDeliveryStatus" parameterType="fw.domain.sp.shipment.ShipmentUploadItem" resultType="fw.domain.sp.shipment.DeliveryStatus">
+        SELECT
+            S_DELIVERY.DELIVERY_STATUS AS "code"
+        FROM
+            S_DELIVERY
+        INNER JOIN 
+            (
+            SELECT
+                ACC_CD,
+                CUST_CD,
+                ORDER_NO,
+                DELIV_KEY_NO,
+                MAX(UPD_CNT) AS UPD_CNT
+            FROM
+                S_DELIVERY
+            GROUP BY 
+                ACC_CD,
+                CUST_CD,
+                ORDER_NO,
+                DELIV_KEY_NO
+            ) S_DELIVERY_MAX
+            ON
+                S_DELIVERY.ACC_CD = S_DELIVERY_MAX.ACC_CD
+            AND S_DELIVERY.CUST_CD = S_DELIVERY_MAX.CUST_CD
+            AND S_DELIVERY.ORDER_NO = S_DELIVERY_MAX.ORDER_NO
+            AND S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_MAX.DELIV_KEY_NO
+            AND S_DELIVERY.UPD_CNT = S_DELIVERY_MAX.UPD_CNT
+        WHERE
+            S_DELIVERY.ACC_CD = #{accCd}
+        AND S_DELIVERY.CUST_CD = #{custCd}
+        AND S_DELIVERY.ORDER_NO = #{orderNo}
+        AND S_DELIVERY.DELIV_KEY_NO = #{delivKeyNo}
+    </select>    
+</mapper>

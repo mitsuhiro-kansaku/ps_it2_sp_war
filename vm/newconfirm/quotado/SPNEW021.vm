@@ -1,0 +1,303 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('QUOT_ADO_INFO')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$quotAdoSearchCondition)
+#set($checkBoxsIsSelectMessageParam=["#customSpringMessage('QUOT_ADO_INFO')"])
+#parse("./common/common_js.vm")
+var oldPage;
+function onLoad() {
+    parentButtonEnable();
+    #if($quotAdoList.quotAdoItemList.size()!=0)
+        function  block(){
+            parent.document.getElementById('none').style.display='';
+        }
+        block();
+    #else
+        function none(){
+            parent.document.getElementById('none').style.display='none';
+        }
+        none();
+    #end
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $quotAdoParam1 = ["#customSpringMessage('QUOT_ADO_INFO')"])
+        alert('#customMessageArgs("I002",$quotAdoParam1)');
+    }
+
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+}
+//data画面(ページがある)
+function dataLoadHasPage(){
+    changeFontSize();
+    paging()
+    setSortImg();
+}
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    var checkBoxs = document.getElementsByName('Chk');
+    for(var i=0;i<checkBoxs.length;i++){
+        var checkBox = checkBoxs[i];
+        if(checkBox.checked){
+            count++;
+        }
+    }
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           parent.document.Body.PageNo.value = oldPage;
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+         #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+         #end
+
+         #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+         #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+         #end
+         oldPage = parseInt(parent.document.Body.PageNo.value);
+    #end
+}
+function update() {
+    if (!checkBoxsIsSelect('Chk')) {
+    return;
+    }
+
+    #set( $quotAdoParam2 = ["#customSpringMessage('QUOT_ADO_INFO')","#customSpringMessage('NEW_CHECK')"])
+    if( !confirm("#customMessageArgs("W001",$quotAdoParam2)") ) {
+        return;
+    }
+    parentButtonDisable();
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newConfirm";
+    getObj('BodyForm').submit();
+}
+
+function allupdate(){
+    #set( $quotAdoParam3 = ["#customSpringMessage('QUOT_ADO_INFO')","#customSpringMessage('NEW_ALL_COUNT_CHECK')"])
+    if( !confirm("#customMessageArgs("W001",$quotAdoParam3)") ) {
+            return;
+    }
+    parentButtonDisable();
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newAllConfirm";
+    getObj('BodyForm').submit();
+}
+
+function openDetail(quotAdoSeq,type) {
+    if(type==2){
+    poppage('${flowExecutionUrl}&_eventId=detailPrice&&quotAdoSeq='+quotAdoSeq,'DETAIL','800','700');
+    }else{
+    poppage('${flowExecutionUrl}&_eventId=detail&quotAdoSeq='+quotAdoSeq,'DETAIL','800','700');
+    }
+}
+
+function chkHead(obj) {
+    #foreach ( $item in $quotAdoList.quotAdoItemList )
+        var checkName = "check$velocityCount";
+        if(getObj(checkName)!=null){
+            getObj(checkName).checked = obj.checked;
+            var status = '';
+            if(obj.checked) {
+                status = 1;
+                $("tr:[id=Row_$velocityCount]").css("backgroundColor","#ff9");
+            } else {
+                #if($velocityCount % 2 == 0)
+                    $("tr:[id=Row_$velocityCount]").css("backgroundColor","#dce4ef");
+                #else
+                    $("tr:[id=Row_$velocityCount]").css("backgroundColor","#fff");
+                #end
+            }
+            document.getElementById("quotAdoSeqList[$velocityCount].checkDpoFlg").value = status;
+        }
+    #end
+}
+
+//check one
+function chkData(obj, index){
+    var status = '';
+
+    if(obj.checked == true){
+        $("tr:[id=Row_" + index+"]").css("backgroundColor","#ff9");
+        status = 1;
+    }else{
+        if (index % 2 != 0) {
+            $("tr:[id=Row_" + index+"]").css("backgroundColor","#fff");
+        } else {
+            $("tr:[id=Row_" + index+"]").css("backgroundColor","#dce4ef");
+        }
+    }
+    document.getElementById("quotAdoSeqList["+index+"].checkDpoFlg").value = status;
+}
+
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE', 1, 3)"><!-- テーブル幅と固定内容を設定(テーブルID,ヘッダ固定行数,固定列数)-->
+#if($!errorMessage && $!errorMessage!="")
+<div id="error" name="error" class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm"  method="post">
+#foreach($!quotadoItem in $quotAdoList.quotAdoItemList)
+        #customFormHiddenInput("quotAdoSeqList[$velocityCount].quotAdoSeq" "$!quotadoItem.quotAdoIdentify.quotAdoSeq")
+        #customFormHiddenInput("quotAdoSeqList[$velocityCount].lastUpdDate" "$!quotadoItem.quotAdoIdentify.lastUpdDate")
+#end
+<table id="TABLE" class="ListArea" WIDTH="100%">
+    <thead>
+    #if($quotAdoList.quotAdoItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall"><input name="ParentCheck" type="checkbox" onclick="chkHead(this);"></th><!--全選択/全選択解除-->
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_ADO.QUOT_ADO_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_ADO.QUOT_ADO_IND')">
+            #customSpringMessage('QUOT_ADO_EDI')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_ADO.APL_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_ADO.APL_VERSION')">
+            #customSpringMessage('REVISION_NUMBER')
+            </th>
+            ## 2013.04.15 DEL DAIKO_WANG START
+            #*
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.QUOT_REQ_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.QUOT_REQ_IND')">
+            #customSpringMessage('QUOT_REQ_IND')
+            *#
+            ## 2013.04.15 DEL DAIKO_WANG -END-
+            ##</th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_ADO.DPO_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_ADO.DPO_FLG')">
+            #customSpringMessage('STATUS')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_ADO.APL_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_ADO.APL_NO')">
+            #customSpringMessage('QUOT_REQ_NO')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_ADO.QUOT_ADO_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_ADO.QUOT_ADO_DATE')">
+            #customSpringMessage('QUOT_ADO_DATE')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.QUOT_REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.QUOT_REQ_DATE')">
+            #customSpringMessage('QUOT_REQ_DATE')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.BUYER_COMPANY_NAME')">
+            #customSpringMessage('BUYER_COMPANY')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_QUOT_REQ.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_QUOT_REQ.TITLE_NAME')">
+            #customSpringMessage('TITLE_NAME')
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+    #foreach($!quotadoItem in $quotAdoList.quotAdoItemList)
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+            <td class="BoxDetailCenter FontList">
+                <img id="DetailButton_0" class="Icon" src="../../image/btnDetailDisp.gif" style="margin-right:4px;" onclick="openDetail('#jsEscapeInHTML($!quotadoItem.quotAdoIdentify.quotAdoSeq)','#jsEscapeInHTML($!quotadoItem.quotReqInd)');">
+            </td>
+            <td id="CheckCol_0" class="BoxDetailCenter FontList">
+                #if($!quotadoItem.status=='0')
+                    #customFormHiddenInput("quotAdoSeqList[$velocityCount].checkDpoFlg" "")
+                    <input class="Icon" name="Chk" id="check$velocityCount" type="checkbox" onclick="chkData(this, '$velocityCount');"/>
+                #end
+            </td>
+
+            #if($!quotadoItem.adoption == '1')
+                <td class="BoxDetailCenter FontMiniAnkBold Red"> #out($!quotadoItem.adoption_PageValue)</td>
+            #else
+                <td class="BoxDetailCenter FontList"> #out($!quotadoItem.adoption_PageValue)</td>
+            #end
+            #* ----- 2013/02/04 DEL DAIKO_YAMAGUCHI
+            #if($!quotadoItem.revisionNumber!= '1')
+            *#
+            <td class="BoxDetailCenter FontList">#out($!quotadoItem.revisionNumber)</td>
+            #* ----- 2013/02/04 DEL DAIKO_YAMAGUCHI
+            #else
+            <td class="BoxDetailCenter FontList"></td>
+            #end
+            *#
+            ## +++++ 強化-00046-000 2013/04/02 ADD SBO_wangzf START +++++
+            ## 2013.04.15 DEL DAIKO_WANG
+            ##<td class="BoxDetailCenter FontMiniAnkBold">#out($!quotadoItem.quotReqInd_PageValue)</td>
+            ## +++++ 強化-00046-000 2013/04/02 ADD SBO_wangzf END +++++
+            ## ----- 強化-00046-000 2013/04/02 DEL SBO_wangzf START -----
+            ##<td class="BoxDetailCenter FontList">#out($!quotadoItem.quotReqInd_PageValue)</td>
+            ## ----- 強化-00046-000 2013/04/02 DEL SBO_wangzf END -----
+            <td class="BoxDetailCenter FontStatus">#out($!quotadoItem.status_PageValue)</td>
+            <td class="BoxDetailLeft FontSlipNo">#out($!quotadoItem.quotReqNo)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotadoItem.adoDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotadoItem.quotReqDate.dateOfymdFormat)</td>
+            <td class="BoxDetailLeft FontList">#out($!quotadoItem.buyerCompany)</td>
+            <td class="BoxDetailLeft FontList">#out($!quotadoItem.titleName)</td>
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+</form>
+</body>
+</html>

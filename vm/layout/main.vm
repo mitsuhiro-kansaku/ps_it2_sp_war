@@ -1,0 +1,565 @@
+<!--*************************************************************************-->
+<!--*          Copyright (C)2010 Masayuki MUTO. All Rights Reserved.        *-->
+<!--*************************************************************************-->
+<!doctype html>
+<HTML LANG="ja">
+<HEAD>
+<META http-equiv="Content-type" content="text/html; charset=UTF-8">
+<META http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<META http-equiv="Content-script-type" CONTENT="text/javascript">
+<title>PROCURESUITE</title>
+<link id="CSS_FONT" rel="stylesheet" href="../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../include/Color.css" type="text/css">
+<LINK REL="stylesheet" HREF="../include/searchbox.css" TYPE="text/css">
+<SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/common.js"></SCRIPT>
+<SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/check.js"></SCRIPT>
+<SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/searchbox.js"></SCRIPT>
+<SCRIPT LANGUAGE="javascript" TYPE="text/javascript">
+<!--
+var SearchFlg = false;
+
+var MenuList = new Array (
+    "HOME___../home/body.vm",
+    "ﾜｰｸﾌﾛｰﾏｯﾌﾟ___../wfm/body.vm",
+    "依頼元業務",
+    "依頼元業務|||購入依頼",
+    "依頼元業務|||購入依頼|||新規起票",
+    "依頼元業務|||購入依頼|||新規起票|||スポット品の購入___../reqCreateSlip/body.vm",
+    "依頼元業務|||購入依頼|||新規起票|||カタログ品の購入___../reqCatalog/body.vm",
+    "依頼元業務|||購入依頼|||伝票照会___../reqViewSlip/body.vm",
+    "依頼元業務|||購入依頼|||伝票照会(単票形式)___../reqViewSlip2/body.vm",
+    "依頼元業務|||購入依頼|||伝票照会(単票形式)|||保留___../reqViewSlip2/body.vm",
+    "依頼元業務|||購入依頼|||伝票照会(単票形式)|||差戻し___../reqViewSlip2/body.vm",
+    "依頼元業務|||購入依頼|||伝票照会(単票形式)|||承認中___../reqViewSlip2/body.vm",
+    "依頼元業務|||見積依頼",
+    "依頼元業務|||見積依頼|||新規見積依頼___../estCreateSlip/body.vm",
+    "依頼元業務|||見積依頼|||見積依頼照会___../estViewSlip/body.vm",
+    "購買業務",
+    "購買業務|||伝票受付箱___../odrReceptionBox/body.vm",
+    "購買業務|||発注待ち一覧___../odrOrder/body.vm",
+    "購買業務|||注文伝票照会___../odrViewSlip/body.vm",
+    "購買業務|||検収処理",
+    "購買業務|||検収処理|||新規検収___../acpInput/body.vm",
+    "購買業務|||見積依頼",
+    "購買業務|||見積依頼|||新規見積依頼___../estCreateSlip/body.vm",
+    "購買業務|||見積依頼|||見積依頼照会___../estViewSlip/body.vm",
+    "購買業務|||価格台帳管理",
+    "購買業務|||価格台帳管理|||価格台帳照会___../mstPriceSheet/body.vm",
+    "購買業務|||価格台帳管理|||価格シートの登録___../mstPriceSheet/newBody.vm",
+    "受入業務",
+    "受入業務|||受入処理",
+    "受入業務|||受入処理|||受入入力___../arrInput/body2.vm",
+    "受入業務|||受入処理|||受入バーコード入力(工事中)___../arrInput/body.vm",
+    "受入業務|||納期問合せ___../purDeliveryDate/body.vm",
+    "予算管理",
+    "予算管理|||新規稟議入力___../bgtCreateBudget/body.vm",
+    "予算管理|||稟議一覧___../bgtViewBudget/body.vm",
+    "承認業務",
+    "承認業務|||見積依頼承認___../aprQuot/body.vm___COUNTER_APV_EST",
+    "承認業務|||購入依頼承認___../aprRequest/body.vm",
+    "承認業務|||価格シート登録依頼承認___../aprPriceSheet/body.vm",
+    "マスタ保守",
+    "マスタ保守|||管理系マスタ",
+    "マスタ保守|||管理系マスタ|||事業所マスタ___../mstDept/body.vm",
+    "マスタ保守|||管理系マスタ|||事業所マスタ|||新規登録",
+    "マスタ保守|||管理系マスタ|||取引先マスタ___../mstSupplier/body.vm",
+    "マスタ保守|||管理系マスタ|||取引先マスタ|||新規登録",
+    "マスタ保守|||管理系マスタ|||部署マスタ___../mstSection/body.vm",
+    "マスタ保守|||管理系マスタ|||部署マスタ|||新規登録",
+    "マスタ保守|||管理系マスタ|||ロールマスタ___../mstRole/body.vm",
+    "マスタ保守|||管理系マスタ|||ロールマスタ|||新規登録",
+    "マスタ保守|||管理系マスタ|||ユーザーマスタ___../mstUser/body.vm",
+    "マスタ保守|||管理系マスタ|||ユーザーマスタ|||新規登録",
+    "マスタ保守|||管理系マスタ|||承認ルートマスタ___../mstApprove/body.vm",
+    "マスタ保守|||管理系マスタ|||承認ルートマスタ|||新規登録",
+    "マスタ保守|||業務系マスタ",
+    "マスタ保守|||業務系マスタ|||カレンダーマスタ___../mstCalendar/body.vm",
+    "マスタ保守|||業務系マスタ|||納入先マスタ___../mstDlvPlace/body.vm",
+    "マスタ保守|||業務系マスタ|||納入先マスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||メーカーマスタ___../mstMaker/body.vm",
+    "マスタ保守|||業務系マスタ|||メーカーマスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||品名マスタ___../mstProduct/body.vm",
+    "マスタ保守|||業務系マスタ|||品名マスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||品名分類マスタ___../mstClassOfProduct/body.vm",
+    "マスタ保守|||業務系マスタ|||品名分類マスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||通貨マスタ___../mstCurrency/body.vm",
+    "マスタ保守|||業務系マスタ|||通貨マスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||単位マスタ___../mstUnitName/body.vm",
+    "マスタ保守|||業務系マスタ|||単位マスタ|||新規登録",
+    "マスタ保守|||業務系マスタ|||勘定科目マスタ___../mstSubject/body.vm",
+    "マスタ保守|||業務系マスタ|||勘定科目マスタ|||新規登録",
+    "マスタ保守|||運用系マスタ",
+    "マスタ保守|||運用系マスタ|||お知らせ情報___../mstNews/body.vm",
+    "マスタ保守|||運用系マスタ|||ライブラリ___../mstLibrary/body.vm",
+    "マスタ保守|||運用系マスタ|||項目名称マスタ___../mstItemName/body.vm"
+);
+
+
+icon = new Array("cmdBack","cmdUser","cmdPassword","cmdLogout");
+
+var LoginUserId = "010101";
+var LoginUserName = "取引先利用者";
+var LoginUserTel1 = "03-3266-8123";
+var LoginUserTel2 = "3496";
+var OrderCompanyName = "全社";
+
+var VIEWSLIPMODE; // 購入依頼伝票検索モード 1=保留・差戻し伝票を検索　2=特定の伝票№を検索
+var wSlipNo;
+//var MENUID = 0; // 現在選択中のタグ番号
+
+/*
+var estData0 = [
+            ["","","","","","","","",""],
+            ["","","","","","","","",""],
+            ["","","","","","","","",""],
+            ["","","","","","","","",""],
+            ["","","","","","","","",""]
+        ]
+var estData1 = [
+            ["アラバマ工業(株)","JPY","円","800,000","08/03/25","078521 (株)月立製作所","0","0","00005"],
+            ["サウス・ダコタ化成(株)","JPY","円","760,000","08/03/26","020105 ユウヒカセイ","0","0","00020"],
+            ["","","","","","","","",""],
+            ["","","","","","","","",""],
+            ["","","","","","","","",""]
+        ]
+var wItemName;
+*/
+
+var CSS_DEFAULT; // デフォルトスタイシートの番号
+var CSS_LAYOUT; // レイアウトスタイシートの番号
+
+function onLoad() {
+//openInfoBox(getObj("ROLENAME"),"dddd");
+    for(var i=0; i<document.styleSheets.length; i++) {
+        if( document.styleSheets[i].href == "../include/default.css" ) {
+            CSS_DEFAULT = i;
+        } else if( document.styleSheets[i].href == "../include/Layout.css" ) {
+            CSS_LAYOUT = i;
+        }
+    }
+
+    top.SLIPNO = "";
+
+//  changeFontSize0();
+    getObj('BODYAREA').contentWindow.changeFontSize();
+
+    // ユーザーコンフィグボックス
+//  submitSFWWithEventId("UserConfigBox","_UserConfigBox");
+
+}
+
+function changeFontSize( size ) {
+    setCookie("FONTSIZE",size);
+
+    changeFontSize0(size);
+
+    getObj('BODYAREA').contentWindow.changeFontSize(size);
+//  getObj('USERCONFIGBOX').contentWindow.changeFontSize0(size);
+
+}
+
+
+function changeRole() {
+    //setText("ROLENAME",top.ROLES[document.Body.Roles.selectedIndex][1]);
+    // ＨＯＭＥのときは、再表示。
+    parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDataArea();
+
+/*
+    try {
+        if( !parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.getObj("Menu0") ) {
+            return;
+        }
+        switch( document.Body.Roles.selectedIndex ) {
+        case 0:
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu0",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu1",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu2",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu3",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu4",true);
+            break;
+        case 1:
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu0",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu1",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu2",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu3",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu4",false);
+            break;
+        case 2:
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu0",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu1",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu2",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu3",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu4",false);
+            break;
+        case 3:
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu0",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu1",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu2",false);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu3",true);
+            parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.setDisplay("Menu4",false);
+            break;
+        }
+        parent.getObj('BODYAREA').contentWindow.getObj('DATAAREA').contentWindow.reDraw(top.ROLES[document.Body.Roles.selectedIndex][2]);
+    } catch(e) {
+    }
+*/
+
+}
+
+function setQuickLink(isQuickLink){
+    document.getElementById("quickLink").value = isQuickLink;
+}
+
+function setQuickLinkReq(isQuickLink){
+    document.getElementById("quickLink").value = isQuickLink;
+}
+function setQuickLinkAdo(isQuickLink){
+    document.getElementById("quickLink").value = isQuickLink;
+}
+
+function setQuickLinkAcceptance(isQuickLink){
+    document.getElementById("quickLink").value = isQuickLink;
+}
+
+/*  メニュー関連  */
+var serMenu = true;
+// ページ切替え
+function changePage( url,param ) {
+//  closeMenu();
+    serMenu = true;
+    getObj("BODYAREA").src = url;
+    if( isEmpty(param) ) {
+    }
+    PARAM = param;
+}
+function changePage2( bodyurl,param) {
+//  closeMenu();
+    serMenu = false;
+    getObj("BODYAREA").src = bodyurl;
+    if( isEmpty(param) ) {
+    }
+    PARAM = param;
+}
+
+
+var MENUOPEN = false,id=0,MENUCNT=0,MAXMENUNO=5,OPENLOADING=false;
+var ALARM = new Array(0,1,1,0,0,1,0,0);
+
+function openMenu(obj,level,topmenuNo,childNo) {
+    closeSearchBox();
+
+    var h,i,j,w,wStr;
+    var tr,td,span;
+
+    if( OPENLOADING ) {
+        return;
+    }
+
+    if( level==0 ) {
+        for(i=0; i<MAXMENUNO; i++) {
+            setDisplay("LEVEL"+i,false);
+        }
+        for(i=0; i<MENUCNT; i++) {
+            if( i==topmenuNo ) {
+                getObj("MENUSTR_"+i).style.backgroundColor = "plum";
+            } else {
+                getObj("MENUSTR_"+i).style.backgroundColor = "transparent";
+            }
+        }
+    } else {
+        w = obj.id.lastIndexOf("_");
+        getObj(obj.id.substring(0,w)).style.backgroundColor = "plum";
+    }
+
+    MENUOPEN = true;
+    for(i=getObj("LEVEL"+level).childNodes.length-1; i>=0; i--) {
+        getObj("LEVEL"+level).removeChild(getObj("LEVEL"+level).childNodes.item(i));
+    }
+    for(i=level+1; i<MAXMENUNO; i++) {
+        setDisplay("LEVEL"+i,false);
+    }
+    var childno=0;
+    var menustr = trim(getText2(obj));
+    if( (w=menustr.toUpperCase().indexOf("<IMG"))>=0 ) {
+        menustr = menustr.substring(0,w);
+    }
+    var wMenuLevel = new Array(MAXMENUNO);
+    var wIndent = -1;
+    for(i=0; i<MAXMENUNO; i++) {
+        wMenuLevel[i] = -1;
+    }
+
+    var wNo = -1;
+    for(i=0; i<MenuList.length; i++) {
+        if( getIndentNo(MenuList[i])<wNo ) {
+            for(j=getIndentNo(MenuList[i])+1; j<MAXMENUNO; j++) {
+                wMenuLevel[j] = -1;
+            }
+        }
+        wNo = getIndentNo(MenuList[i]);
+        wMenuLevel[getIndentNo(MenuList[i])]++;
+        if( getIndentNo(MenuList[i])==(level+1) && getMenuItem(MenuList[i],level).split("___")[0]==menustr ) {
+            var wIdElements = obj.id.replace("MENUSTR_","").split("_");
+            var wFlg = true;
+            for(j=0; j<=level; j++) {
+                //alert(j+":"+wMenuLevel[j]+":"+wIdElements[j]);
+                if( wMenuLevel[j] != eval(wIdElements[j]) ) {
+                    wFlg = false;
+                    break;
+                }
+            }
+            if( !wFlg ) {
+                continue;
+            }
+            td = document.createElement("TD");
+            td.id = obj.id + "_" + (childno++);
+            td.style.width = "auto";
+            td.style.height = "auto";
+            td.onmouseout = function() { this.style.backgroundColor = "#FFFFFF"; }
+            td.onmouseover = function() {
+                var obj = this.parentNode.parentNode;
+                for(i=0; i<obj.childNodes.length; i++) {
+                    obj.childNodes.item(i).childNodes(0).style.backgroundColor = "#FFFFFF";
+                }
+                this.style.backgroundColor = "plum";
+                openMenu(this,level+1);
+            }
+            w = getMenuItem(MenuList[i],level+1).split("___");
+            if( isIE() ) {
+                setText2(td,w[0]);
+            } else {
+                td.innerHTML = w[0];
+            }
+            /*
+            // タグ名が指定されていた場合
+            if( w.length>=3 ) {
+                span = document.createElement("SPAN");
+                span.id = w[2];
+                td.insertBefore(span,null);
+            }
+            */
+            if( i<MenuList.length-1 && getIndentNo(MenuList[i+1])==level+2 ) {
+                img = document.createElement("IMG");
+                img.src = "../image/mrkNextmenu.gif";
+                td.insertBefore(img,null);
+            }
+
+            if( w.length>1 ) {
+                td.className = "MenuList";
+                td.setAttribute("url",w[1]);
+                td.onclick = function() { changePage(this.getAttribute("url")); }
+            } else {
+                td.className = "MenuList2";
+            }
+            tr = document.createElement("TR");
+            tr.insertBefore(td,null);
+            if( level>=MAXMENUNO-1 ) {
+                alert("これ以上メニューを表示できません。");
+                return;
+            }
+            getObj("LEVEL"+level).insertBefore(tr,null);
+            setDisplay("LEVEL"+level,true);
+        }
+    }
+
+    var x = 88,y = 0;
+    if( level== 0 ) {
+        for(i=0;i<topmenuNo; i++) {
+            x += eval(getObj("MENU"+i).offsetWidth);
+        }
+        y = 61;
+    } else {
+        x = eval(getObj("MENUWINDOW"+(level-1)).offsetLeft);
+        x += eval(getObj("MENUWINDOW"+(level-1)).offsetWidth);
+        x -= 10;
+        y = eval(getObj("MENUWINDOW"+(level-1)).offsetTop);
+        w = obj.id.split("_");
+        w = eval(w[w.length-1]);
+        for(i=0; i<eval(w); i++) {
+            y += eval(obj.offsetHeight);
+        }
+        y += 6;
+    }
+    getObj("MENUWINDOW"+level).style.left = x;
+    getObj("MENUWINDOW"+level).style.top = y;
+
+    OPENLOADING = false;
+
+}
+
+function closeMenu() {
+    alert("お願い\n\nbodyタグに「 onclick=\"top.closeMenu();\"」の記述がありますが、これは削除してください。（武藤）")
+}
+
+function getIndentNo(data) {
+    return data.split("|||").length - 1;
+}
+
+function getMenuItem(data,level) {
+    if( level<0 || level>MAXMENUNO ) {
+        return "";
+    }
+    var w = data.split("|||");
+    if( w.length > level ) {
+        return w[level];
+    } else {
+        return "";
+    }
+}
+
+var backUrl="";
+function back(){
+    if(backUrl!=""){
+        iframeChange(backUrl);
+    }else{
+        history.back();
+    }
+}
+var homeUrl="";
+function home(){
+    if(homeUrl!=""){
+        iframeChange(homeUrl);
+    }else{
+        changePage('../home/data.vm');
+    }
+}
+
+//-->
+</SCRIPT>
+</HEAD>
+
+<BODY ONLOAD="onLoad();" CLASS="Body" ALIGN="center" topmargin="0" leftmargin="0" STYLE="overflow-y:hidden;">
+<FORM NAME="Body">
+#customFormHiddenInput("ORDER_COMPANY_CD" "")
+#customFormHiddenInput("quickLink" "")
+#customFormHiddenInput("infoCd" "")
+    <!-- ＊＊＊＊＊　警告ボックスの雛形　＊＊＊＊＊ -->
+    <TABLE ID="WBX" CLASS="WBX" ONCLICK="setDisplay2(this,false);" ONDBLCLICK="closeWarningBox();" ONMOUSEOUT="closeWarningBox();">
+        <TR>
+            <TD CLASS="WbxTopLeft"></TD><TD CLASS="WbxTopCenter" BACKGROUND="../image/sankaku4.gif"></TD><TD CLASS="WbxTopRight"></TD>
+        </TR>
+        <TR>
+            <TD ID="WBX_MIDDLE1" CLASS="WbxMiddleLeft"></TD><TD CLASS="WbxMiddleCenter"></TD><TD ID="WBX_MIDDLE2" CLASS="WbxMiddleRight"></TD>
+        </TR>
+        <TR>
+            <TD CLASS="WbxBottom" COLSPAN="3">
+                <TABLE CLASS="NoBorder" STYLE="width:100%;">
+                    <TR>
+                        <TD STYLE="width:20px;" align="left" valign="top"><IMG src="../image/mrkMiniWarning.gif"></TD>
+                        <TD STYLE="width:auto;" align="left" valign="top">
+                            <SPAN ID="WBX_MESSAGE" CLASS="FontMini" STYLE="color:red;">警告内容</SPAN>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </TD>
+        </TR>
+    </TABLE>
+
+    <!-- ＊＊＊＊＊　インフォメーションボックスの雛形　＊＊＊＊＊ -->
+    <TABLE ID="IBX" CLASS="IBX" ONCLICK="setDisplay2(this,false);" ONDBLCLICK="closeInfoBox();" STYLE="display:none;">
+        <TR>
+            <TD CLASS="IbxTopLeft"></TD><TD CLASS="IbxTopCenter" BACKGROUND="../image/sankaku5.gif"></TD><TD CLASS="IbxTopRight"></TD>
+        </TR>
+        <TR>
+            <TD ID="IBX_MIDDLE1" CLASS="IbxMiddleLeft"></TD><TD CLASS="IbxMiddleCenter"></TD><TD ID="IBX_MIDDLE2" CLASS="IbxMiddleRight"></TD>
+        </TR>
+        <TR>
+            <TD CLASS="IbxBottom" COLSPAN="3">
+                <TABLE CLASS="NoBorder" STYLE="width:100%;">
+                    <TR>
+                        <TD STYLE="width:20px;" align="left" valign="top"><IMG src="../image/mrkInfo.gif"></TD>
+                        <TD STYLE="width:auto;" align="left" valign="top">
+                            <U><SPAN ID="IBX_ title" CLASS="FontSmallBold DarkBlue">タイトル</SPAN></U>
+                            <SPAN ID="IBX_SEPARATOR" CLASS="FontMiniAnk"><BR></SPAN>
+                            <SPAN ID="IBX_MESSAGE" CLASS="FontMini" STYLE="color:#666666;">内容</SPAN>
+                            <SPAN ID="CHECK" CLASS="FontMini"><BR><BR><INPUT ID="IBX_SETTING" TYPE="checkbox"  ONCLICK="setCookie(this.name,'OFF');">&nbsp;次回からこのメッセージを表示しない。</SPAN>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </TD>
+        </TR>
+    </TABLE>
+
+    <!-- ＊＊＊＊＊　ユーザーコンフィグ　＊＊＊＊＊ -->
+<!--
+    <IFRAME ID="USERCONFIGBOX" NAME="_UserConfigBox" CLASS="NoBorder" framespacing="0" scrolling="no" frameborder="0" STYLE="display:none;z-index:100;position:absolute;width:500px;height:700px;allowTransparency:true;" src="../sbxUserConfig/body.vm"></IFRAME>
+-->
+<TABLE ID="MENU" CLASS="NoBorder" STYLE="width:100%;height:100%;"><TR>
+<TD NOWRAP CLASS="NoBorder" STYLE="height:50px;border-bottom:1px solid black;" BGCOLOR="#819cc9">
+
+    <TABLE CLASS="NoBorder" STYLE="width:100%;height:50px;z-index:0;"><TR>
+        <TD NOWRAP BACKGROUND="../image/header1.gif" STYLE="height:50px;background-repeat:no-repeat;">
+            <TABLE CLASS="NoBorder" STYLE="width:100%;">
+                <TR>
+                    <TD NOWRAP><img src="../image/title2.gif" ></TD>
+                    <TD NOWRAP STYLE="text-align:left;padding-top:4px;">
+                        <TABLE CLASS="NoBorder">
+                            <TR>
+                            <TD NOWRAP STYLE="vertical-align:top;"ROWSPAN="3"><IMG SRC="../image/mrkUsericon.gif"></TD>
+                            <TD NOWRAP NOWRAP CLASS="RoleName" ALIGN="left" COLSPAN="2">
+                                <SPAN CLASS="FontMiniAnk" style="color:lightcyan;">最終ログイン日時：2008/12/26 18:25:15</SPAN><BR>
+                            </TD>
+                            </TR>
+                            <TR>
+                            <TD NOWRAP NOWRAP ALIGN="left" VALIGN="middle">
+                                <SPAN CLASS="FontBig" style="color: #FFFFFF;"><B><SCRIPT>document.write(LoginUserName)</SCRIPT></B></SPAN>&nbsp;&nbsp;
+                            </TD>
+                            <TD NOWRAP CLASS="FontMini" ALIGN="left" VALIGN="middle" STYLE="display:none;">
+                                <SPAN STYLE="color:gold;"> ○×事業所　○×購買部</SPAN><BR>
+                                <SPAN ID="ROLENAME" STYLE="color:palegreen;">購入依頼者権限/伝票受付権限</SPAN>
+                            </TD>
+
+                            <TR>
+                            <TD NOWRAP STYLE="vertical-align:top;color:lightcyan;" COLSPAN="2">
+                                <SPAN CLASS="FontMiniAnk">発注企業：</SPAN>
+                                <SPAN id="ORDER_COMPANY_NAME" CLASS="FontMiniAnk"></SPAN>
+                            </TD>
+                            </TR>
+
+                            <TD NOWRAP STYLE="text-align:right;display:none;">
+                                <SELECT NAME="Roles" CLASS="Small" ONCHANGE="changeRole()">
+                                    <OPTION VALUE="0">　　　　　　　　　　</OPTION>
+                                </SELECT>
+                            </TD>
+
+                            </TR>
+                        </TABLE>
+                    </TD>
+                    <TD NOWRAP STYLE="text-align:right;white-space:nowrap;">
+                        <TABLE CLASS="NoBorder" STYLE="width:100%;">
+                            <TR>
+                                <TD NOWRAP CLASS="NoBorder"><A HREF="#"><IMG SRC="../image/cmdHome.gif" ONMOUSEOVER="this.src='../image/cmdHome_.gif'" ONMOUSEOUT="this.src='../image/cmdHome.gif'" BORDER="0" onclick="home()"></A></TD>
+                                <TD NOWRAP CLASS="NoBorder"><A HREF="#"><IMG SRC="../image/cmdBack.gif" ONMOUSEOVER="this.src='../image/cmdBack_.gif'" ONMOUSEOUT="this.src='../image/cmdBack.gif'" BORDER="0" onclick="back()"></A></TD>
+                                <!-- TD NOWRAP CLASS="NoBorder" ID="CMDUSEROFF"><A HREF="#"><IMG SRC="../image/cmdUser.gif" ONCLICK="initSearchBox(12,this);" ONMOUSEOVER="this.src='../image/cmdUser_.gif'" ONMOUSEOUT="this.src='../image/cmdUser.gif'" BORDER="0"></A></TD -->
+                                <td nowrap class="NoBorder" id="CMDUSEROFF"><a href="javascript:top.iframeChange('../lgn/password/SPLGN020','pageid','SPLGN020');"><img class="Icon" src="../image/cmdUser.gif" onmouseover="this.src='../image/cmdUser_.gif'" onmouseout="this.src='../image/cmdUser.gif'"></a></td>
+                                <TD NOWRAP CLASS="NoBorder"><A HREF="../j_spring_security_logout"><IMG SRC="../image/cmdLogout.gif" ONMOUSEOVER="this.src='../image/cmdLogout_.gif'" ONMOUSEOUT="this.src='../image/cmdLogout.gif'" BORDER="0"></A></TD>
+                            </TR>
+                        </TABLE>
+                    </TD>
+                </TR>
+            </TABLE>
+        </TD>
+        <TD NOWRAP STYLE="width:10px;height:40px;background-repeat:no-repeat;" BACKGROUND="../image/header3.gif">&nbsp;</TD>
+
+    </TR></TABLE>
+
+<TR><TD NOWRAP CLASS="NoBorder" HEIGHT="*" STYLE="height:*;">
+
+
+<IFRAME STYLE="width:100%;height:100%" ID="BODYAREA" NAME="BODYAREA" SRC="../home/body.vm" SCROLLING="auto" BORDER="0" NORESIZE framespacing="0" frameborder="0" MARGINWIDTH="0" MARGINHEIGHT="0">
+</IFRAME>
+
+</TD></TR>
+</TABLE>
+
+
+
+
+
+</FORM>
+</BODY>
+
+
+</HTML>

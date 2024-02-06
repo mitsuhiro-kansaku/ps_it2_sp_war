@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="defaultSearchCondition" class="fw.domain.sp.dlv.dlvresp.DelivRespSearchCondition" />
+
+    <input name="isQuickLink" />
+
+    <on-start>
+        <evaluate expression="SPANS040Service.init()" result="flowScope.searchCondition" />
+        <set name="flowScope.isCurrentPageSearch" value="false" />
+    </on-start>
+
+    <view-state id="SPANS040" view="ans/delivery/SPANS040" model="searchCondition">
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true" />
+            <set name="flowScope.isQuickLink" value="'false'" />
+            <evaluate expression="SPANS040Service.search(searchCondition)" />
+        </transition>
+        <transition on="search" to="SPANS041" validate="false" />
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+
+    <subflow-state id="SPANS041" subflow="ans/delivery/SPANS041">
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <input name="isQuickLink" value="isQuickLink" />
+        <transition on="back" to="SPANS040">
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+
+</flow>

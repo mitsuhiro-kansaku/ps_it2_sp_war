@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="identify" class="fw.domain.sp.dlv.dlvresp.DelivRespListItemIdentify" />
+    <var name="delivRespListItem" class="fw.domain.sp.dlv.dlvresp.DelivRespListItem" />
+
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+    <input name="isQuickLink" />
+
+    <decision-state id="isSearchByKey">
+        <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+
+    <action-state id="searchByCondition">
+        <evaluate expression="SPANS041Service.init(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPANS041" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPANS041Service.page(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPANS041" />
+    </action-state>
+
+    <view-state id="SPANS041" view="ans/delivery/SPANS041" model="itemList">
+        <transition on="order" validate="false">
+            <evaluate expression="SPANS041Service.order(searchCondition)" result="flowScope.itemList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPANS041Service.page(searchCondition)" result="flowScope.itemList" />
+        </transition>
+        <transition on="answerProcessing" to="searchByKey" validate="false">
+            <evaluate expression="SPANS041Service.answerProcessing(itemList)"/>
+            <set name="flashScope.isSuccess" value="true" />
+        </transition>
+        <transition on="answerDetailValidate" validate="false">
+            <set name="identify.delivMngIdentify" value="itemList.delivRespListItemList.get(requestParameters.index).getPreDelivMngIdentify()" />
+            <set name="flashScope.isShowAnswerDetail" value="true" />
+        </transition>
+        <transition on="answerDetail" to="SPANS042" validate="false" />
+        <transition on="detailValidate" validate="false">
+            <set name="identify" value="itemList.delivRespListItemList.get(requestParameters.index).getDelivRespListItemIdentify()" />
+            <set name="flashScope.isShowDetail" value="true" />
+        </transition>
+        <transition on="detail" to="SPNEW042" validate="false" />
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+
+    <subflow-state id="SPANS042" subflow="ans/delivery/SPANS042">
+        <input name="delivMngIdentify" value="identify.delivMngIdentify" />
+    </subflow-state>
+
+    <subflow-state id="SPNEW042" subflow="newconfirm/delivery/SPNEW042">
+        <input name="orderSeq" value="identify.orderIdentify.orderSeq" />
+        <input name="delivMngIdentify" value="identify.delivMngIdentify" />
+    </subflow-state>
+
+</flow>

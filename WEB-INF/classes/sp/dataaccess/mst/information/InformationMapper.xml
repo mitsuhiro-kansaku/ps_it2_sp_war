@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.mst.information.InformationMapper">
+
+    <select id="search"
+            parameterType="String"
+            resultType="fw.domain.sp.information.InformationDetail">
+        SELECT T_NEWS.TITLE as "title",
+               T_NEWS.SEND_USER_NAME as "custUser",
+               T_NEWS.VALID_START_DATE as "validStartDate.dateOfymd",
+               T_NEWS.VALID_END_DATE as "validEndDate.dateOfymd",
+               T_NEWS.CONTENTS as "content.comment"
+          FROM T_NEWS
+         WHERE T_NEWS.NEWS_SEQ = #{newsSeq} 
+    </select>
+
+</mapper>

@@ -1,0 +1,72 @@
+<html lang="ja">
+<head>
+<link id="CSS_DEFAULT" rel="stylesheet" href="../../include/defaultS.css" type="text/css">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+
+<style>
+.item{
+    position:absolute;
+    z-index:1;
+    left:0px;
+    top:-2px;
+}
+.select{
+    width:100px;
+    font-size:12px;
+}
+.main{
+    padding:0;
+    margin:0;
+    background-color:#eaeaea;
+}
+</style>
+<script type="text/javascript">
+function pageLoad(){
+    enableButton();
+    addTitle();
+}
+
+function addTitle(){
+    var selects = document.getElementsByTagName("select");
+    for(var k = 0 ; k < selects.length ; k++){
+        var items = selects[k].options;
+        for(var i=0; i<items.length ; i++){
+            items[i].title = items[i].text;
+        }
+    }
+}
+</script>
+</head>
+
+<body class="main" onload="pageLoad()">
+<div class="item">
+    <table>
+    <tr>
+        <td class="FontSmallBold" align="left" nowrap>
+            <table class="NoBorder">
+                <tr>
+                    <td><button class="ClassButton" title=#springMessage('ITEM_CLASS_LARGE') style="background-image:url('../../image/btn7.gif');">大</button></td><!--大分類 -->
+                    <td nowrap class="FontSmallBold" align="left" colspan ="5">
+                        #customFormSingleSelect("searchCondition.itemClassL" $itemClassL "onchange='parent.doChangeItemClass(2,this.value)' class='select'")
+                    </td>
+                    </td>
+                    <td><button class="ClassButton" title=#springMessage('ITEM_CLASS_MEDIUM') style="background-image:url('../../image/btn7.gif');">中</button></td><!--中分類 -->
+                    <td nowrap class="FontSmallBold" align="left" colspan ="5">
+                        #customFormSingleSelect("searchCondition.itemClassM" $itemClassM "onchange='parent.doChangeItemClass(3,this.value)' class='select'")
+                    </td>
+                    <td><button class="ClassButton" title=#springMessage('ITEM_CLASS_SMALL') style="background-image:url('../../image/btn7.gif');">小</button></td><!--小分類 -->
+                    <td nowrap class="FontSmallBold" align="left" colspan ="5">
+                        #customFormSingleSelect("searchCondition.itemClassS" $itemClassS "onchange='parent.doChangeItemClass(4,this.value)' class='select'")
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+     <!-- 見積回答（入力）　価格登録品の場合-->
+    <input name="quotReqIdentify" />
+    
+    <on-start>
+        <evaluate expression="SPRES030InputService.init(quotReqIdentify)"
+            result="flowScope.quotRespPrice" />
+    </on-start>
+
+    <view-state id="SPRES030Input" model="quotRespPrice" view="res/quotresp/SPRES030Input">
+        <!-- 回答 -->
+        <transition on="answer" validate="true">
+            <evaluate expression="SPRES030InputService.answer(quotRespPrice)" />
+            <set name="flashScope.isAnswer" value="true"/>
+        </transition>
+        <!-- 辞退 -->
+        <transition on="dismiss" validate="true">
+            <evaluate expression="SPRES030InputService.dismiss(quotRespPrice)" />
+            <set name="flashScope.isDismiss" value="true"/>
+        </transition>
+        <transition on="download" validate="true">
+            <evaluate expression="SPRES030InputService.download(quotRespPrice, requestParameters.index)" />
+        </transition>
+    </view-state>
+</flow>

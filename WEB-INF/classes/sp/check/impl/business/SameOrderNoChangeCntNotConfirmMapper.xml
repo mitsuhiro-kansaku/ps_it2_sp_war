@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.SameOrderNoChangeCntNotConfirmMapper">
+
+    <select id="getNumberForUnacknowledged" resultType="int">
+        SELECT COUNT(ORDER_NO) FROM S_NEW_DLV_EST
+        WHERE ORDER_NO = (
+        SELECT ORDER_NO
+        FROM S_NEW_DLV_EST
+        WHERE S_NEW_DLV_EST.DLV_EST_SEQ = #{delivMngSeq}
+        )
+        AND S_NEW_DLV_EST.ACC_CD = #{utlUserCd}
+        AND S_NEW_DLV_EST.CUST_CD = #{buyerCompanyCd}
+        AND S_NEW_DLV_EST.DELIV_VERSION &lt; #{delivDateKeyNoVsn}
+        AND DPO_FLG = '0'
+    </select>
+</mapper>

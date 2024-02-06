@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.UnconfirmDelivMapper">
+
+    <select id="listDelivCheckItem" resultType="int">
+        SELECT 
+               COUNT(1)
+          FROM S_NEW_DLV_EST
+         WHERE
+               S_NEW_DLV_EST.ACC_CD = #{orderUserCd}
+           AND S_NEW_DLV_EST.CUST_CD = #{buyerUserCd}
+           <!-- 2013/06/04 DEL DAIKO_M.TAKEDA
+           AND S_NEW_DLV_EST.DLV_EST_SEQ = #{dlvEstSeq}
+            AND S_NEW_DLV_EST.DPO_FLG = '0'
+            -->
+           <!-- 2013/06/04 ADD DAIKO_M.TAKEDA START -->
+           AND S_NEW_DLV_EST.ORDER_NO = #{orderNo}
+           AND S_NEW_DLV_EST.DPO_FLG = '0'
+           AND S_NEW_DLV_EST.DELETE_FLG = '0'
+           AND S_NEW_DLV_EST.AUTO_DELETE_FLG = '0'
+           <!-- 2013/06/04 ADD DAIKO_M.TAKEDA -END- -->
+    </select>    
+</mapper>

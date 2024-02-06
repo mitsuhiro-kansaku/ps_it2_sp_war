@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+  
+    <input name="identify" />
+    
+    <on-start>
+        <evaluate expression="SPNEW022Service.detailPrice(identify)"
+            result="flowScope.detailItem" />
+    </on-start>
+    
+    <!-- ＩＴ２-01427-000 2013/06/20 DEL SBO_CHENCHENG START -->
+    <!-- <view-state id="SPNEW022" model="detailItem" view="newconfirm/quotado/SPNEW022">-->
+    <!-- ＩＴ２-01427-000 2013/06/20 DEL SBO_CHENCHENG -END- -->
+    <!-- ＩＴ２-01427-000 2013/06/20 ADD SBO_CHENCHENG START -->
+    <view-state id="SPNEW022" model="detailItem" view="newconfirm/quotreq/SPNEW012">
+    <!-- ＩＴ２-01427-000 2013/06/20 ADD SBO_CHENCHENG -END- -->
+    <transition on="download" validate="false">
+            <evaluate expression="SPAttachFileService.downloadFromQuotReqDetail(requestParameters.attachFileSeq1)"/>
+        </transition>
+    <transition on="fileDownload" validate="false">
+            <evaluate expression="SPAttachFileService.downloadFromQuotRespDetail(requestParameters.attachFileSeq1)"/>
+        </transition>
+    </view-state>
+</flow>

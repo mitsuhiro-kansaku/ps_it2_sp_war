@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.mst.user.UserMapper">
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+        AND M_S_USER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(userId)">
+            AND M_S_USER.S_USER_ID ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.usermaster.UserMasterSearchCondition","userId")}
+        </if> 
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(userName)">
+            AND M_S_USER_LANG.S_USER_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.usermaster.UserMasterSearchCondition","userName")}
+        </if> 
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(validStartDateFrom.dateOfymd)">
+            AND M_S_USER.VALID_START_DATE >= #{validStartDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(validStartDateTo.dateOfymd)">
+            AND M_S_USER.VALID_START_DATE &lt;= #{validStartDateTo.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(validEndtDateFrom.dateOfymd)">
+            AND M_S_USER.VALID_END_DATE >= #{validEndtDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(validEndtDateTo.dateOfymd)">
+            AND M_S_USER.VALID_END_DATE &lt;= #{validEndtDateTo.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(searchCondition.termFlg)">
+            <choose>
+                <when test="searchCondition.termFlg==9">
+                    AND M_S_USER.TERM_FLG IN (0,1)
+                </when>
+                <otherwise>
+                    AND M_S_USER.TERM_FLG IN (#{searchCondition.termFlg, jdbcType=VARCHAR})
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.usermaster.UserMasterSearchCondition" 
+            resultType="fw.domain.sp.usermaster.UserMasterIdentify">
+        SELECT 
+            M_S_USER.S_USER_ID as "supplierUserId"
+        FROM
+            M_S_USER
+        LEFT JOIN M_S_USER_LANG
+        ON 
+            M_S_USER_LANG.S_USER_ID = M_S_USER.S_USER_ID
+        AND M_S_USER_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    
+    <resultMap type="fw.domain.sp.usermaster.UserMasterItem" id="UserMasterItem_Map">
+        <id column="S_USER_ID" property="userMasterIdentify.supplierUserId"/>
+        <id column="LAST_UPD_DATE" property="userMasterIdentify.lastUpdDate"/>
+    </resultMap> 
+    
+    <select id="listPageItem" resultMap="UserMasterItem_Map">
+            SELECT 
+              M_S_USER.S_USER_ID,
+              M_S_USER_LANG.S_USER_NAME as "userName",
+              M_S_USER.SUP_USER_MNG_FLG as "userMngFlg",
+              M_S_USER.VALID_START_DATE as "validStartDate.dateOfymd",
+              M_S_USER.VALID_END_DATE as "validEndtDate.dateOfymd",
+              M_S_USER.TERM_FLG as "termination", 
+              M_S_USER.LAST_UPD_DATE
+        FROM
+            M_S_USER
+        LEFT JOIN M_S_USER_LANG
+        ON 
+            M_S_USER_LANG.S_USER_ID = M_S_USER.S_USER_ID
+        AND M_S_USER_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+        <where>
+            (M_S_USER.S_USER_ID) IN
+                 <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList" open="(" separator="," close=")">
+                     (#{keyList.supplierUserId})
+                 </foreach>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <insert id="insertUser" parameterType="fw.domain.sp.usermaster.UserMasterManagement">
+        INSERT INTO M_S_USER 
+        (
+            S_USER_ID,
+            VENDOR_CD,
+            VALID_START_DATE,
+            VALID_END_DATE,
+            USE_LANGUAGE_IND,
+            PASSWORD,
+<!-- TODO 14/11/10 add パスワード暗号化 daiko t.watanabe start -->
+            PW_SALT,
+            PW_CHANGED_TIME,
+            PW_LOCKED_TIME,
+            PW_FAILED_COUNT,
+<!-- TODO 14/11/10 add パスワード暗号化 daiko t.watanabe start -->
+            MAIL_ADDR,
+            UTL_NEW_MAIL_FLG,
+            UTL_NEW_INFO_FLG,
+            UTL_NEW_DOWNLOAD_FLG,
+            UTL_ORDER_MNG_FLG,
+            UTL_ORDER_DOWNLOAD_FLG,
+            UTL_DELIV_MNG_FLG,
+            UTL_SHIP_MNG_FLG,
+            UTL_MONEY_DSP_FLG,
+            UTL_NEW_ALL_CHK_FLG,
+            SUP_USER_MNG_FLG,
+            TERM_FLG,
+            LAST_UPD_DATE,
+            LAST_UPD_COMPANY_CD,
+            LAST_UPD_SECTION_CD,
+            LAST_UPD_USER_ID,
+            REG_DATE,
+            REG_COMPANY_CD,
+            REG_SECTION_CD,
+            REG_USER_ID
+        )VALUES(
+            #{userMasterIdentify.supplierUserId, jdbcType=VARCHAR},
+            '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}',
+            #{useFlg.validityPeriod.period.startDate.dateOfymd, jdbcType=VARCHAR},
+            #{useFlg.validityPeriod.period.endDate.dateOfymd, jdbcType=VARCHAR},
+            #{useLanguage.languageind.languageInd, jdbcType=VARCHAR},
+            #{password, jdbcType=VARCHAR},
+<!-- TODO 14/11/10 add パスワード暗号化 daiko t.watanabe start -->
+            #{passwordSalt},
+            #{passwordValidStartTime.dateOfymd},
+            NULL,
+            0,
+<!-- TODO 14/11/10 add パスワード暗号化 daiko t.watanabe end -->
+            #{mailAddr.mail, jdbcType=VARCHAR},
+            #{functionUse.utlNewMail, jdbcType=VARCHAR},
+            #{functionUse.utlNewInfo, jdbcType=VARCHAR},
+            #{functionUse.utlNewDownload, jdbcType=VARCHAR},
+            #{functionUse.utlOrderMng, jdbcType=VARCHAR},
+            #{functionUse.utlOrderDownload, jdbcType=VARCHAR},
+            #{functionUse.utlDelivMng, jdbcType=VARCHAR},
+            #{functionUse.utlShipMng, jdbcType=VARCHAR},
+            #{functionUse.utlMoneyDsp, jdbcType=VARCHAR},
+            #{functionUse.utlNewAllChk, jdbcType=VARCHAR},
+            #{userMngFlg.userMngFlg, jdbcType=VARCHAR},
+            '0',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            'EDI',
+            ' ',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            'EDI',
+            ' ',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+               )
+    </insert>
+    
+    <insert id="insertUserLanguage" parameterType="fw.domain.sp.usermaster.Language">
+        INSERT INTO M_S_USER_LANG 
+        (
+            S_USER_ID,
+            LANGUAGE_IND,
+            S_USER_NAME,
+            SUP_USER_REMARK,
+            LAST_UPD_DATE,
+            LAST_UPD_COMPANY_CD,
+            LAST_UPD_SECTION_CD,
+            LAST_UPD_USER_ID,
+            REG_DATE,
+            REG_COMPANY_CD,
+            REG_SECTION_CD,
+            REG_USER_ID
+        )VALUES(
+            #{userMasterIdentify.supplierUserId, jdbcType=VARCHAR},
+            #{languageind.languageInd, jdbcType=VARCHAR},
+            #{userName, jdbcType=VARCHAR},
+            #{userJnl, jdbcType=VARCHAR},
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            'EDI',
+            ' ',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            'EDI',
+            ' ',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+               )
+    </insert>
+    
+    <update id="update" parameterType="fw.domain.sp.usermaster.UserMasterManagement">
+        UPDATE M_S_USER
+        SET
+            VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}',
+            VALID_START_DATE = #{useFlg.validityPeriod.period.startDate.dateOfymd},
+            VALID_END_DATE = #{useFlg.validityPeriod.period.endDate.dateOfymd},
+            USE_LANGUAGE_IND = #{useLanguage.languageind.languageInd},
+<!-- TODO 14/11/10 mod パスワード暗号化 daiko t.watanabe start -->
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(password)">
+            PASSWORD = #{password},
+            PW_SALT = #{passwordSalt},
+            PW_CHANGED_TIME = #{passwordValidStartTime.dateOfymd},
+            PW_LOCKED_TIME = NULL,
+            PW_FAILED_COUNT = 0,
+        </if>
+<!-- TODO 14/11/10 mod パスワード暗号化 daiko t.watanabe end -->
+            MAIL_ADDR = #{mailAddr.mail},
+            UTL_NEW_MAIL_FLG = #{functionUse.utlNewMail},
+            UTL_NEW_INFO_FLG = #{functionUse.utlNewInfo},
+            UTL_NEW_DOWNLOAD_FLG = #{functionUse.utlNewDownload},
+            UTL_ORDER_MNG_FLG = #{functionUse.utlOrderMng},
+            UTL_ORDER_DOWNLOAD_FLG = #{functionUse.utlOrderDownload},
+            UTL_DELIV_MNG_FLG = #{functionUse.utlDelivMng},
+            UTL_SHIP_MNG_FLG = #{functionUse.utlShipMng},
+            UTL_MONEY_DSP_FLG = #{functionUse.utlMoneyDsp},
+            UTL_NEW_ALL_CHK_FLG = #{functionUse.utlNewAllChk},
+            SUP_USER_MNG_FLG = #{userMngFlg.userMngFlg},
+            TERM_FLG = #{useFlg.term.termFlg, jdbcType=VARCHAR},
+            LAST_UPD_DATE = '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            LAST_UPD_COMPANY_CD = 'EDI',
+            LAST_UPD_SECTION_CD = ' ',
+            LAST_UPD_USER_ID = '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            REG_DATE = '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            REG_COMPANY_CD = 'EDI',
+            REG_SECTION_CD = ' ',
+            REG_USER_ID = '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        WHERE 
+            S_USER_ID = #{userMasterIdentify.supplierUserId}
+    </update>
+
+    <delete id="deleteUser" parameterType="fw.domain.sp.usermaster.UserMasterIdentify">
+        DELETE FROM M_S_USER
+        WHERE 
+            S_USER_ID = #{supplierUserId}
+    </delete>
+    
+    <delete id="deleteUserLanguage" parameterType="String">
+        DELETE FROM M_S_USER_LANG
+        WHERE 
+            S_USER_ID = #{supplierUserId}
+    </delete>
+
+    <resultMap type="fw.domain.sp.usermaster.UserMasterManagement" id="UserMasterManagement_Map">
+        <id column="S_USER_ID" property="userMasterIdentify.supplierUserId"/>
+        <id column="S_USER_NAME" property="userName"/>
+        <id column="PASSWORD" property="password"/>
+<!-- TODO 14/11/05 add パスワード暗号化 daiko t.watanabe start -->
+        <id column="PW_SALT" property="passwordSalt"/>
+        <id column="PW_CHANGED_TIME" property="passwordValidStartTime.dateOfymd"/>
+        <id column="PW_LOCKED_TIME" property="passwordLockStartTime.dateOfymd"/>
+        <id column="PW_FAILED_COUNT" property="passwordFailedCount"/>
+<!-- TODO 14/11/05 add パスワード暗号化 daiko t.watanabe end -->
+        <id column="SUP_USER_REMARK" property="userJnl"/>
+        <id column="TERM_FLG" property="useFlg.term.termFlg"/>
+        <id column="USE_LANGUAGE_IND" property="useLanguage.languageind.languageInd"/>
+        <id column="MAIL_ADDR" property="mailAddr.mail"/>
+        <id column="SUP_USER_MNG_FLG" property="userMngFlg.userMngFlg"/>
+        <id column="VALID_START_DATE" property="useFlg.validityPeriod.period.startDate.dateOfymd"/>
+        <id column="VALID_END_DATE" property="useFlg.validityPeriod.period.endDate.dateOfymd"/>
+        <id column="UTL_NEW_MAIL_FLG" property="functionUse.utlNewMail"/>
+        <id column="UTL_NEW_INFO_FLG" property="functionUse.utlNewInfo"/>
+        <id column="UTL_NEW_DOWNLOAD_FLG" property="functionUse.utlNewDownload"/>
+        <id column="UTL_NEW_ALL_CHK_FLG" property="functionUse.utlNewAllChk"/>
+        <id column="UTL_ORDER_MNG_FLG" property="functionUse.utlOrderMng"/>
+        <id column="UTL_ORDER_DOWNLOAD_FLG" property="functionUse.utlOrderDownload"/>
+        <id column="UTL_DELIV_MNG_FLG" property="functionUse.utlDelivMng"/>
+        <id column="UTL_SHIP_MNG_FLG" property="functionUse.utlShipMng"/>
+        <id column="UTL_MONEY_DSP_FLG" property="functionUse.utlMoneyDsp"/>
+        <id column="LAST_UPD_DATE" property="userMasterIdentify.lastUpdDate"/>
+    </resultMap>
+
+    <select id="searchUser" resultMap="UserMasterManagement_Map">
+        SELECT 
+            M_S_USER.S_USER_ID,
+            M_S_USER_LANG.S_USER_NAME,
+            M_S_USER.PASSWORD,
+<!-- TODO 14/11/07 add パスワード暗号化 daiko t.watanabe start -->
+            M_S_USER.PW_SALT,
+            M_S_USER.PW_CHANGED_TIME,
+            M_S_USER.PW_LOCKED_TIME,
+            M_S_USER.PW_FAILED_COUNT,
+<!-- TODO 14/11/07 add パスワード暗号化 daiko t.watanabe end -->
+            M_S_USER_LANG.SUP_USER_REMARK,
+            M_S_USER.TERM_FLG,
+            M_S_USER.USE_LANGUAGE_IND,
+            M_S_USER.MAIL_ADDR,
+            M_S_USER.SUP_USER_MNG_FLG,
+            M_S_USER.VALID_START_DATE as "oldStartDate.dateOfymd",
+            M_S_USER.VALID_START_DATE,
+            M_S_USER.VALID_END_DATE,
+            M_S_USER.UTL_NEW_MAIL_FLG,
+            M_S_USER.UTL_NEW_INFO_FLG,
+            M_S_USER.UTL_NEW_DOWNLOAD_FLG,
+            M_S_USER.UTL_NEW_ALL_CHK_FLG,
+            M_S_USER.UTL_ORDER_MNG_FLG,
+            M_S_USER.UTL_ORDER_DOWNLOAD_FLG,
+            M_S_USER.UTL_DELIV_MNG_FLG,
+            M_S_USER.UTL_SHIP_MNG_FLG,
+            M_S_USER.UTL_MONEY_DSP_FLG,
+            M_S_USER.LAST_UPD_DATE
+        FROM
+            M_S_USER
+        LEFT JOIN M_S_USER_LANG
+        ON 
+            M_S_USER_LANG.S_USER_ID = M_S_USER.S_USER_ID
+        AND M_S_USER_LANG.LANGUAGE_IND = #{languageInd}
+        WHERE
+            M_S_USER.S_USER_ID = #{supplierUserId}
+    </select>
+
+    <resultMap type="fw.domain.sp.usermaster.Language" id="Language_Map">
+        <id column="S_USER_ID" property="userMasterIdentify.supplierUserId"/>
+        <id column="SUP_USER_REMARK" property="userJnl"/>
+        <id column="LANGUAGE_IND" property="languageind.languageInd"/>
+        <id column="S_USER_NAME" property="userName"/>
+        <id column="LAST_UPD_DATE" property="userMasterIdentify.lastUpdDate"/>
+    </resultMap>
+
+    <select id="searchUserLanguage" resultMap="Language_Map">
+        SELECT 
+            M_S_USER_LANG.S_USER_ID,
+            M_S_USER_LANG.SUP_USER_REMARK,
+            M_S_USER_LANG.LANGUAGE_IND,
+            M_S_USER_LANG.S_USER_NAME,
+            M_S_USER_LANG.LAST_UPD_DATE
+        FROM
+            M_S_USER_LANG
+        WHERE
+            M_S_USER_LANG.S_USER_ID = #{userMasterIdentify.supplierUserId}
+            AND M_S_USER_LANG.LANGUAGE_IND != #{languageInd}
+    </select>
+</mapper>

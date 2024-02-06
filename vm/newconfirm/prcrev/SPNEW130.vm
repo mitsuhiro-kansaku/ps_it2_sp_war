@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<title>#customSpringMessage('PRICE_REQ_INFORMATION')</title><!-- 価格改定依頼情報 -->
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+var pinName="newconfirmPrcRev_Pin";
+#parse("./common/common_js.vm")
+
+function onLoad(){
+    ## ----- ＩＴ３-00187-000 20130703 SBO_SOKOU DEL START -----
+    #*
+    ## +++++ 強化-01325-000 2013/05/24 ADD SBO_pangzhen START +++++
+    //ダウンロードボタンは非表示となる
+    #if($downloadFlg != "1")
+        document.getElementById('download').style.display='none';
+    #end
+    //新着確認ボタンは非表示となる
+    #if($newConfirmFlg != "1")
+        document.getElementById('newConfirm').style.display='none';
+    #end
+    //新着全件確認ボタンは非表示となる
+    #if($newConfirmAllFlg != "1")
+        document.getElementById('newConfirmAll').style.display='none';
+    #end
+    ## +++++ 強化-01325-000 2013/05/24 ADD SBO_pangzhen -END- +++++
+    *#
+    ## ----- ＩＴ３-00187-000 20130703 SBO_SOKOU DEL -END- -----
+    if(parent.parent.document.getElementById("quickLink").value=='true'){
+        parent.parent.setQuickLinkPrcRev('false');
+        document.getElementById("quickLink").value=='false';
+        iframeChange("${flowExecutionUrl}&_eventId=quickLinkSearch","pageid","prcRevList",'quickLink',true);
+    }
+    bodyLoad();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+
+    if (errorMsg != ""){
+        getObj("TR_ERROR").style.display = "";
+        setErrorMessage("ERRORDIV", errorMsg, "DATAAREA");
+        return;
+    }
+     var isDownload = "#jsEscape($!isDownLoadValidate)";
+    if (isDownload == 'true') {
+        iframeChange("${flowExecutionUrl}&_eventId=download","pageid","SPNEW131","HIDDENAREA");
+    } else {
+        var isShowList = "#jsEscape($isShowList)";
+        if (isShowList == 'true'){
+            iframeChange("${flowExecutionUrl}&_eventId=search","pageid","prcRevList");
+        }
+        var isQuickLink = "#jsEscape($isQuickLink)";
+        if (isQuickLink == 'true'){
+            iframeChange("${flowExecutionUrl}&_eventId=quickLinkSearch","pageid","prcRevList",'quickLink',true);
+        }
+    }
+}
+
+function execSearch() {
+    ## +++++ 強化-00041-000 2013/03/25 ADD SBO_KANGJW START +++++
+    buttonDisable();
+    ## +++++ 強化-00041-000 2013/03/25 ADD SBO_KANGJW -END- +++++
+    getObj("BodyForm").target="_self";
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=validate";
+    getObj("BodyForm").submit();
+}
+
+function doDownload() {
+     //メッセージは空設定
+    getObj("ERRORDIV").innerHTML="";
+    getObj("BodyForm").target = "HIDDENAREA";
+    buttonDisable();
+    setTimeout(buttonUsable,1000);
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=downloadValidate";
+
+    getObj("BodyForm").submit();
+}
+//-->
+</script>
+</head>
+<body class="BodyArea" onload="onLoad();">
+<form id="BodyForm" name="Body" action="${flowExecutionUrl}&_eventId=validate" method="post">
+    #customFormHiddenInput("searchCondition.page.pageRecorders.hidden" "$!defaultSearchCondition.searchCondition.page.pageRecorders")
+    #customFormHiddenInput("quickLink" "false")
+    #customFormHiddenInput("searchObject.searchObject.hidden" "$!defaultSearchCondition.searchObject.searchObject")
+    <!-- ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊ -->
+    <iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0"scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+    <!--検索部テーブル開始-->
+    <table class="NoBorder" style="width:100%;height:100%;z-index:0;">
+        <tr>
+            <td id="SEARCH_AREA" class="SearchArea"><!-- onLoadで変更 -->
+                #parse("./common/common_title_nonew.vm")
+                <table width="100%">
+                    <tr id="SEARCH_AREA2">
+                        <td id="Adjust" align="right" Valign="top">
+                            <!-- 検索条件入力部 -->
+                            <table class="NoBorder" width="100%">
+                                <tr>
+                                    <td align="left" colspan="4" nowrap>
+                                        #customSpringMessage('SPNEW130_HEADER_COMMENT')
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <!--検索条件表示エリア-->
+                                        <table class="NoBorder" width="100%">
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">
+                                                    #customSpringMessage('TITLE_NAME')<span class="FontComment">％</span><!-- 件名 -->
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left" >
+                                                    #springFormInput("searchCondition.titleName" "size=60 maxLength=30 class='Small'")
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="right">
+                                                    #customSpringMessage('REVISION_REQ_DATE')<!-- 改定依頼日 -->
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                #springFormInput("searchCondition.revisionReqDateFrom.dateOfymdFormat" "size=12 maxLength=8 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('revisionReqDateFrom.dateOfymdFormat'));">
+                                                &nbsp;～&nbsp;
+                                                #springFormInput("searchCondition.revisionReqDateTo.dateOfymdFormat" "size=12 maxLength=8 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('revisionReqDateTo.dateOfymdFormat'));">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('DISPLY_OBJECT')</td><!-- 表示対象 -->
+                                                <td nowrap class="FontSmall" align="left" colspan="5">
+                                                    <div id="ListShow">
+                                                        #customFormRadioButtons("searchCondition.searchObject.searchObject" $NEW_CHK_IND "" "" "")
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="left" colspan="4" nowrap class="FontComment">
+                                                    #customSpringMessage('SPNEW130_FOOTER_COMMENT')
+                                                </td> ## ＊:前方一致 / ％:中間一致 / なし:完全一致
+                                            </tr>
+                                        </table>
+                                    </td>
+                                        <!--検索ボタンエリア-->
+                                    <td nowrap class="FontSmallBold" align="right">
+                                        <br>
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('ACTION_SEARCH')" onclick="javascript:execSearch();">
+                                        <br>
+                                        <br>
+                                        <a href="javascript:clear();">#customSpringMessage('ACTION_CLEAR_SEARCH_CRITERIA')</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <!-- 検索条件入力部 -->
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="UploadArea" class="NoBorder" style="height:35px;border-bottom:1px solid #999999;text-align:left;vertical-align:top;">
+                #parse("./common/new_download.vm")
+            </td>
+        </tr>
+        <tr id="TR_ERROR" style="display: none;">
+            <td class="error" style="height:0px;">
+               <div id="ERRORDIV">$!errorMessage</div>
+            </td>
+        </tr>
+        <tr style="vertical-align:top;height:100%;">
+            <td class="NoBorder" style="height:100%;">
+                <iframe id="DATAAREA" name="DATAAREA" class="DataArea" framespacing="0" frameborder="0" src="../../layout/default.vm" scrolling="yes" frameborder="no"></iframe>
+            </td>
+        </tr>
+    </table>
+<!--検索部テーブル終了-->
+<iframe id="HIDDENAREA" name="HIDDENAREA" framespacing="0" frameborder="0" src="" scrolling="no" frameborder="no" style="display:none"></iframe>
+
+</form>
+</body>
+</html>

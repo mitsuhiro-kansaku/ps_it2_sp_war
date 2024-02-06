@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    
+    <!-- 見積回答一覧 -->
+    
+    <!--見積依頼情報識別情報-->
+    <var name="quotReqIdentify" class="fw.domain.sp.quot.quotreq.QuotReqIdentify" />
+    <!--見積依頼新着確認-->
+    <var name="quotReqNewDop" class="fw.domain.sp.quot.quotreq.QuotReqNewDop" />
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPRES020Service.init(searchCondition)" 
+            result="flowScope.quotRespList" />
+        <transition to="SPRES020"/>
+    </action-state>
+
+    <action-state  id="searchByKey">
+        <evaluate expression="SPRES020Service.page(searchCondition)" 
+            result="flowScope.quotRespList" />
+        <transition to="SPRES020"/>
+    </action-state>
+    
+    <!-- 見積回答一覧の場合 -->
+    <view-state id="SPRES020" model="quotReqIdentify" view="res/quotresp/SPRES020">
+         <!-- 見積回答（入力）　都度品、参考見積の場合-->
+         <transition on="answerInputEachValidate" validate="true">
+            <set name="flashScope.isShowInputEach" value="true"></set>
+        </transition>
+        <transition on="answerInputEach" to="SPRES030" validate="false" />
+
+        <transition on="editValidate" validate="true">
+            <set name="flashScope.isEditInputEach" value="true"></set>
+        </transition>
+        <transition on="edit" to="SPRES030Edit" validate="false" />
+        
+        <!-- 見積回答（入力）　価格登録品の場合-->
+        <transition on="answerInputPriceValidate" validate="true">
+            <set name="flashScope.isShowInputPrice" value="true"></set>
+        </transition>
+        <transition on="answerInputPrice" to="SPRES030Input" validate="false" />
+        
+        <!-- 詳細の価格登録品の場合 -->
+        <transition on="detailPrice" to="SPNEW012" validate="false" >
+         	<set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+         </transition>
+         <!-- 詳細の都度品、参考見積の場合 -->
+        <transition on="detail" to="SPNEW012Other" validate="false" >
+            <set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+        </transition>
+        <transition on="editDetail" to="SPNEW012OtherEdit" validate="false" >
+            <set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+        </transition>
+        
+        <transition on="order" validate="false">
+            <evaluate expression="SPRES020Service.order(searchCondition)"
+                result="flowScope.quotRespList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPRES020Service.page(searchCondition)"
+                result="flowScope.quotRespList" />
+        </transition>
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+    <!-- 都度品、参考見積の場合 -->
+    <subflow-state id="SPRES030" subflow="res/quotresp/SPRES030" >
+        <input name="quotReqIdentify" value="quotReqIdentify" />
+        <input name="patternName" value="0"/>
+    </subflow-state>
+    <subflow-state id="SPRES030Edit" subflow="res/quotresp/SPRES030" >
+        <input name="quotReqIdentify" value="quotReqIdentify" />
+        <input name="patternName" value="3"/>
+    </subflow-state>
+    <!-- 価格登録品の場合 -->
+    <subflow-state id="SPRES030Input" subflow="res/quotresp/SPRES030Input" >
+        <input name="quotReqIdentify" value="quotReqIdentify" />
+    </subflow-state>
+    
+    <!-- 詳細 価格登録品の場合-->
+    <subflow-state id="SPNEW012" subflow="newconfirm/quotReq/SPNEW012">
+        <input name="identify" value="quotReqIdentify" />
+    </subflow-state>
+    <!-- 詳細 都度品、参考見積の場合-->
+    <subflow-state id="SPNEW012Other" subflow="newconfirm/quotReq/SPNEW012Other">
+        <input name="identify" value="quotReqIdentify" />
+    </subflow-state>
+</flow>

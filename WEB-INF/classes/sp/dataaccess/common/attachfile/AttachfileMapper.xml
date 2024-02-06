@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.common.attachfile.AttachfileMapper">
+    <select id="searchFileFromAttach" resultType="fw.domain.slip.common.attachfile.AttachFile">
+        SELECT H.ATTACH_FILE_NAME as "fileName",
+               H.ATTACH_FILE as "data"
+          FROM ${tableName} H   
+         WHERE 
+            H.ATTACH_FILE_SEQ = #{attachFileSeq}
+            AND H.DELETE_FLG = '0'
+    </select>
+</mapper>

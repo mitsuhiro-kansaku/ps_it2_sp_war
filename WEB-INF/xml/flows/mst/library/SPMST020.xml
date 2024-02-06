@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    
+    <var name="identify" class="fw.domain.sp.library.LibraryIdentify" />
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    <action-state id="searchByCondition">
+        <evaluate expression="SPMST020Service.init(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPMST020"/>
+    </action-state>
+
+    <action-state  id="searchByKey">
+        <evaluate expression="SPMST020Service.page(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPMST020"/>
+    </action-state> 
+
+    <view-state id="SPMST020" view="mst/library/SPMST020" model="identify">
+         <transition on="order" validate="false">
+            <evaluate expression="SPMST020Service.order(searchCondition)"
+                result="flowScope.itemList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPMST020Service.page(searchCondition)"
+                result="flowScope.itemList" />
+        </transition> 
+        <transition on="download" validate="false">
+            <evaluate expression="SPMST020Service.downloadByteFile(identify)"/>
+        </transition>
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+    
+</flow>

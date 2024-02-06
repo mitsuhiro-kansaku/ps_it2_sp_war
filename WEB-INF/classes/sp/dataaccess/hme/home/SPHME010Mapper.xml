@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.hme.home.SPHME010Mapper">
+
+    <!-- 強化-00180-000 2013/03/11 MODIFY SBO_SOKOU START -->
+    <select id="getInformationList"
+            resultType="fw.domain.mst.operation.news.NewsManagement">
+        SELECT T_NEWS.NEWS_SEQ as "newsIdentify.newsSeq",
+               T_NEWS.TITLE as "title",
+               T_NEWS.SEND_USER_NAME as "sendUserName",
+               T_NEWS.LAST_UPD_DATE as "newsIdentify.lastUpdDate",
+               T_NEWS.CONTENTS as "contents",
+               CASE WHEN M1.COMPANY_NAME IS NOT NULL 
+                    THEN M1.COMPANY_NAME
+                    WHEN M2.COMPANY_NAME IS NOT NULL 
+                    THEN M2.COMPANY_NAME
+                     END AS "companySummary.companyName"
+          FROM T_NEWS
+          LEFT JOIN M_COMPANY
+                 ON M_COMPANY.COMPANY_CD = T_NEWS.COMPANY_CD
+                AND M_COMPANY.TERM_FLG = '0'
+          LEFT JOIN M_COMPANY_LANG M1
+                 ON M1.COMPANY_CD = T_NEWS.COMPANY_CD
+                AND M1.LANGUAGE_IND = #{loginUserLanguageInd}
+          LEFT JOIN M_COMPANY_LANG M2
+                 ON M2.COMPANY_CD = T_NEWS.COMPANY_CD
+                AND M2.LANGUAGE_IND = #{sysLanguageInd}
+        <where>
+                (T_NEWS.COMPANY_CD IN
+                <if test="buyerCompanyList == null or buyerCompanyList.size &lt;= 0">
+                    ('')
+                </if>
+                <if test="buyerCompanyList != null and buyerCompanyList.size &gt; 0">
+                    <foreach collection="buyerCompanyList" item="buyerCompanyItem"  open="(" separator="," close=")">
+                        #{buyerCompanyItem.companyCd}
+                    </foreach>
+                </if>
+            OR T_NEWS.COMPANY_CD = 'ALL')
+           AND (T_NEWS.RECV_USER_IND = '2' OR T_NEWS.RECV_USER_IND = '0')
+           AND T_NEWS.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate()}'
+           AND T_NEWS.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate()}'
+         </where>
+           ORDER BY T_NEWS.LAST_UPD_DATE DESC
+    </select>
+    <!-- 強化-00180-000 2013/03/11 MODIFY SBO_SOKOU END -->
+</mapper>

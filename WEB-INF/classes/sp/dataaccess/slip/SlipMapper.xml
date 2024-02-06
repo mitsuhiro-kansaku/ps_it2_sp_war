@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.slip.SlipMapper">
+
+    <select id="lockSlips" resultType="fw.domain.sp.exclusive.ExclusiveSlipId">
+        SELECT
+               S_SLIP.SLIP_NO as slipNo
+        <if test="selectLastUpdatedDate">
+               , S_SLIP.LAST_UPD_DATE as lastUpdDate
+        </if>
+          FROM S_SLIP
+         WHERE S_SLIP.SLIP_NO IN 
+            <foreach collection="exclusiveSlipIds" item="exclusiveSlipId"  open="(" separator="," close=")">  
+                #{exclusiveSlipId.slipNo} 
+            </foreach>
+           FOR UPDATE NOWAIT
+    </select>
+    
+    <update id="updateLastUpdated">
+        UPDATE S_SLIP 
+        SET 
+             LAST_UPD_DATE = #{lastUpdatedDatetime}
+            ,LAST_UPD_USER_ID = '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+         WHERE SLIP_NO IN 
+        <foreach collection="exclusiveSlipIdList" item="exclusiveSlipId"  open="(" separator="," close=")">  
+            #{exclusiveSlipId.slipNo} 
+        </foreach>
+    </update>
+
+</mapper>

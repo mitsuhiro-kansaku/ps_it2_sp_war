@@ -1,0 +1,844 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.ans.delivery.DeliveryMapper">
+
+    <sql id="listKeyIdentityWhereCondition">
+         AND S_ORDER.INFO_CD IN ('0502', '0503')
+        <if test="@org.apache.commons.lang.StringUtils@isBlank(displayObject)">
+         AND V_DLV_EST_MNG.CONFIRM_MARK IS NULL
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivDateRespListType)">
+                <if test="delivDateRespListType==2">
+         AND V_DLV_EST_MNG.DLV_EST_MNG_SEQ IS NULL
+                </if>
+                <if test="delivDateRespListType==3">
+         AND V_DLV_EST_MNG.DLV_EST_MNG_SEQ IS NOT NULL
+                </if>
+            </if>
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(displayObject)">
+            <if test="displayObject==1">
+         AND V_DLV_EST_MNG.CONFIRM_MARK = '1'
+            </if>
+            <if test="displayObject==2">
+         AND V_DLV_EST_MNG.CONFIRM_MARK = '2'
+            </if>
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(orderNo)">
+         AND S_ORDER.ORDER_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.dlv.dlvresp.DelivRespSearchCondition","orderNo")}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(orderDelivDateFrom.dateOfymd)">
+         AND S_ORDER.DELIVERY_DATE >= #{orderDelivDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(orderDelivDateTo.dateOfymd)">
+         AND S_ORDER.DELIVERY_DATE &lt;= #{orderDelivDateTo.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(checkDelivDateFrom.dateOfymd)">
+         AND S_DLV_EST_DTL.INQ_RESP_DATE >= #{checkDelivDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(checkDelivDateTo.dateOfymd)">
+         AND S_DLV_EST_DTL.INQ_RESP_DATE &lt;= #{checkDelivDateTo.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(excludeAcceptedFlg)">
+        <!-- 未検収 又は、検収完納を条件にする（要するに検収済のみは表示しない） -->
+         AND NOT EXISTS
+            (SELECT 1 FROM V_NEW_RCV
+              WHERE S_ORDER.ACC_CD = V_NEW_RCV.ACC_CD
+                AND S_ORDER.CUST_CD = V_NEW_RCV.CUST_CD
+                AND S_ORDER.ORDER_NO = V_NEW_RCV.ORDER_NO
+                AND S_ORDER.ORDER_VOL &lt;= V_NEW_RCV.ACCEPT_VOL)
+        </if>
+    </sql>
+
+    <sql id="viewSql">
+        WITH V_SUPPLIER AS
+     (SELECT M_SUPPLIER.COMPANY_CD
+           , M_SUPPLIER.SUP_CD
+        FROM M_SUPPLIER
+       WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+         AND M_SUPPLIER.COMPANY_CD = 'ALL'
+        </if>
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="@sp.common.util.SecurityUtil@isAllCust()">
+         AND M_SUPPLIER.COMPANY_CD IN
+                <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                    #{custCdList}
+                </foreach>
+            </if>
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+         AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+            </if>
+        </if>
+         AND M_SUPPLIER.TERM_FLG = '0'
+         AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+         AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}')
+           , V_ORDER AS
+     (SELECT S_ORDER.ACC_CD
+           , S_ORDER.CUST_CD
+           , S_ORDER.ORDER_NO
+           , MAX(S_ORDER.ORDER_VERSION) AS ORDER_VERSION
+        FROM S_ORDER
+       WHERE S_ORDER.DELETE_FLG = '0'
+    GROUP BY S_ORDER.ACC_CD
+           , S_ORDER.CUST_CD
+           , S_ORDER.ORDER_NO)
+           , V_DLV_EST_MNG AS
+     (SELECT *
+        FROM S_DLV_EST_MNG
+       INNER JOIN
+            (SELECT ACC_CD
+                  , CUST_CD
+                  , ORDER_NO
+                  , MAX(DELIV_VERSION) AS DELIV_VERSION
+               FROM S_DLV_EST_MNG
+              WHERE DELETE_FLG = '0'
+           GROUP BY ACC_CD
+                  , CUST_CD
+                  , ORDER_NO) S_DLV_EST_MNG_MAXVER
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_MNG_MAXVER.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_MNG_MAXVER.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_MNG_MAXVER.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_MNG_MAXVER.DELIV_VERSION
+       INNER JOIN
+            (SELECT ACC_CD
+                  , CUST_CD
+                  , ORDER_NO
+                  , DELIV_VERSION
+                  , MIN(INQ_RESP_IND) AS INQ_IND
+               FROM S_DLV_EST_MNG
+           GROUP BY ACC_CD
+                  , CUST_CD
+                  , ORDER_NO
+                  , DELIV_VERSION) S_DLV_EST_MNG_MININD
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_MNG_MININD.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_MNG_MININD.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_MNG_MININD.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_MNG_MININD.DELIV_VERSION
+         AND S_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_MNG_MININD.INQ_IND)
+           , V_NEW_RCV AS
+     (SELECT S_NEW_RCV.ACC_CD
+           , S_NEW_RCV.CUST_CD
+           , S_NEW_RCV.ORDER_NO
+           , SUM(COALESCE(S_NEW_RCV.ACCEPT_VOL, 0)) AS ACCEPT_VOL
+        FROM S_NEW_RCV
+       INNER JOIN
+            (SELECT ACC_CD
+                  , CUST_CD
+                  , ORDER_NO
+                  , DELIV_KEY_NO
+                  , MAX(DELIV_VERSION) AS DELIV_VERSION
+               FROM S_NEW_RCV
+              WHERE DPO_FLG = '1'
+                AND DELETE_FLG = '0'
+           GROUP BY ACC_CD
+                  , CUST_CD
+                  , ORDER_NO
+                  , DELIV_KEY_NO) S_NEW_RCV_MAX
+          ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAX.ACC_CD
+         AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAX.CUST_CD
+         AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAX.ORDER_NO
+         AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAX.DELIV_KEY_NO
+         AND S_NEW_RCV.DELIV_VERSION = S_NEW_RCV_MAX.DELIV_VERSION
+    GROUP BY S_NEW_RCV.ACC_CD
+           , S_NEW_RCV.CUST_CD
+           , S_NEW_RCV.ORDER_NO)
+           , V_DLV_RESP AS
+     (SELECT S_ORDER.ACC_CD
+           , S_ORDER.CUST_CD
+           , S_ORDER.ORDER_NO
+           , S_ORDER.ORDER_VERSION
+           , S_ORDER.ORDER_SEQ
+           , S_ORDER.BUYER_COMPANY_NAME
+           , S_ORDER.BUYER_SECTION_PLACE_NAME
+           , S_ORDER.BUYER_SECTION_NAME
+           , S_ORDER.BUYER_USER_NAME
+           , S_ORDER.TITLE_NAME
+           , S_ORDER.ITEM_NAME
+           , S_ORDER.CUST_ITEM_CD
+           , S_ORDER.KATASHIKI
+           , S_ORDER.MANUFACT_NAME
+           , S_ORDER.UNIT_NAME
+           , S_ORDER.ORDER_FIRST_DATE
+           , S_ORDER.DELIVERY_DATE
+           , S_ORDER.ORDER_VOL
+           , S_ORDER.ORDER_CANCEL_VOL
+           , S_ORDER.REMAINING_VOL
+           , S_ORDER.DELIV_PLACE_NAME
+           , S_ORDER.FOR_SUPPLIER_COMMENT
+           , S_ORDER.LAST_UPD_DATE AS S_ORDER_LAST_UPD_DATE
+           , V_DLV_EST_MNG.DLV_EST_MNG_SEQ
+           , V_DLV_EST_MNG.DELIV_VERSION
+           , V_DLV_EST_MNG.INQ_RESP_IND
+           , V_DLV_EST_MNG.CONFIRM_MARK
+           ,(CASE WHEN V_DLV_EST_MNG.CONFIRM_MARK IS NULL
+                  THEN(CASE WHEN V_DLV_EST_MNG.DLV_EST_MNG_SEQ IS NULL THEN '1'
+                            ELSE '2' END)
+                  ELSE(CASE WHEN V_DLV_EST_MNG.CONFIRM_MARK = '1' THEN '3'
+                            WHEN V_DLV_EST_MNG.CONFIRM_MARK = '2' THEN '4'
+                            ELSE NULL END)
+                  END) AS DELIV_DATE_RESP_STATUS
+           , V_DLV_EST_MNG.RESP_LIMIT_DATE
+           , V_DLV_EST_MNG.LAST_UPD_DATE AS S_DLV_EST_MNG_LAST_UPD_DATE
+           , S_SLIP.LAST_UPD_DATE AS S_SLIP_LAST_UPD_DATE
+        FROM S_ORDER
+       INNER JOIN V_SUPPLIER
+          ON S_ORDER.ACC_CD = V_SUPPLIER.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+         AND S_ORDER.CUST_CD = V_SUPPLIER.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+         AND S_ORDER.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+       INNER JOIN S_SLIP
+          ON S_SLIP.SLIP_NO = S_ORDER.ORDER_NO
+         AND S_SLIP.DELETE_FLG = '0'
+       INNER JOIN V_ORDER
+          ON S_ORDER.ACC_CD = V_ORDER.ACC_CD
+         AND S_ORDER.CUST_CD = V_ORDER.CUST_CD
+         AND S_ORDER.ORDER_NO = V_ORDER.ORDER_NO
+         AND S_ORDER.ORDER_VERSION = V_ORDER.ORDER_VERSION
+        LEFT OUTER JOIN V_DLV_EST_MNG
+          ON S_ORDER.ACC_CD = V_DLV_EST_MNG.ACC_CD
+         AND S_ORDER.CUST_CD = V_DLV_EST_MNG.CUST_CD
+         AND S_ORDER.ORDER_NO = V_DLV_EST_MNG.ORDER_NO
+         AND S_ORDER.ORDER_VERSION = V_DLV_EST_MNG.ORDER_VERSION
+        LEFT OUTER JOIN S_DLV_EST_DTL
+          ON V_DLV_EST_MNG.ACC_CD = S_DLV_EST_DTL.ACC_CD
+         AND V_DLV_EST_MNG.CUST_CD = S_DLV_EST_DTL.CUST_CD
+         AND V_DLV_EST_MNG.ORDER_NO = S_DLV_EST_DTL.ORDER_NO
+         AND V_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_DTL.DELIV_VERSION
+         AND V_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_DTL.INQ_RESP_IND
+         AND S_DLV_EST_DTL.DELETE_FLG = '0'
+    <where>
+        <include refid="listKeyIdentityWhereCondition"/>
+    </where>
+    GROUP BY S_ORDER.ACC_CD
+           , S_ORDER.CUST_CD
+           , S_ORDER.ORDER_NO
+           , S_ORDER.ORDER_VERSION
+           , S_ORDER.ORDER_SEQ
+           , S_ORDER.BUYER_COMPANY_NAME
+           , S_ORDER.BUYER_SECTION_PLACE_NAME
+           , S_ORDER.BUYER_SECTION_NAME
+           , S_ORDER.BUYER_USER_NAME
+           , S_ORDER.TITLE_NAME
+           , S_ORDER.ITEM_NAME
+           , S_ORDER.CUST_ITEM_CD
+           , S_ORDER.KATASHIKI
+           , S_ORDER.MANUFACT_NAME
+           , S_ORDER.UNIT_NAME
+           , S_ORDER.ORDER_FIRST_DATE
+           , S_ORDER.DELIVERY_DATE
+           , S_ORDER.ORDER_VOL
+           , S_ORDER.ORDER_CANCEL_VOL
+           , S_ORDER.REMAINING_VOL
+           , S_ORDER.DELIV_PLACE_NAME
+           , S_ORDER.FOR_SUPPLIER_COMMENT
+           , S_ORDER.LAST_UPD_DATE
+           , V_DLV_EST_MNG.DLV_EST_MNG_SEQ
+           , V_DLV_EST_MNG.DELIV_VERSION
+           , V_DLV_EST_MNG.INQ_RESP_IND
+           , V_DLV_EST_MNG.CONFIRM_MARK
+           , V_DLV_EST_MNG.RESP_LIMIT_DATE
+           , V_DLV_EST_MNG.LAST_UPD_DATE
+           , S_SLIP.LAST_UPD_DATE)
+    </sql>
+
+    <resultMap id="identity_Map" type="fw.domain.sp.dlv.dlvresp.DelivRespListItemIdentify">
+        <id column="ACC_CD" property="orderIdentify.accCd" />
+        <id column="CUST_CD" property="orderIdentify.custCd" />
+        <id column="ORDER_SEQ" property="orderIdentify.orderSeq" />
+        <id column="S_ORDER_LAST_UPD_DATE" property="orderIdentify.lastUpdDate" />
+        <id column="ORDER_NO" property="orderIdentify.exclusiveSlipId.slipNo" />
+        <id column="S_SLIP_LAST_UPD_DATE" property="orderIdentify.exclusiveSlipId.lastUpdDate" />
+        <id column="DLV_EST_MNG_SEQ" property="delivMngIdentify.delivMngSeq" />
+        <id column="ACC_CD" property="delivMngIdentify.accCd" />
+        <id column="CUST_CD" property="delivMngIdentify.custCd" />
+        <id column="ORDER_NO" property="delivMngIdentify.orderNo" />
+        <id column="ORDER_VERSION" property="delivMngIdentify.orderVersion" />
+        <id column="S_DLV_EST_MNG_LAST_UPD_DATE" property="delivMngIdentify.lastUpdDate" />
+        <id column="ORDER_NO" property="delivMngIdentify.exclusiveSlipId.slipNo" />
+        <id column="S_SLIP_LAST_UPD_DATE" property="delivMngIdentify.exclusiveSlipId.lastUpdDate" />
+    </resultMap>
+
+    <resultMap id="item_Map" type="fw.domain.sp.dlv.dlvresp.DelivRespListItem">
+        <id column="ACC_CD" property="delivRespListItemIdentify.orderIdentify.accCd" />
+        <id column="CUST_CD" property="delivRespListItemIdentify.orderIdentify.custCd" />
+        <id column="ORDER_SEQ" property="delivRespListItemIdentify.orderIdentify.orderSeq" />
+        <id column="S_ORDER_LAST_UPD_DATE" property="delivRespListItemIdentify.orderIdentify.lastUpdDate" />
+        <id column="ORDER_NO" property="delivRespListItemIdentify.orderIdentify.exclusiveSlipId.slipNo" />
+        <id column="S_SLIP_LAST_UPD_DATE" property="delivRespListItemIdentify.orderIdentify.exclusiveSlipId.lastUpdDate" />
+        <id column="DLV_EST_MNG_SEQ" property="delivRespListItemIdentify.delivMngIdentify.delivMngSeq" />
+        <id column="ACC_CD" property="delivRespListItemIdentify.delivMngIdentify.accCd" />
+        <id column="CUST_CD" property="delivRespListItemIdentify.delivMngIdentify.custCd" />
+        <id column="ORDER_NO" property="delivRespListItemIdentify.delivMngIdentify.orderNo" />
+        <id column="ORDER_VERSION" property="delivRespListItemIdentify.delivMngIdentify.orderVersion" />
+        <id column="S_DLV_EST_MNG_LAST_UPD_DATE" property="delivRespListItemIdentify.delivMngIdentify.lastUpdDate" />
+        <id column="ORDER_NO" property="delivRespListItemIdentify.delivMngIdentify.exclusiveSlipId.slipNo" />
+        <id column="S_SLIP_LAST_UPD_DATE" property="delivRespListItemIdentify.delivMngIdentify.exclusiveSlipId.lastUpdDate" />
+        <id column="DELIV_VERSION" property="revisionNumber" />
+        <id column="INQ_RESP_IND" property="inqRespInd" />
+        <id column="DELIV_DATE_RESP_STATUS" property="status" />
+        <id column="ORDER_NO" property="orderNo" />
+        <id column="BUYER_COMPANY_NAME" property="buyerCompanyName" />
+        <id column="BUYER_SECTION_PLACE_NAME" property="buyerSectionPlaceName" />
+        <id column="BUYER_SECTION_NAME" property="buyerSectionName" />
+        <id column="BUYER_USER_NAME" property="buyerUserName" />
+        <id column="TITLE_NAME" property="titleName" />
+        <id column="ITEM_NAME" property="itemName" />
+        <id column="CUST_ITEM_CD" property="itemCd" />
+        <id column="KATASHIKI" property="katashiki" />
+        <id column="MANUFACT_NAME" property="manufactName" />
+        <id column="RESP_LIMIT_DATE" property="delivRcvLimit.dateOfymd" />
+        <id column="UNIT_NAME" property="unit" />
+        <id column="ORDER_FIRST_DATE" property="orderDate.dateOfymd" />
+        <id column="DELIVERY_DATE" property="orderDelivDate.dateOfymd" />
+        <id column="ORDER_VOL" property="orderVol.vol" />
+        <id column="ORDER_CANCEL_VOL" property="orderCancelVol.vol" />
+        <id column="REMAINING_VOL" property="orderRemainAmount.vol" />
+        <id column="DELIV_PLACE_NAME" property="delivPlaceName" />
+        <id column="FOR_SUPPLIER_COMMENT" property="forSupplierComment.comment" />
+    </resultMap>
+
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.dlv.dlvresp.DelivRespSearchCondition" resultMap="identity_Map">
+        <include refid="viewSql" />
+      SELECT V_DLV_RESP.ACC_CD
+           , V_DLV_RESP.CUST_CD
+           , V_DLV_RESP.ORDER_NO
+           , V_DLV_RESP.ORDER_VERSION
+           , V_DLV_RESP.ORDER_SEQ
+           , V_DLV_RESP.S_ORDER_LAST_UPD_DATE
+           , V_DLV_RESP.DLV_EST_MNG_SEQ
+           , V_DLV_RESP.S_DLV_EST_MNG_LAST_UPD_DATE
+           , V_DLV_RESP.S_SLIP_LAST_UPD_DATE
+        FROM V_DLV_RESP
+    ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="listPageItem" parameterType="fw.domain.sp.dlv.dlvresp.DelivRespSearchCondition" resultMap="item_Map">
+        <include refid="viewSql" />
+      SELECT V_DLV_RESP.ACC_CD
+           , V_DLV_RESP.CUST_CD
+           , V_DLV_RESP.ORDER_NO
+           , V_DLV_RESP.ORDER_VERSION
+           , V_DLV_RESP.ORDER_SEQ
+           , V_DLV_RESP.S_ORDER_LAST_UPD_DATE
+           , V_DLV_RESP.DLV_EST_MNG_SEQ
+           , V_DLV_RESP.S_DLV_EST_MNG_LAST_UPD_DATE
+           , V_DLV_RESP.S_SLIP_LAST_UPD_DATE
+           , V_DLV_RESP.DELIV_VERSION
+           , V_DLV_RESP.INQ_RESP_IND
+           , V_DLV_RESP.DELIV_DATE_RESP_STATUS
+           , V_DLV_RESP.BUYER_COMPANY_NAME
+           , V_DLV_RESP.BUYER_SECTION_PLACE_NAME
+           , V_DLV_RESP.BUYER_SECTION_NAME
+           , V_DLV_RESP.BUYER_USER_NAME
+           , V_DLV_RESP.TITLE_NAME
+           , V_DLV_RESP.ITEM_NAME
+           , V_DLV_RESP.CUST_ITEM_CD
+           , V_DLV_RESP.KATASHIKI
+           , V_DLV_RESP.MANUFACT_NAME
+           , V_DLV_RESP.RESP_LIMIT_DATE
+           , V_DLV_RESP.UNIT_NAME
+           , V_DLV_RESP.ORDER_FIRST_DATE
+           , V_DLV_RESP.DELIVERY_DATE
+           , V_DLV_RESP.ORDER_VOL
+           , V_DLV_RESP.ORDER_CANCEL_VOL
+           , V_DLV_RESP.REMAINING_VOL
+           , V_DLV_RESP.DELIV_PLACE_NAME
+           , V_DLV_RESP.FOR_SUPPLIER_COMMENT
+        FROM V_DLV_RESP
+        <where>
+             V_DLV_RESP.ORDER_SEQ IN
+            <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList" open="(" separator="," close=")">
+                #{keyList.orderIdentify.orderSeq, jdbcType=VARCHAR}
+            </foreach>
+         AND(V_DLV_RESP.DLV_EST_MNG_SEQ IS NULL OR V_DLV_RESP.DLV_EST_MNG_SEQ IN
+            <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList" open="(" separator="," close=")">
+                #{keyList.delivMngIdentify.delivMngSeq, jdbcType=VARCHAR}
+            </foreach>)
+        </where>
+    ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="quickLinkCount" parameterType="fw.domain.sp.dlv.dlvresp.DelivRespSearchCondition" resultType="java.lang.Integer">
+        <include refid="viewSql" />
+      SELECT COUNT(*)
+        FROM V_DLV_RESP
+    </select>
+
+    <resultMap id="preRespIdentity_Map" type="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify">
+        <id column="DLV_EST_MNG_SEQ" property="delivMngSeq" />
+        <id column="ACC_CD" property="accCd" />
+        <id column="CUST_CD" property="custCd" />
+        <id column="ORDER_NO" property="orderNo" />
+        <id column="ORDER_VERSION" property="orderVersion" />
+        <id column="LAST_UPD_DATE" property="lastUpdDate" />
+        <id column="ORDER_NO" property="exclusiveSlipId.slipNo" />
+        <id column="S_SLIP_LAST_UPD_DATE" property="exclusiveSlipId.lastUpdDate" />
+    </resultMap>
+
+    <select id="searchPreRespIdentify" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify" resultMap="preRespIdentity_Map">
+      SELECT S_DLV_EST_MNG.DLV_EST_MNG_SEQ
+           , S_DLV_EST_MNG.ACC_CD
+           , S_DLV_EST_MNG.CUST_CD
+           , S_DLV_EST_MNG.ORDER_NO
+           , S_DLV_EST_MNG.ORDER_VERSION
+           , S_DLV_EST_MNG.LAST_UPD_DATE
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{accCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{custCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE ACC_CD = #{accCd, jdbcType=VARCHAR}
+                AND CUST_CD = #{custCd, jdbcType=VARCHAR}
+                AND ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivMngSeq)">
+                AND DLV_EST_MNG_SEQ != #{delivMngSeq, jdbcType=VARCHAR}
+        </if>
+                AND INQ_RESP_IND = '2'
+                AND DELETE_FLG = '0')
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivMngSeq)">
+         AND S_DLV_EST_MNG.DLV_EST_MNG_SEQ != #{delivMngSeq, jdbcType=VARCHAR}
+        </if>
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+    </select>
+
+    <select id="getDelivCheckDate" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify" resultType="java.lang.String">
+      SELECT S_DLV_EST_MNG.INQ_RESP_DATE
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{accCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{custCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{orderVersion, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE ACC_CD = #{accCd, jdbcType=VARCHAR}
+                AND CUST_CD = #{custCd, jdbcType=VARCHAR}
+                AND ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+                AND ORDER_VERSION = #{orderVersion, jdbcType=VARCHAR}
+                AND INQ_RESP_IND = '1'
+                AND DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '1'
+    </select>
+
+    <select id="getDelivRcvDate" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify" resultType="java.lang.String">
+      SELECT S_DLV_EST_MNG.INQ_RESP_DATE
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{accCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{custCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE ACC_CD = #{accCd, jdbcType=VARCHAR}
+                AND CUST_CD = #{custCd, jdbcType=VARCHAR}
+                AND ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+                AND INQ_RESP_IND = '2'
+                AND DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+    </select>
+
+    <select id="searchInqRespItemList1" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify"
+        resultType="fw.domain.sp.dlv.dlvresp.InqRespItem">
+      SELECT S_DLV_EST_DTL.INQ_RESP_DATE AS "checkDelivDate.dateOfymd"
+           , S_DLV_EST_DTL.INQ_RESP_VOL AS "checkAmount.vol"
+        FROM S_DLV_EST_MNG
+        LEFT OUTER JOIN S_DLV_EST_DTL
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_DTL.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_DTL.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_DTL.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_DTL.DELIV_VERSION
+         AND S_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_DTL.INQ_RESP_IND
+       WHERE S_DLV_EST_MNG.ACC_CD = #{accCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{custCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{orderVersion, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE ACC_CD = #{accCd, jdbcType=VARCHAR}
+                AND CUST_CD = #{custCd, jdbcType=VARCHAR}
+                AND ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+                AND ORDER_VERSION = #{orderVersion, jdbcType=VARCHAR}
+                AND INQ_RESP_IND = '1'
+                AND DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '1'
+    </select>
+
+    <select id="searchInqRespItemList2" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify"
+        resultType="fw.domain.sp.dlv.dlvresp.InqRespItem">
+      SELECT S_DLV_EST_DTL.INQ_RESP_DATE AS "respDelivDate.dateOfymd"
+           , S_DLV_EST_DTL.INQ_RESP_VOL AS "respVol.vol"
+        FROM S_DLV_EST_MNG
+        LEFT OUTER JOIN S_DLV_EST_DTL
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_DTL.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_DTL.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_DTL.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_DTL.DELIV_VERSION
+         AND S_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_DTL.INQ_RESP_IND
+       WHERE S_DLV_EST_MNG.ACC_CD = #{accCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{custCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE ACC_CD = #{accCd, jdbcType=VARCHAR}
+                AND CUST_CD = #{custCd, jdbcType=VARCHAR}
+                AND ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+                AND INQ_RESP_IND = '2'
+                AND DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+    </select>
+
+    <resultMap type="fw.domain.sp.dlv.DelivDetail" id="DelivRespDetail_Map">
+        <id column="ACC_CD" property="delivRespIdentify.orderUserCd"/>
+        <id column="CUST_CD" property="delivRespIdentify.buyerUserCd"/>
+        <id column="ORDER_NO" property="delivRespIdentify.orderNo"/>
+        <id column="DELIV_VERSION" property="delivRespIdentify.delivVersion"/>
+        <id column="INQ_RESP_IND" property="delivRespIdentify.inqRespInd"/>
+        <id column="LAST_UPD_DATE" property="delivRespIdentify.lastUpdDate"/>
+        <id column="EXCLUSIVE_SLIP_NO" property="delivRespIdentify.exclusiveSlipId.slipNo"/>
+        <id column="EXCLUSIVE_LAST_UPD_DATE" property="delivRespIdentify.exclusiveSlipId.lastUpdDate"/>
+        <id column="SUP_ABBR_NAME" property="orderBaseInfo.accAbbrName"/>
+        <id column="INQ_RESP_DATE" property="delivInfoList.delivCheckDate.dateOfymd"/>
+        <id column="ORDER_VOL" property="orderBaseInfo.orderInfo.orderVol.vol"/>
+        <id column="ORDER_CANCEL_VOL" property="orderBaseInfo.orderCancelVol.vol"/>
+        <id column="DELIVERY_DATE" property="orderBaseInfo.orderDeliv.dateOfymd"/>
+        <id column="INQ_RESP_COMMENT" property="delivInfoList.checkDetail"/>
+        <id column="CONFIRM_MARK" property="delivInfoList.confirmMark"/>
+    </resultMap>
+
+    <select id="searchDlvRespDetail" parameterType="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify" resultMap="DelivRespDetail_Map">
+      SELECT S_DLV_EST_MNG.ACC_CD
+           , S_DLV_EST_MNG.CUST_CD
+           , S_DLV_EST_MNG.ORDER_NO
+           , S_DLV_EST_MNG.DELIV_VERSION
+           , S_DLV_EST_MNG.INQ_RESP_IND
+           , S_DLV_EST_MNG.LAST_UPD_DATE
+           , S_SLIP.SLIP_NO AS EXCLUSIVE_SLIP_NO
+           , S_SLIP.LAST_UPD_DATE AS EXCLUSIVE_LAST_UPD_DATE
+           , M_SUPPLIER_LANG.SUP_ABBR_NAME
+           , S_DLV_EST_MNG.INQ_RESP_DATE
+           , S_ORDER.ORDER_VOL
+           , S_ORDER.ORDER_CANCEL_VOL
+           , S_ORDER.DELIVERY_DATE
+           , S_DLV_EST_MNG.INQ_RESP_COMMENT
+           , S_DLV_EST_MNG.CONFIRM_MARK
+        FROM S_DLV_EST_MNG
+       INNER JOIN S_SLIP
+          ON S_SLIP.SLIP_NO = S_DLV_EST_MNG.ORDER_NO
+       INNER JOIN S_ORDER
+          ON S_DLV_EST_MNG.ACC_CD = S_ORDER.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_ORDER.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_ORDER.ORDER_NO
+         AND S_DLV_EST_MNG.ORDER_VERSION = S_ORDER.ORDER_VERSION
+       INNER JOIN M_SUPPLIER
+          ON (M_SUPPLIER.COMPANY_CD = S_ORDER.CUST_CD OR M_SUPPLIER.COMPANY_CD = 'ALL')
+         AND M_SUPPLIER.SUP_CD = S_ORDER.ACC_CD
+       INNER JOIN M_SUPPLIER_LANG
+          ON M_SUPPLIER_LANG.COMPANY_CD = M_SUPPLIER.COMPANY_CD
+         AND M_SUPPLIER_LANG.SUP_CD = M_SUPPLIER.SUP_CD
+         AND M_SUPPLIER_LANG.LANGUAGE_IND = M_SUPPLIER.BASE_LANGUAGE_IND
+       WHERE S_DLV_EST_MNG.DLV_EST_MNG_SEQ = #{delivMngSeq, jdbcType=VARCHAR}
+    </select>
+
+    <select id="searchDlvRespDetailList" parameterType="fw.domain.sp.dlv.dlvresp.DelivRespIdentify"
+        resultType="fw.domain.sp.dlv.DelivInfoItem">
+      SELECT S_DLV_EST_DTL.INQ_RESP_VOL AS "checkAmount.vol"
+           , S_DLV_EST_DTL.INQ_RESP_DATE AS "checkDelivDate.dateOfymd"
+        FROM S_DLV_EST_DTL
+       WHERE S_DLV_EST_DTL.ACC_CD = #{orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_DTL.CUST_CD = #{buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_DTL.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_DTL.DELIV_VERSION = #{delivVersion, jdbcType=VARCHAR}
+         AND S_DLV_EST_DTL.INQ_RESP_IND = #{inqRespInd, jdbcType=VARCHAR}
+    ORDER BY S_DLV_EST_DTL.DELIV_LINE_NO
+    </select>
+
+    <resultMap type="fw.domain.sp.dlv.dlvresp.DelivResp" id="DelivResp_Map">
+        <id column="ACC_CD" property="delivRespManagement.delivRespIdentify.orderUserCd"/>
+        <id column="CUST_CD" property="delivRespManagement.delivRespIdentify.buyerUserCd"/>
+        <id column="ORDER_NO" property="delivRespManagement.delivRespIdentify.orderNo"/>
+        <id column="ORDER_VERSION" property="delivRespInputDetail.historyNo.historyNo"/>
+        <id column="ORDER_STATUS" property="delivRespInputDetail.orderStatus"/>
+        <id column="ORDER_DATE" property="delivRespInputDetail.orderDate.dateOfymd"/>
+        <id column="TITLE_NAME" property="delivRespInputDetail.titleName.titleName"/>
+        <id column="CUST_ITEM_CD" property="delivRespInputDetail.itemCd"/>
+        <id column="ITEM_NAME" property="delivRespInputDetail.itemName"/>
+        <id column="KATASHIKI" property="delivRespInputDetail.katashiki"/>
+        <id column="MANUFACT_NAME" property="delivRespInputDetail.manufact.manufactName"/>
+        <id column="DELIVERY_DATE" property="delivRespInputDetail.orderDelivDate.dateOfymd"/>
+        <id column="ORDER_VOL" property="delivRespInputDetail.orderVol.vol"/>
+        <id column="ORDER_CANCEL_VOL" property="delivRespInputDetail.orderCancelVol.vol"/>
+        <id column="REMAINING_VOL" property="delivRespInputDetail.orderRemainAmount.vol"/>
+        <id column="UNIT_NAME" property="delivRespInputDetail.unitName"/>
+        <id column="BUYER_COMPANY_CD" property="delivRespInputDetail.custInfo.custCompany.code"/>
+        <id column="BUYER_COMPANY_NAME" property="delivRespInputDetail.custInfo.custCompany.name"/>
+        <id column="BUYER_SECTION_PLACE_NAME" property="delivRespInputDetail.custInfo.custUser.sectionPlaceName"/>
+        <id column="BUYER_SECTION_NAME" property="delivRespInputDetail.custInfo.custUser.sectionName"/>
+        <id column="BUYER_USER_NAME" property="delivRespInputDetail.custInfo.custUser.userName"/>
+        <id column="BUYER_USER_TEL_NO" property="delivRespInputDetail.custInfo.custUser.contact.telNo.telNo"/>
+
+        <id column="BUYER_USER_MAIL_ADDR" property="delivRespInputDetail.custInfo.custUser.contact.mailAddr.mail"/>
+
+        <id column="FOR_SUPPLIER_COMMENT" property="delivRespInputDetail.custInfo.comment.comment"/>
+        <id column="DELIV_PLACE_NAME" property="delivRespInputDetail.delivPlace.delivPlaceName"/>
+        <id column="EXCLUSIVE_SLIP_NO" property="delivRespManagement.exclusiveSlipId.slipNo"/>
+        <id column="EXCLUSIVE_LAST_UPD_DATE" property="delivRespManagement.exclusiveSlipId.lastUpdDate"/>
+    </resultMap>
+
+    <select id="searchDlvRespInfo" parameterType="int" resultMap="DelivResp_Map">
+      SELECT S_ORDER.ACC_CD
+           , S_ORDER.CUST_CD
+           , S_ORDER.ORDER_NO
+           , S_ORDER.ORDER_VERSION
+           , S_ORDER.ORDER_STATUS
+           , S_ORDER.ORDER_FIRST_DATE AS "ORDER_DATE"
+           , S_ORDER.TITLE_NAME
+           , S_ORDER.CUST_ITEM_CD
+           , S_ORDER.ITEM_NAME
+           , S_ORDER.KATASHIKI
+           , S_ORDER.MANUFACT_NAME
+           , S_ORDER.DELIVERY_DATE
+           , S_ORDER.ORDER_VOL
+           , S_ORDER.ORDER_CANCEL_VOL
+           , S_ORDER.REMAINING_VOL
+           , S_ORDER.UNIT_NAME
+           , S_ORDER.BUYER_COMPANY_CD
+           , S_ORDER.BUYER_COMPANY_NAME
+           , S_ORDER.BUYER_SECTION_PLACE_NAME
+           , S_ORDER.BUYER_SECTION_NAME
+           , S_ORDER.BUYER_USER_NAME
+           , S_ORDER.BUYER_USER_TEL_NO
+           , S_ORDER.BUYER_USER_MAIL_ADDR
+           , S_ORDER.FOR_SUPPLIER_COMMENT
+           , S_ORDER.DELIV_PLACE_NAME
+           , S_SLIP.SLIP_NO AS EXCLUSIVE_SLIP_NO
+           , S_SLIP.LAST_UPD_DATE AS EXCLUSIVE_LAST_UPD_DATE
+        FROM S_ORDER
+       INNER JOIN S_SLIP
+          ON S_SLIP.SLIP_NO = S_ORDER.ORDER_NO
+       WHERE S_ORDER.ORDER_SEQ = #{orderSeq}
+    </select>
+
+    <resultMap type="fw.domain.sp.dlv.dlvresp.DelivResp" id="DelivEstInqInfo_Map">
+        <id column="ACC_CD" property="delivRespManagement.delivRespIdentify.orderUserCd"/>
+        <id column="CUST_CD" property="delivRespManagement.delivRespIdentify.buyerUserCd"/>
+        <id column="ORDER_NO" property="delivRespManagement.delivRespIdentify.orderNo"/>
+        <id column="DELIV_VERSION" property="delivRespManagement.delivRespIdentify.delivVersion"/>
+        <id column="ORDER_VERSION" property="delivRespInputDetail.historyNo.historyNo"/>
+        <id column="INQ_RESP_DATE" property="delivRespInputDetail.delivCheckList.inqDate.dateOfymd"/>
+        <id column="RESP_LIMIT_DATE" property="delivRespInputDetail.delivCheckList.respLimitDate.dateOfymd"/>
+        <id column="INQ_RESP_COMMENT" property="delivRespInputDetail.delivCheckList.checkDetail"/>
+    </resultMap>
+
+    <select id="searchDlvEstInqInfo" parameterType="fw.domain.sp.dlv.dlvresp.DelivResp" resultMap="DelivEstInqInfo_Map">
+      SELECT S_DLV_EST_MNG.ACC_CD
+           , S_DLV_EST_MNG.CUST_CD
+           , S_DLV_EST_MNG.ORDER_NO
+           , S_DLV_EST_MNG.DELIV_VERSION
+           , S_DLV_EST_MNG.ORDER_VERSION
+           , S_DLV_EST_MNG.INQ_RESP_DATE
+           , S_DLV_EST_MNG.RESP_LIMIT_DATE
+           , S_DLV_EST_MNG.INQ_RESP_COMMENT
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(S_DLV_EST_MNG.DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.INQ_RESP_IND = '1'
+                AND S_DLV_EST_MNG.DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '1'
+    </select>
+
+    <select id="searchListDlvEstDtlInqInfo" parameterType="fw.domain.sp.dlv.dlvresp.DelivResp"
+        resultType="fw.domain.sp.dlv.dlvresp.DelivCheckItem">
+      SELECT S_DLV_EST_DTL.INQ_RESP_VOL AS "checkAmount.vol"
+           , S_DLV_EST_DTL.INQ_RESP_DATE AS "checkDelivDate.dateOfymd"
+        FROM S_DLV_EST_MNG
+       INNER JOIN S_DLV_EST_DTL
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_DTL.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_DTL.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_DTL.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_DTL.DELIV_VERSION
+         AND S_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_DTL.INQ_RESP_IND
+       WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION = #{delivRespManagement.delivRespIdentify.delivVersion, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '1'
+    ORDER BY S_DLV_EST_DTL.DELIV_LINE_NO ASC
+    </select>
+
+    <select id="searchDlvEstRespInfo" parameterType="fw.domain.sp.dlv.dlvresp.DelivResp" resultMap="DelivEstInqInfo_Map">
+      SELECT S_DLV_EST_MNG.ACC_CD
+           , S_DLV_EST_MNG.CUST_CD
+           , S_DLV_EST_MNG.ORDER_NO
+           , S_DLV_EST_MNG.DELIV_VERSION
+           , S_DLV_EST_MNG.ORDER_VERSION
+           , S_DLV_EST_MNG.INQ_RESP_DATE
+           , S_DLV_EST_MNG.RESP_LIMIT_DATE
+           , S_DLV_EST_MNG.INQ_RESP_COMMENT
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION =
+            (SELECT MAX(S_DLV_EST_MNG.DELIV_VERSION)
+               FROM S_DLV_EST_MNG
+              WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+                AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+                AND S_DLV_EST_MNG.DELETE_FLG = '0')
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+    </select>
+
+    <select id="searchListDlvEstDtlRespInfo" parameterType="fw.domain.sp.dlv.dlvresp.DelivResp" resultMap="DelivRespInputItem_Map">
+      SELECT S_DLV_EST_DTL.DELIV_LINE_NO
+           , S_DLV_EST_DTL.INQ_RESP_VOL
+           , S_DLV_EST_DTL.INQ_RESP_DATE
+        FROM S_DLV_EST_MNG
+       INNER JOIN S_DLV_EST_DTL
+          ON S_DLV_EST_MNG.ACC_CD = S_DLV_EST_DTL.ACC_CD
+         AND S_DLV_EST_MNG.CUST_CD = S_DLV_EST_DTL.CUST_CD
+         AND S_DLV_EST_MNG.ORDER_NO = S_DLV_EST_DTL.ORDER_NO
+         AND S_DLV_EST_MNG.DELIV_VERSION = S_DLV_EST_DTL.DELIV_VERSION
+         AND S_DLV_EST_MNG.INQ_RESP_IND = S_DLV_EST_DTL.INQ_RESP_IND
+       WHERE S_DLV_EST_MNG.ACC_CD = #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_VERSION = #{delivRespInputDetail.historyNo.historyNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELIV_VERSION = #{delivRespManagement.delivRespIdentify.delivVersion, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.INQ_RESP_IND = '2'
+    ORDER BY S_DLV_EST_DTL.DELIV_LINE_NO ASC
+    </select>
+
+    <resultMap type="fw.domain.sp.dlv.dlvresp.DelivRespInputItem" id="DelivRespInputItem_Map">
+        <id column="DELIV_LINE_NO" property="rowNo"/>
+        <id column="INQ_RESP_VOL" property="respVol.respVol.vol"/>
+        <id column="INQ_RESP_DATE" property="respDlvEst.respDlvEst.dateOfymd"/>
+    </resultMap>
+
+    <select id="searchMaxDelivVersion" parameterType="fw.domain.sp.dlv.dlvresp.DelivRespIdentify" resultType="int">
+      SELECT COALESCE(MAX(S_DLV_EST_MNG.DELIV_VERSION), 0)
+        FROM S_DLV_EST_MNG
+       WHERE S_DLV_EST_MNG.ACC_CD = #{orderUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.CUST_CD = #{buyerUserCd, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.ORDER_NO = #{orderNo, jdbcType=VARCHAR}
+         AND S_DLV_EST_MNG.DELETE_FLG = '0'
+    </select>
+
+    <insert id="insertDlvEstDtl">
+      INSERT INTO S_DLV_EST_DTL (
+        S_DLV_EST_DTL.ACC_CD
+      , S_DLV_EST_DTL.CUST_CD
+      , S_DLV_EST_DTL.ORDER_NO
+      , S_DLV_EST_DTL.DELIV_VERSION
+      , S_DLV_EST_DTL.INQ_RESP_IND
+      , S_DLV_EST_DTL.DELIV_LINE_NO
+      , S_DLV_EST_DTL.INQ_RESP_DATE
+      , S_DLV_EST_DTL.INQ_RESP_VOL
+      , S_DLV_EST_DTL.CONFIRM_MARK
+      , S_DLV_EST_DTL.DELETE_FLG
+      , S_DLV_EST_DTL.AUTO_DELETE_FLG
+      , S_DLV_EST_DTL.AUTO_DELETE_DATE
+      , S_DLV_EST_DTL.LAST_UPD_DATE
+      , S_DLV_EST_DTL.LAST_UPD_USER_ID
+      , S_DLV_EST_DTL.REG_DATE
+      , S_DLV_EST_DTL.REG_USER_ID
+      ) VALUES (
+        #{delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+      , #{delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+      , #{delivRespIdentify.orderNo, jdbcType=VARCHAR}
+      , #{delivVersion, jdbcType=VARCHAR}
+      , '2'
+      , #{delivRespInputItem.rowNo, jdbcType=VARCHAR}
+      , #{delivRespInputItem.respDlvEst.respDlvEst.dateOfymd, jdbcType=VARCHAR}
+      , #{delivRespInputItem.respVol.respVol.vol, jdbcType=VARCHAR}
+      , #{confirmMark, jdbcType=VARCHAR}
+      , '0'
+      , '0'
+      , ''
+      , '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}'
+      , '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+      , '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}'
+      , '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+      )
+    </insert>
+
+    <insert id="insertDlvEstMng">
+      INSERT INTO S_DLV_EST_MNG (
+        S_DLV_EST_MNG.ACC_CD
+      , S_DLV_EST_MNG.CUST_CD
+      , S_DLV_EST_MNG.ORDER_NO
+      , S_DLV_EST_MNG.ORDER_VERSION
+      , S_DLV_EST_MNG.DELIV_VERSION
+      , S_DLV_EST_MNG.DLV_EST_MNG_SEQ
+      , S_DLV_EST_MNG.INFO_IND
+      , S_DLV_EST_MNG.INQ_RESP_IND
+      , S_DLV_EST_MNG.INQ_RESP_DATE
+      , S_DLV_EST_MNG.RESP_LIMIT_DATE
+      , S_DLV_EST_MNG.INQ_RESP_COMMENT
+      , S_DLV_EST_MNG.CONFIRM_MARK
+      , S_DLV_EST_MNG.SEND_IND
+      , S_DLV_EST_MNG.RECEIPT_NUMBER
+      , S_DLV_EST_MNG.DELETE_FLG
+      , S_DLV_EST_MNG.AUTO_DELETE_FLG
+      , S_DLV_EST_MNG.AUTO_DELETE_DATE
+      , S_DLV_EST_MNG.LAST_UPD_DATE
+      , S_DLV_EST_MNG.LAST_UPD_USER_ID
+      , S_DLV_EST_MNG.REG_DATE
+      , S_DLV_EST_MNG.REG_USER_ID
+      ) VALUES (
+        #{delivRespManagement.delivRespIdentify.orderUserCd, jdbcType=VARCHAR}
+      , #{delivRespManagement.delivRespIdentify.buyerUserCd, jdbcType=VARCHAR}
+      , #{delivRespManagement.delivRespIdentify.orderNo, jdbcType=VARCHAR}
+      , #{orderVersion}
+      , #{delivVersion}
+      , #{dlvEstSeq}
+      , '0702'
+      , '2'
+      , '${@fw.common.util.AppUtil@getSysDate()}'
+      , #{respLimitDate, jdbcType=VARCHAR}
+      , #{delivRespManagement.respBackup.respBackup.comment, jdbcType=VARCHAR}
+      , #{confirmMark, jdbcType=VARCHAR}
+      , '0'
+      , ''
+      , '0'
+      , '0'
+      , ''
+      , '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}'
+      , '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+      , '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}'
+      , '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+      )
+    </insert>
+
+    <update id="updateOrder">
+      UPDATE S_ORDER SET
+             S_ORDER.ORDER_STATUS = '02'
+           , S_ORDER.LAST_UPD_DATE = '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}'
+           , S_ORDER.LAST_UPD_USER_ID = '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+       WHERE S_ORDER.ORDER_SEQ = #{orderSeq, jdbcType=VARCHAR}
+         AND S_ORDER.DELETE_FLG = '0'
+    </update>
+
+</mapper>

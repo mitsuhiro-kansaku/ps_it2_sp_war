@@ -1,0 +1,29 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('PRINT_LIST')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+
+<script language="javascript" type="text/javascript">
+<!--
+
+
+function onLoad(){
+   var flag = "#jsEscape($!flag)";
+   if(flag=="false")
+   {
+      location.href = "$!requestContext.contextPath/lgn/login/SPLGN010";
+   }
+}
+
+//-->
+</script>
+</head>
+<body onload="onLoad();">
+
+</body>
+
+</html>

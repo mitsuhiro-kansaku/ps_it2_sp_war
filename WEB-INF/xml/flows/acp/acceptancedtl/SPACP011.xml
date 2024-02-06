@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="identify" class="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemIdentify" />
+    <var name="acceptItem" class="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoItem" />
+    
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+    
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPACP011Service.init(searchCondition)"
+            result="flowScope.acceptList" />
+        <transition to="SPACP011" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPACP011Service.page(searchCondition)"
+            result="flowScope.acceptList" />
+        <transition to="SPACP011" />
+    </action-state>
+
+    <view-state id="SPACP011" model="acceptItem"
+        view="acp/acceptancedtl/SPACP011">
+        <transition on="order" validate="false">
+            <evaluate expression="SPACP011Service.order(searchCondition)"
+                result="flowScope.acceptList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPACP011Service.page(searchCondition)"
+                result="flowScope.acceptList" />
+        </transition>
+        <transition on="back" to="home" validate="false" />
+        <transition on="detail" to="SPACP012" validate="false" >
+            <set name="identify.fiscalYearMonth.dateOfym" value="requestParameters.fiscalYearMonth1"/>
+            <set name="identify.buyerCompany" value="requestParameters.buyerCompany"/>
+            <set name="identify.buyerSectionCd" value="requestParameters.buyerSectionCd"/>
+            <set name="identify.currencyCd" value="requestParameters.currencyCd"/>
+            <set name="identify.accCd" value="requestParameters.accCd"/>
+        </transition>
+    </view-state>
+    <subflow-state id="SPACP012" subflow="acp/acceptancedtl/SPACP012">
+        <input name="identify" value="identify" />
+    </subflow-state>
+</flow>

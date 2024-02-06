@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+
+<HEAD>
+## ＩＴ３-00202-000 2013.07.12 DEL SBO_WANGXM
+##<TITLE>#customSpringMessage('upload_result_013')</TITLE>
+## ＩＴ３-00202-000 2013.07.12 ADD SBO_WANGXM
+<TITLE>#customSpringMessage('UPLOAD_RESULT')</TITLE>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link id="CSS_CORNERS" rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link id="CSS_CORNERS" rel="stylesheet" href="../../include/Color.css" type="text/css">
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript">
+
+<!--
+## +++++ 強化-00924-000 2013/04/24 ADD SBO_pangzhen START +++++
+parent.backUrl="${flowExecutionUrl}&_eventId=back";
+## +++++ 強化-00924-000 2013/04/24 ADD SBO_pangzhen -END- +++++
+function onLoad() {
+
+    changeFontSize();
+
+}
+
+function changeFontSize() {
+    //changeFontSize0();
+}
+
+function back() {
+    top.SearchFlg = true;
+    history.back();
+}
+
+//-->
+</SCRIPT>
+</HEAD>
+<body id="BODY" class="Body" topmargin="10" leftmargin="10" marginwidth="0" marginheight="0" align="left" onload="onLoad();" >
+
+<FORM NAME="Body">
+#customFormHiddenInput("EVENT_ID" "")
+#customFormHiddenInput("OPERATION" "")
+<CENTER>
+
+#if($errorList.size()==0)
+## ＩＴ３-00202-000 2013.07.12 DEL SBO_WANGXM
+##<b>#customSpringMessage('upload_result_003')</b>
+<BR>
+#else
+<b>
+<span class="FontLargeAnkBold">#customSpringMessage('UPLOAD_RESULT_HEADER_COMMENT')</span>
+</b>
+<TABLE id="TABLE" class="ListArea" BORDER="1" CELLPADDING="2" CELLSPACING="1" WIDTH="100%">
+  <TR>
+    <th label="case" class="BoxHeaderCenter FontSmall">No.</TH>## <!--No. -->
+    <th label="case" class="BoxHeaderCenter FontSmall">#customSpringMessage('UPLOAD_FILE')</TH>## アップロードファイル名
+    <th label="case" class="BoxHeaderCenter FontSmall">#customSpringMessage('DELIV_LINE_NO')</TH>## <!--行番号 -->
+    <th label="case" class="BoxHeaderCenter FontSmall">#customSpringMessage('ITEM_NO')</TH>##  <!--項目番号 -->
+    <th label="case" class="BoxHeaderCenter FontSmall">#customSpringMessage('ITEM_NAME_UPLOAD')</TH>## <!--項目名 -->
+    <th label="case" class="BoxHeaderCenter FontSmall">#customSpringMessage('ERRORS')</TH>## <!--エラー内容 -->
+  </TR>
+#foreach($!error in $!errorList)
+  <TR >
+     <TD class="BoxDetailRight">
+        <span class="FontList">$foreach.count</span>
+    </TD>
+    <TD class="BoxDetailCenter">
+        <span class="FontList">#out($!error.fileName)</span>
+    </TD>
+    <TD class="BoxDetailRight">
+        <span class="FontList">#if($!error.lineNo != '0')$!error.lineNo#end</span>
+    </TD>
+    <TD class="BoxDetailRight">
+        <span class="FontList">#if($!error.itemNo != '0')$!error.itemNo#end</span>
+    </TD>
+    <TD class="BoxDetailLeft">
+        <span class="FontList">#out($!error.itemName)</span>
+    </TD>
+    <TD class="BoxDetailLeft">
+     ## +++++ 強化-01816-000　2013/06/21 ADD SBO_KANGJW START +++++
+    <span class="FontList">#out($!error.error)</span>
+     ## +++++ 強化-01816-000　2013/06/21 ADD SBO_KANGJW END +++++
+     ## ----- 強化-01816-000　2013/06/21 DEL SBO_KANGJW START -----
+     ##<span class="FontList">$!error.error</span>
+     ## ----- 強化-01816-000　2013/06/21 DEL SBO_KANGJW END -----
+    </TD>
+    </TR>
+    #end
+</TABLE>
+<BR>
+#end
+## +++++  強化-01777-000 2013/06/09 ADD SBO_wangzf START +++++
+<input type="button" class="SmallButton" value="#customSpringMessage('BACK')" onClick="back()">## <!--戻る -->
+## +++++  強化-01777-000 2013/06/09 ADD SBO_wangzf END +++++
+## -----  強化-01777-000 2013/06/09 DEL SBO_wangzf START -----
+##<input type="button" class="SmallButton" value="戻る" onClick="back()">## <!--戻る -->
+## -----  強化-01777-000 2013/06/09 DEL SBO_wangzf END -----
+</CENTER>
+</FORM>
+</BODY>
+</HTML>

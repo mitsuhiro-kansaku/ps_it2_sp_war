@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('QUOT_ANS_INPUT')</title><!--見積回答入力-->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+
+var maxIndex = 0;
+var isClickable = false;
+
+function onLoad() {
+    setFocus();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        alert(alertMessage);
+    }
+
+    //format money if it has value
+    convert();
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        isClickable = true;
+        return;
+    }
+    var isAnswer = '#jsEscape($!isAnswer)';
+    if(isAnswer == 'true'){
+        #set( $mQuotReply = "#customSpringMessage('QUOT_REPLY')" )
+        alert('#customMessageArgs("I005",[$mQuotReply])');
+        buttonDisable();
+        top.iframeChange("${flowExecutionUrl}&_eventId=back");
+        return;
+    }
+     var isDismiss = '#jsEscape($!isDismiss)';
+    if(isDismiss == 'true'){
+        #set( $mQuotReply = "#customSpringMessage('QUOT_REPLY')" )
+        alert('#customMessageArgs("I033",[$mQuotReply])');
+        buttonDisable();
+        top.iframeChange("${flowExecutionUrl}&_eventId=back");
+        return;
+    }
+
+    isClickable = true;
+    ## 2015/06/18 ADD RIKI_SUGIYAMA START
+    var isTempSave = '#jsEscape($!isTempSave)';
+    if(isTempSave == 'true'){
+        #set( $mQuotReply = "#customSpringMessage('QUOT_REPLY')" )
+        alert('#customMessageArgs("I030",[$mQuotReply])');
+        top.iframeChange("${flowExecutionUrl}&_eventId=back");
+    }
+    ## 2015/06/18 ADD RIKI_SUGIYAMA END
+}
+
+function exec() {
+    if(!isClickable) {
+        return;
+    }
+    #set( $mmQuotReply = "#customSpringMessage('QUOT_REQ')" )
+    #set( $reply = "#customSpringMessage('REQ_REPLY')" )
+    if( !confirm('#customMessageArgs("W001",[$mmQuotReply,$reply])') ) {
+        return;
+    }
+    setFileDeleteFlg();
+
+    buttonDisable();
+
+    getObj("Body").action="${flowExecutionUrl}&_eventId=answer";
+    getObj("Body").submit();
+}
+
+function getCalendar(num,objName){
+    var obj = document.getElementsByName(objName)[0];
+    initSearchBox(num,obj);
+}
+
+function clearfile(no, attachNo) {
+    var obj = document.getElementById("File" + no + "-" + attachNo);
+    var str = obj.innerHTML;
+    obj.innerHTML = str;
+}
+
+function setFileDeleteFlg() {
+     var mount=#jsEscape($!{quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList.size()});
+     for(var i = 0; i < mount; i++){
+        var del = getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile.screenDelFlg").value;
+        var file = getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile.screenFile").value;
+        if("1" == del && file.length > 0) {
+            getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile.screenDelFlg").value = "0";
+        }
+        ## 2015/06/18 ADD RIKIS_SUGIYAMA START
+        del = getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile2.screenDelFlg").value;
+        file = getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile2.screenFile").value;
+        if("1" == del && file.length > 0) {
+            getObj("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].attachFile2.screenDelFlg").value = "0";
+        }
+        ## 2015/06/18 ADD RIKIS_SUGIYAMA END
+     }
+}
+function downloadFile(index, attachNo) {
+    parent.iframeChange('${flowExecutionUrl}&_eventId=download','index',index,'attachNo',attachNo);
+}
+
+ function dismiss(){
+    if(!isClickable) {
+        return;
+    }
+    #set( $mmQuotReply = "#customSpringMessage('QUOT_REQ')" )
+    #set( $refuse = "#customSpringMessage('REFUSE')" )
+    if( !confirm('#customMessageArgs("W001",[$mmQuotReply,$refuse])') ) {
+            return;
+        }
+        setFileDeleteFlg();
+
+        buttonDisable();
+
+        getObj("Body").action="${flowExecutionUrl}&_eventId=dismiss";
+        getObj("Body").submit();
+    }
+## 2015/06/18 ADD RIKI_SUGIYAMA START
+function tempSave(){
+    if(!isClickable) {
+        return;
+    }
+    setFileDeleteFlg();
+
+    buttonDisable();
+
+    getObj("Body").action="${flowExecutionUrl}&_eventId=tempSave";
+    getObj("Body").submit();
+}
+## 2015/06/18 ADD RIKI_SUGIYAMA END
+
+function add(index){
+    var obj1 = document.getElementById("quotRespInfoEachManagement.quotRespInputItemEachList["+index+"].respVol.respVol.volFormat");
+    var obj2 = document.getElementById("quotRespInfoEachManagement.quotRespInputItemEachList["+index+"].respPrice.respPrice.amountFormat");
+    var vol = obj1.value.replace(/,/g,"");
+    var price = obj2.value.replace(/,/g,"");
+    var obj5 = document.getElementById("quotRespInfoEachManagement.quotRespInputItemEachList["+index+"].respAmount.respAmount.amountFormat");
+    var obj3 = document.getElementById("respAmount["+index+"]");
+    var custCd = '#jsEscape($!quotRespEach.quotDetail.custInfo.custCompany.code)';
+    var currencyCd = document.getElementById("quotRespEach.quotDetail.QuotItemList["+index+"].currencyCd").innerText;
+
+    $.ajax({
+        type: "POST",
+        async:false,
+        url:"../../priceController/calculateAmount",
+        data: {
+            "vol.vol":cleanXss(vol),
+            "price.amountFormat":cleanXss(price),
+            "custCd":cleanXss(custCd),
+            "currencyCd":cleanXss(currencyCd)
+        },
+        success:function(data){
+            if(data){
+                if(data.respAmount.amountFormat==""){
+                    obj3.innerHTML="0";
+                }else{
+                    obj3.innerHTML=data.respAmount.amountFormat;
+                }
+                obj5.value=data.respAmount.amountFormat;
+                calTotalAmount(index)
+            }
+        }
+    });
+}
+
+function calTotalAmount(index){
+    var custCd = '#jsEscape($!quotRespEach.quotDetail.custInfo.custCompany.code)';
+    var currencyCd = document.getElementById("quotRespEach.quotDetail.QuotItemList["+index+"].currencyCd").innerText;
+    var totalAmountObj = document.getElementById("quotTotalAmount");
+    var amounObj=document.getElementById("quotRespInfoEachManagement.quotTotalAmount.quotTotalAmount.amountFormat");
+
+	$.ajax({
+        type: "POST",
+        async:false,
+        url:"../../priceController/totalAmount",
+        data: {
+            #foreach($!item in $!quotRespEach.quotDetail.quotItemList)
+                "amountArray[$velocityCount].amountFormat":cleanXss(getObj("quotRespInfoEachManagement.quotRespInputItemEachList[$velocityCount].respAmount.respAmount.amountFormat").value),
+            #end
+            "custCd":cleanXss(custCd),
+            "currencyCd":cleanXss(currencyCd)
+        },
+        success:function(data){
+            if(data){
+                totalAmountObj.innerHTML = data.totalAmount.amountFormat;
+                amounObj.value=data.totalAmount.amountFormat;
+            }
+        }
+   });
+}
+
+function convert(){
+    //add ","
+    var mount=#jsEscape($!{quotRespEach.quotDetail.quotItemList.size()});
+    for(var i=0;i<mount;i++){
+        //回答金額hidden
+        var tmpHidden=document.getElementById("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].respAmount.respAmount.amountFormat");
+        var tmpInput=document.createElement("input");
+        tmpInput.value=tmpHidden.value;
+        editVal(tmpInput);
+        //回答金額label
+
+        var tmpLabel=document.getElementById("respAmount["+i+"]");
+
+        if(tmpInput.value==""){
+            tmpLabel.innerHTML="0";
+        }else{
+            tmpLabel.innerHTML=tmpInput.value;
+        }
+
+        //回答単価text
+        var tmpText=document.getElementById("quotRespInfoEachManagement.quotRespInputItemEachList["+i+"].respPrice.respPrice.amountFormat");
+        editVal(tmpText);
+    }
+     //見積合計金額 hidden
+    var tmpHidden=document.getElementById("quotRespInfoEachManagement.quotTotalAmount.quotTotalAmount.amountFormat");
+    var tmpInput=document.createElement("input");
+    tmpInput.value=tmpHidden.value;
+    editVal(tmpInput);
+    //見積合計金額 label
+    var tmpLabel=document.getElementById("quotTotalAmount");
+
+    if(tmpInput.value==""){
+        tmpLabel.innerHTML="0";
+    }else{
+        tmpLabel.innerHTML=tmpInput.value;
+    }
+
+}
+
+
+//-->
+</script>
+</head>
+<body class="CreateArea" onload="onLoad();">
+<table class="NoBorder" width="70%"><tr><td>
+<!-- ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊ -->
+<iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0"scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+</td></tr></table>
+<form id="Body" name="Body" method="post" enctype="multipart/form-data">
+
+    <table class="HomeBox">
+        <tr>
+            <td class="BoxCreateSlip" style="padding:20px 20px 20px 20px">
+                <table width="100%">
+                    <tr>
+                        <td align="left">
+                        <!-- ＊＊＊＊＊＊＊＊＊＊左サイド＊＊＊＊＊＊＊＊＊＊ -->
+                            <table class="NoBorder" width="100%">
+                                <tr>
+                                    <td>
+                                        <u><img src="../../image/mrkCircle.gif"><span id="StepTitle" class="FontStepTitle">#customSpringMessage('QUOT_ANS_INPUT')<!--見積回答の入力--></span></u><br><br>
+                                        <span class="FontSmallBold DarkBlue">#customSpringMessage('SPRES030_HEADER_COMMENT')</span>
+                                    </td>
+                                    <td align="right" valign="middle" style="white-space: nowrap">
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('REFUSE')" onclick="dismiss();"><!--辞　退-->
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('TEMPORARY_PRESERVATION')" onclick="tempSave();"><!--一時保存-->
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('REQ_REPLY')" onclick="exec();"><!--回　答-->
+                                    </td>
+                                </tr>
+                                <tr><td class="error" style="height:0px"  colspan="2">
+                                    $!errorMessage
+                                </td></tr>
+                            </table>
+                            <table class="Box1G" width="950px">
+                                <tbody class="Box1G">
+                                    <tr>
+                                        <td class="Box1H FontBoxHeader" width="20%">#customSpringMessage('QUOT_REQ_NO')<!--見積依頼番号--></td>
+                                        <td nowrap class="Box1D FontSlipNo">
+                                            #out($!quotRespEach.quotRespInfoEachManagement.quotRespIdentify.aplNo)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('REVISION_NUMBER')<!--履歴番号-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespEach.quotRespInfoEachManagement.quotRespIdentify.aplVersion)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_REQ_IND')<!--見積依頼区分-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                          #out($!quotRespEach.quotDetail.quotInd.quotInd_PageValue)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('TITLE_NAME')<!--件名-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                           #out($!quotRespEach.quotDetail.titleName.titleName)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('QUOT_REQ_DATE')<!--見積依頼日-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="NormalAnk">
+                                                #out($!quotRespEach.quotDetail.quotPeriod.quotReqDate.quotReqDate.dateOfymdFormat)
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('QUOT_ANS_LIMIT')<!--見積回答期限-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="BoldAnk">
+                                                #out($!quotRespEach.quotDetail.quotPeriod.quotRespLimitDate.dateOfymdFormat)
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('BUYER_COMPANY')<!--発注企業-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespEach.quotDetail.custInfo.custCompany.code)  &nbsp;
+                                            #out($!quotRespEach.quotDetail.custInfo.custCompany.name)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('BUYER_USER')<!--購買担当者-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="">
+                                                #out($!quotRespEach.quotDetail.custInfo.custUser.sectionPlaceName)&nbsp;
+                                                #out($!quotRespEach.quotDetail.custInfo.custUser.sectionName)
+                                            </span><br>
+                                             <b>
+                                                #out($!quotRespEach.quotDetail.custInfo.custUser.userName)
+                                            </b><br>
+                                            <table class="NoBorder">
+                                                <tr>
+                                                    <td valign="top"><img src="../../image/mrkTel.gif"></td><!--連絡先-->
+                                                    <td nowrap class="FontSmallAnk">
+                                                        <span class="FontMini">#customSpringMessage('TEL')</span><!-- TEL -->
+                                                        #out($!quotRespEach.quotDetail.custInfo.custUser.contact.telNo.telNo)
+                                                    </td>
+
+                                                    <td valign="top"><img src="../../image/mrkMail.gif"></td><!--メールアドレス-->
+                                                    <td nowrap class="FontSmallAnk">
+                                                        <a class="FontMiniAnk" href='mailto:$!quotRespEach.quotDetail.custInfo.custUser.userName<$!quotRespEach.quotDetail.custInfo.custUser.contact.mailAddr.mail>'>
+                                                            #out($!quotRespEach.quotDetail.custInfo.custUser.contact.mailAddr.mail)</a>
+                                                    </td>
+
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('FOR_SUPPRIER_COMMENT')<!--取引先向けコメント-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span id="quotDetail.custInfo.comment.comment" class="FontSmallAnk">
+                                          #out($!quotRespEach.quotDetail.custInfo.comment.comment)
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">#customSpringMessage('ATTACH_FILE')</td> ##添付ファイル
+                                        <td nowrap class="Box1D FontSmallAnk" >
+                                        #set($fileList = $quotRespEach.quotDetail.attachFileLinkList.list)
+                                        #foreach($attachFile in $fileList)
+                                            <a href = "#" onclick = "javascript:iframeChange('${flowExecutionUrl}&_eventId=downloadReqHeaderAttachment&index=$foreach.index')" >#out($!attachFile.fileName)</a>
+                                            #if($velocityHasNext),&nbsp;#end
+                                        #end
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <br>
+
+                            <table class="Box1G" width="100%">
+                                <tbody class="Box1G">
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader" width="20%">
+                                            #customSpringMessage('QUOT_RESP_END_DATE')<!--見積有効期限-->
+                                            <span class="FontMini Red">&nbsp;※</span>
+                                        </th>
+                                        <td class="Box1D FontSmallAnk">
+                                            #springFormInput("quotRespEach.quotRespInfoEachManagement.quotPeriod.quotValidDate.quotValidDate.dateOfymdFormat" "maxLength=8 size=11 class='MiddleAnk noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                            <img class="Icon" src="../../image/btnCalendar.gif" onclick="getCalendar(1,'quotRespInfoEachManagement.quotPeriod.quotValidDate.quotValidDate.dateOfymdFormat');"><!--カレンダー-->
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader" width="20%">
+                                            #customSpringMessage('COMMENT')<!--コメント-->
+                                        </th>
+                                        <td class="Box1D FontSmallAnk">
+                                            #springFormTextarea("quotRespEach.quotRespInfoEachManagement.comment.comment" "class='Small' cols='82' rows='3'")
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br>
+                            <table id="DetailTable" class="Box1G" width="100%">
+                                <tbody id="Detail1" class="Box1G">
+                                    #set($No=0)
+                                    #set($index=1)
+                                    #foreach($quotItem in $quotRespEach.quotDetail.QuotItemList)
+                                    <tr>
+                                        ## 2015/06/17 ADD RIKI_SUGIYAMA START
+                                        <td nowrap class="Box1H FontSmallAnkBold" rowspan="18" width="5%">
+                                        ## 2015/06/17 ADD RIKI_SUGIYAMA END
+                                        ## 2015/06/17 DELETE RIKI_SUGIYAMA START
+                                        ##<td nowrap class="Box1H FontSmallAnkBold" rowspan="17" width="5%">
+                                        ## 2015/06/17 DELETE RIKI_SUGIYAMA END
+                                            <p>$index</p>
+                                        </td>
+                                        <th class="Box1H FontBoxHeader" width="15%">
+                                            #customSpringMessage('QUOT_REQ_DTL_NO')<!--見積依頼明細番号-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk" style="width:750px;">
+                                            <span class="FontMiddleAnkBold">
+                                                #out($quotItem.quotReqItemNo.quotReqItemNo)
+                                            </span><br>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('ITEM_CD')<!--品名コード-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="MiddleBoldAnk">
+                                               #out($quotItem.itemCd)
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('ITEM_NAME')<!--品名-->
+                                            #if($quotItem.itemCd == "")
+                                            <span class="FontMini Red">&nbsp;※</span>
+                                            #end
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #if($quotItem.itemCd == "")
+                                                #springFormInput("quotRespEach.quotDetail.quotItemList[$velocityCount].itemName" "class='Small onIME' maxLength='60' size='120'" "")
+                                            #else
+                                                #out($quotItem.itemName)
+                                            #end
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('MANUFACT_NAME')<!--メーカー名-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #if($quotItem.itemCd == "")
+                                                #springFormInput("quotRespEach.quotDetail.quotItemList[$velocityCount].manufactName" "class='Small onIME' maxLength='30' size='60'" "")
+                                            #else
+                                              #out($quotItem.manufactName)
+                                            #end
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('KATASHIKI')<!--型式-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+
+                                            #if($quotItem.itemCd == "")
+                                                #springFormInput("quotRespEach.quotDetail.quotItemList[$velocityCount].Katashiki" "class='Small onIME' maxLength='60' size='120'" "")
+                                            #else
+                                               #out($quotItem.katashiki)
+                                            #end
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('UNIT')<!--単位-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($quotItem.unitName)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('REQ_DELIV_DATE')<!--希望納期-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($quotItem.hopeDlvEst.hopeDlvEst.dateOfymdFormat)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_REQ_VOL')<!--見積依頼数量-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($quotItem.quotReqVolFormat)
+                                            <span class="FontMini">#out($quotItem.unitName)</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('REQ_ATTACH') ##依頼添付
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                        #if($quotItem.attachFileLink.notEmpty)
+                                            <a href = "#" onclick = "javascript:iframeChange('${flowExecutionUrl}&_eventId=downloadReqDetailAttachment&index=$foreach.index')" >#out($!quotItem.attachFileLink.fileName)</a>
+                                        #end
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_RESP_DELIV_DATE')<!--回答納期-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <table>
+                                                <tr>
+                                                    <td class="FontSmall" align="right">
+                                                    #springFormInput("quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].respDlvEst.respDlvEst.dateOfymdFormat" "class='SmallAnk noIME' maxlength='8' type='text' size='12' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    </td>
+                                                    <td class="FontMini" align="left" valign="bottom">
+                                                        <img class="Icon" name="DlvdateSearch1" src="../../image/btnCalendar.gif" onclick="getCalendar(1,'quotRespInfoEachManagement.quotRespInputItemEachList[$No].respDlvEst.respDlvEst.dateOfymdFormat');">
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('STD_ORDER_LT')<!--標準納入日数-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <table>
+                                                <tr>
+                                                    <td class="FontSmall" align="right">
+                                                        #springFormInput("quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].standardDelivDayCount.standardDelivDayCount.dayCount" "maxLength=3 size=12 class='SmallRight noIME'")
+                                                    </td>
+                                                    <td>&nbsp;</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_RESP_VOL')<!--回答数量--><span class="FontMini Red">&nbsp;※</span>
+                                        </th>
+
+
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <table>
+                                                <tr>
+                                                    <td class="FontSmall" align="right">
+                                                        #springFormInput("quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].respVol.respVol.volFormat" "class='SmallRight noIME' size='18' maxLength='13' onblur='add($No);editVal(this);' onfocus='deleteComma(this);'")
+                                                    </td>
+                                                    <td class="FontMini" align="left" valign="bottom">
+                                                        &nbsp; #out($quotRespEach.quotDetail.QuotItemList[$No].unitName)
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader">
+                                            #customSpringMessage('CURRENCY_CD')<!--通貨コード-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="FontMiniAnkBold" id = "quotRespEach.quotDetail.QuotItemList[$No].currencyCd" name = "quotRespEach.quotDetail.QuotItemList[$No].currencyCd">#out($quotRespEach.quotDetail.QuotItemList[$No].currencyCd)</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader">
+                                            #customSpringMessage('ANS_UNIT_PRICE')<!--回答単価--><span class="FontMini Red">&nbsp;※</span>
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="FontCurrSmall">#out($quotRespEach.quotDetail.QuotItemList[0].currencyMark)</span>
+                                            #springFormInput("quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].respPrice.respPrice.amountFormat" "class='MiddleRight noIME' size='24'  maxLength='17' onblur='add($No);editVal(this);' onfocus='deleteComma(this);'")
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_RESP_AMOUNT')<!--回答金額-->
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="FontCurrSmall">#out($quotRespEach.quotDetail.QuotItemList[$No].currencyMark)</span>
+                                            #customFormHiddenInput("quotRespInfoEachManagement.quotRespInputItemEachList[$No].respAmount.respAmount.amountFormat" "$!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].respAmount.respAmount.amountFormat")
+                                            <label id="respAmount[$No]" name="respAmount[$No]" class="FontCurrSmall">
+
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="Box1H FontBoxHeader">
+                                            #customSpringMessage('TAX_IND')<!--課税区分--><span class="FontMini Red">&nbsp;※</span>
+                                        </th>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #customFormSingleSelect("quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].taxInd.taxInd" $taxCdList "")
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('ATTACH_QUOT_FILE') ## 回答添付
+                                        </th>
+                                        <td class="Box1D FontSmallAnk">
+                                            <table width="100%" class="FontSmallAnk">
+                                                <tr>
+                                                    #set( $fileDisp = "" )
+                                                    #if($!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.fileName!='')
+                                                        <td id="FileLink1" nowrap>
+                                                        <a href="#" onclick="downloadFile($No,1);"> #out($!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.fileName)</a>
+                                                            <input type="checkbox" onclick="getObj('quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenFile').disabled =!this.checked;getObj('fileClearBtn_$index').disabled =!this.checked;getObj('quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenDelFlg').value = this.checked?'1':'0';"/>#customSpringMessage('ACTION_DELETE')
+                                                            #customFormHiddenInput("quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenDelFlg" "$!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenDelFlg")
+                                                        </td>
+                                                        <td id="File${index}-1" nowrap>
+                                                        #set( $fileDisp = "disabled" )
+                                                    #else
+                                                        <td id="File${index}-1" nowrap>
+                                                        #customFormHiddenInput("quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenDelFlg" "0")
+                                                    #end
+                                                            <input type="file"
+                                                                id="quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenFile"
+                                                                name="quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.screenFile"
+                                                                size="50"
+                                                                class="Small"
+                                                                #if($!dspFlg=='1')
+                                                                readonly
+                                                                #end
+                                                                value="$!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile.fileName" $fileDisp>
+                                                        &nbsp;
+                                                        <input id="fileClearBtn_$index" type="button" class="MinimumButton" onclick="clearfile($index,1);" value="#customSpringMessage('ACTION_CLEAR')" $fileDisp><!--クリア-->
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    ## 2015/06/17 ADD RIKI_SUGIYAMA START
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader">
+                                           #customSpringMessage('ATTACH_QUOT_FILE2') ## 回答添付
+                                        </th>
+                                        <td class="Box1D FontSmallAnk">
+                                            <table width="100%" class="FontSmallAnk">
+                                                <tr>
+                                                    #set( $fileDisp = "" )
+                                                    #if($!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.fileName!='')
+                                                        <td id="FileLink2" nowrap>
+                                                        <a href="#" onclick="downloadFile($No,2);"> #out($!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.fileName)</a>
+
+                                                            <input type="checkbox" onclick="getObj('quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenFile').disabled =!this.checked;getObj('fileClearBtn_${index}-2').disabled =!this.checked;getObj('quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenDelFlg').value = this.checked?'1':'0';"/>#customSpringMessage('ACTION_DELETE')
+                                                            #customFormHiddenInput("quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenDelFlg" "$!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenDelFlg")
+                                                        </td>
+                                                        <td id="File${index}-2" nowrap>
+                                                        #set( $fileDisp = "disabled" )
+                                                    #else
+                                                        <td id="File${index}-2" nowrap>
+                                                        #customFormHiddenInput("quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenDelFlg" "0")
+                                                    #end
+                                                            <input type="file"
+                                                                id="quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenFile"
+                                                                name="quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.screenFile"
+                                                                size="50"
+                                                                class="Small"
+                                                                #if($!dspFlg=='1')
+                                                                readonly
+                                                                #end
+                                                                value="$!quotRespEach.quotRespInfoEachManagement.quotRespInputItemEachList[$No].attachFile2.fileName" $fileDisp>
+                                                        &nbsp;
+                                                        <input id="fileClearBtn_${index}-2" type="button" class="MinimumButton" onclick="clearfile($index,2);" value="#customSpringMessage('ACTION_CLEAR')" $fileDisp><!--クリア-->
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    ## 2015/06/17 ADD RIKI_SUGIYAMA END
+                                    #set($index=$index+1)
+                                    #set($No=$No+1)
+                                    #end
+                                </tbody>
+                            </table>
+
+                            <br>
+
+                            <table class="Box1G" width="100%">
+                                <tbody class="Box1H FontBoxHeader">
+                                    <tr>
+                                        <th nowrap class="Box1H FontBoxHeader" width="20%">
+                                            #customSpringMessage('QUOT_REQ_TOTAL_AMOUNT')<!--見積合計金額-->
+                                        </th>
+                                        <td rowspan="1" class="Box1D FontSmallAnk" style="width:750px;">
+                                            <span class="FontCurrSmall">
+                                                #if($No > 0)
+                                                $quotRespEach.quotDetail.QuotItemList[0].currencyMark
+                                                #end
+                                            </span>
+                                            #customFormHiddenInput("quotRespInfoEachManagement.quotTotalAmount.quotTotalAmount.amountFormat" "$!quotRespEach.quotRespInfoEachManagement.quotTotalAmount.quotTotalAmount.amountFormat")
+                                            <label id="quotTotalAmount" name="quotTotalAmount" class="FontCurrSmall">
+                                            </label>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <br>
+
+                            <table class="NoBorder" width="100%">
+                                <tr>
+                                    <td>#customSpringMessage('SPRES030_FOOTER_COMMENT')</td>
+                                    <td align="right" valign="middle">
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('REFUSE')" onclick="dismiss();">
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('TEMPORARY_PRESERVATION')" onclick="tempSave();">
+                                        <input type="button" class="LargeButton" value="#customSpringMessage('REQ_REPLY')" onclick="exec();">
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+
+    </table>
+    </form>
+</body>
+</html>

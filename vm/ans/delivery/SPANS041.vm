@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ja">
+<head>
+#set($commonTitle = "#customSpringMessage('DELIV_DATE_COLLECTIVE_REPLY')")
+<title>$commonTitle</title><!--納期一括回答-->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+## ビューが初めて表示される直前に発生します。
+function onLoad(){
+    window.parent.getObj("edit").style.display="";
+    parentButtonEnable();
+    dataLoadHasPage();
+    var alertMessage="$!alertMessage";
+    if(alertMessage!="" && alertMessage.indexOf('W009')==-1){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+
+#if("$!isSuccess" == "")
+    var errorMsg="$!errorMessage";
+    if(errorMsg!=""){
+        return;
+    }else{
+        ## ユーザー確認が必要なメッセージは、エラーメッセージの後に追記する
+        if(alertMessage!="" && alertMessage.indexOf('W009')!=-1){
+            ## 回答納期が過去日の場合は、警告メッセージを出力する
+            if(confirm("$alertMessage")){
+                buttonDisable();
+                parentButtonDisable();
+                getObj("BodyForm").action="${flowExecutionUrl}&_eventId=answerProcessing&checkPass=1";
+                getObj("BodyForm").submit();
+                return;
+            }
+        }
+    }
+#end
+    var isShowDetail="#jsEscape($!isShowDetail)";
+    if(isShowDetail=="true"){
+        parent.poppage("${flowExecutionUrl}&_eventId=detail&&type=detailDelivResp","DETAIL","800","700");
+        return;
+    }
+    var isShowAnswerDetail="#jsEscape($!isShowAnswerDetail)";
+    if(isShowAnswerDetail=="true"){
+        parent.poppage("${flowExecutionUrl}&_eventId=answerDetail","DETAIL","800","500");
+        return;
+    }
+    var isShowInputEach="#jsEscape($!isShowInputEach)";
+    if(isShowInputEach=="true"){
+        top.iframeChange('${flowExecutionUrl}&_eventId=answerInputEach',"pageid","SPANS030");
+        return;
+    }
+    var isSuccess="#jsEscape($!isSuccess)";
+    if(isSuccess=="true"){
+        #set($params = ["#customSpringMessage('DELIV_DATE_RESP')"])
+        alert("#customMessageArgs('I005',$params)");
+    }
+}
+## 「回答処理」ボタンをクリックしたとき発生します。
+function doEdit(){
+    var count=0;
+    $("input:[type=checkbox][name^=status_]").each(function(){
+        if($(this).prop("checked"))
+            count++;
+    });
+    if(count==0){
+        alert("#nothingSelectedMessage()");
+    }else{
+        #set($params = ["#customSpringMessage('DELIV_DATE_RESP_ACTION')","#customSpringMessage('ACTION_RUN')"]);
+        if(!confirm("#customMessageArgs('W001',$params)")){
+            return;
+        }
+        buttonDisable();
+        parentButtonDisable();
+        getObj("BodyForm").action="${flowExecutionUrl}&_eventId=answerProcessing";
+        getObj("BodyForm").submit();
+    }
+}
+## 全選択/全選択解除をクリックしたとき発生します。
+$(function(){
+    $(document).delegate('#ParentCheckBox','change',function(){
+        if($(this).prop('disabled')){ return; }
+        var checked = $(this).prop('checked');
+        $('input:[type=checkbox][name^=status_]').each(function(index){
+            if($(this).prop('disabled')){ return; }
+            var status;
+            if(checked){
+                $('tr:[id=Row_'+index+']').css('background-color','#ff9');
+                status = "1";
+            }else{
+                $('tr:[id=Row_'+index+']').css('background-color','');
+                status = "0";
+            }
+            getObj("delivRespListItemList["+index+"].checkStatus").value=status;
+            $(this).prop('checked',checked);
+        });
+    });
+});
+## 選択/選択解除ボタンをクリックしたとき発生します。
+function checkboxOnClick(obj,index){
+    if(obj.disabled){ return; }
+    var status;
+    if(obj.checked){
+        $('tr:[id=Row_'+index+']').css('background-color','#ff9');
+        status = "1";
+    }else{
+        $('tr:[id=Row_'+index+']').css('background-color','');
+        status = "0";
+    }
+    getObj("delivRespListItemList["+index+"].checkStatus").value=status;
+}
+## 「詳細」ボタンをクリックしたときに発生します。
+function openDetail(index){
+    parent.iframeChange("${flowExecutionUrl}&_eventId=detailValidate","index",index,"HIDDENAREA");
+}
+## 「前回回答」リンクをクリックしたときに発生します。
+function openAnsDetail(index){
+    parent.iframeChange("${flowExecutionUrl}&_eventId=answerDetailValidate","index",index,"HIDDENAREA");
+}
+## 「分納」ボタンをクリックしたときに発生します。
+function addDetail(obj,index){
+    var body="#TABLE > tbody > ";
+    if($('#bodyTableDiv').length!=0){
+        body="#bodyTableDiv > table > tbody > ";
+    }
+    ## 要素数を取得
+    var respIndex=$(body+'tr:eq('+index+') > td:[id=respVol] > input:[id*=\\.respVol\\.volFormat]').length;
+    if(respIndex>=999){ return; }
+    ## 回答数量の要素を追加
+    var respVolColumn=$(body+'tr:eq('+index+') > td:[id=respVol]');
+    var respVolInput=respVolColumn.find('input:[id=delivRespListItemList\\['+index+'\\]\\.respItemList\\[0\\]\\.respVol\\.volFormat]');
+    var respVolId="delivRespListItemList["+index+"].respItemList["+respIndex+"].respVol.volFormat";
+    $('<br>').appendTo(respVolColumn);
+    $(respVolInput).clone(true).attr('id',respVolId).attr('name',respVolId).val('').appendTo(respVolColumn);
+    ## 回答納期の要素を追加
+    var respDelivDateColumn=$(body+'tr:eq('+index+') > td:[id=respDelivDate]');
+    var respDelivDateInput=respDelivDateColumn.find('input:[id=delivRespListItemList\\['+index+'\\]\\.respItemList\\[0\\]\\.respDelivDate\\.dateOfymdFormat]');
+    var respDelivDateId="delivRespListItemList["+index+"].respItemList["+respIndex+"].respDelivDate.dateOfymdFormat";
+    $('<br>').appendTo(respDelivDateColumn);
+    $(respDelivDateInput).clone(true).attr('id',respDelivDateId).attr('name',respDelivDateId).val('').appendTo(respDelivDateColumn);
+    $('<span>&nbsp;</span>').appendTo(respDelivDateColumn);
+    $('<img class="Icon" src="../../image/btnCalendar.gif">').appendTo(respDelivDateColumn).on('click',function(){
+        initSearchBox(1,getObj(respDelivDateId));
+    });
+    $('<span>&nbsp;</span>').appendTo(respDelivDateColumn);
+    ## 「分納」ボタンを移動する(単純に移動するとクリック後の背景色が残ってしまう削除して追加する)
+    $(respDelivDateColumn).find('input[type="button"]').remove().clone(true).appendTo(respDelivDateColumn);
+    ## 変動した高さを調整するために、画面をリサイズする
+    if($('#bodyTableDiv').length!=0){
+        if($('#colTableDiv > table > tbody > tr:eq('+index+')').height()!=$('#bodyTableDiv > table > tbody > tr:eq('+index+')').height()){
+            $('#colTableDiv > table > tbody > tr:eq('+index+')').height($('#bodyTableDiv > table > tbody > tr:eq('+index+')').height());
+        }
+        setTimeout("parent.resetTableFix()", 300);
+    }else{
+        setTablefix('#TABLE',1,5);
+    }
+}
+//-->
+</script>
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE',1,5);" >
+#if($!errorMessage && $!errorMessage != "")
+<div id="error" class="error">
+    $!errorMessage
+</div>
+#end
+#if($!itemList.delivRespListItemList && $!itemList.delivRespListItemList.size() > 0)
+<form id="BodyForm" name="BodyForm" method="post">
+<iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0"scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+<table id="TABLE" class="ListArea" width="100%">
+    <thead>
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.<!--No.--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')<!--詳細--></th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall">
+                <input name="ParentCheckBox" id="ParentCheckBox" type="checkbox"><!--全選択/全選択解除-->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="V_DLV_RESP.DELIV_DATE_RESP_STATUS"
+                onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.DELIV_DATE_RESP_STATUS')">
+                <span class="BoxHeaderSortItem">#customSpringMessage('STATUS')<!--状態--></span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.ORDER_NO"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.ORDER_NO')">
+                    #customSpringMessage('ORDER_NO')<!--注文番号-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.ORDER_FIRST_DATE"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.ORDER_FIRST_DATE')">
+                    #customSpringMessage('ORDER_DATE')<!--注文日-->
+                </span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                #customSpringMessage('DELIV_CHECK_DATE')<!--納期確認日--><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.RESP_LIMIT_DATE"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.RESP_LIMIT_DATE')">
+                    #customSpringMessage('DELIV_RCV_LIMIT')<!--納期回答期限-->
+                </span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.ITEM_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.ITEM_NAME')">
+                    #customSpringMessage('ITEM_NAME')<!--品名-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.CUST_ITEM_CD"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.CUST_ITEM_CD')">
+                    #customSpringMessage('ITEM_CD')<!--品名コード-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.KATASHIKI"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.KATASHIKI')">
+                    #customSpringMessage('KATASHIKI')<!--型式-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.MANUFACT_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.MANUFACT_NAME')">
+                    #customSpringMessage('MANUFACT')<!--メーカー-->
+                </span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.TITLE_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.TITLE_NAME')">
+                    #customSpringMessage('TITLE_NAME')<!--件名-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.DELIV_PLACE_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.DELIV_PLACE_NAME')">
+                    #customSpringMessage('DELIV_PLACE_NAME')<!--納入先名-->
+                </span><br/>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                #customSpringMessage('ORDER_VOL')<!--注文数量--><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.REMAINING_VOL"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.REMAINING_VOL')">
+                    #customSpringMessage('ORDER_REMAIN_AMOUNT')<!--注文残数量-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.UNIT_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.UNIT_NAME')">
+                    #customSpringMessage('UNIT')<!--単位-->
+                </span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.DELIVERY_DATE"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.DELIVERY_DATE')">
+                    #customSpringMessage('ORDER_DELIV_DATE')<!--注文納期-->
+                </span>
+            </th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('CHECK_AMOUNT')<!--確認数量--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('CHECK_DELIV_DATE')<!--確認納期--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('QUOT_RESP_VOL')<span class="FontWarn">&nbsp;※</span><!--回答数量-->
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('QUOT_RESP_DELIV_DATE')<span class="FontWarn">&nbsp;※</span><!--回答納期--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('RCV_DETAIL')<!--回答備考--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('PUR_USER_COMMENT')<!--発注担当者コメント--></th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('CHECK_DETAIL')<!--確認備考--></th>
+            <th class="BoxHeaderCenter FontSmall">
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.BUYER_COMPANY_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.BUYER_COMPANY_NAME')">
+                    #customSpringMessage('BUYER_COMPANY')<!--発注企業-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.BUYER_SECTION_PLACE_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.BUYER_SECTION_PLACE_NAME')">
+                    #customSpringMessage('ORDER_SECTION_PLACE')<!--発注事業所-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.BUYER_SECTION_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.BUYER_SECTION_NAME')">
+                    #customSpringMessage('ORDER_SECTION')<!--発注部門-->
+                </span><br/>
+                <span label="case" class="BoxHeaderSortItem" id="V_DLV_RESP.BUYER_USER_NAME"
+                    onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','V_DLV_RESP.BUYER_USER_NAME')">
+                    #customSpringMessage('ORDER_USER')<!--発注担当者-->
+                </span>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+    #foreach($!item in $!itemList.delivRespListItemList)
+        <tr id="Row_$foreach.index" name="Row_$foreach.index" #if($foreach.index % 2 == 0) bgcolor="#dce4ef" #else bgcolor="#ffffff" #end #if($!item.checkStatus == '1') style="background-color:#ff9;" #end>
+            #set($rowIndex = $foreach.index)
+            <td class="BoxDetailCenter FontList">$foreach.count</td><!--No.-->
+            <td class="BoxDetailCenter"><!--詳細-->
+                <img id="DetailButton_$foreach.index" class="Icon" src="../../image/btnDetailDisp.gif" onclick="openDetail($foreach.index);">
+            </td>
+            <td id="CheckCol_$foreach.index" class="BoxDetailCenter FontList"><!--選択-->
+                <input type="checkbox" class="Icon" name="status_$foreach.index" onclick="checkboxOnClick(this,$foreach.index);" #if($!item.checkStatus == '1') checked #end>
+                #customFormHiddenInput("delivRespListItemList[$foreach.index].checkStatus" "$!item.checkStatus")
+            </td>
+            <td class="BoxDetailCenter FontStatus" nowrap><!--状態-->
+                #out($!item.status_PageValue)
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap>
+                <span class="FontSlipNo">#out($!item.orderNo)<!--注文番号--></span><br/>
+                #out($!item.orderDate.dateOfymdFormat)<!--注文日-->
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap>
+                #out($!item.delivCheckDate.dateListDisp)<!--納期確認日-->&nbsp;<br/>
+                #out($!item.delivRcvLimit.dateOfymdFormat)<!--納期回答期限-->&nbsp;<br/>
+        #if($!item.preDelivMngIdentify.delivMngSeq!='')
+                <a href="#" onclick="openAnsDetail($foreach.index);">
+                    #customSpringMessage('LAST_RCV')<!--前回回答-->
+                </a>&nbsp;
+        #end
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!item.itemName)<!--品名-->&nbsp;<br/>
+                #out($!item.itemCd)<!--品名コード-->&nbsp;<br/>
+                #out($!item.katashiki)<!--型式-->&nbsp;<br/>
+                #out($!item.manufactName)<!--メーカー名-->&nbsp;
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!item.titleName)<!--件名-->&nbsp;<br/>
+                #out($!item.delivPlaceName)<!--納入先名-->&nbsp;
+            </td>
+            <td class="BoxDetailRight FontList" nowrap>
+                #out($!item.originVol.volFormat)<!--注文数量--><br/>
+                #out($!item.orderRemainAmount.volFormat)<!--注文残数量--><br/>
+                #out($!item.unit)<!--単位-->
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap>
+                #out($!item.orderDelivDate.dateOfymdFormat)<!--注文納期-->
+            </td>
+            <td class="BoxDetailRight FontList" nowrap><!--確認数量-->
+            #foreach($!inqRespItem in $!item.inqRespItemList)
+                #out($!inqRespItem.checkAmount.volFormat)<br>
+            #end
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap><!--確認納期-->
+            #foreach($!inqRespItem in $!item.inqRespItemList)
+                #out($!inqRespItem.checkDelivDate.dateOfymdFormat)<br>
+            #end
+            </td>
+            <td id="respVol" class="BoxDetailLeft FontList" nowrap><!--回答数量-->
+            #foreach($!respItem in $!item.respItemList)
+                #if ($foreach.index != 0)<br>#end
+                #springFormInput("itemList.delivRespListItemList[$rowIndex].respItemList[$foreach.index].respVol.volFormat" 'class="SmallRight noIME" maxlength="13" size="18" onblur="editVal(this);" onfocus="deleteComma(this);"')
+            #end
+            </td>
+            <td id="respDelivDate" class="BoxDetailLeft FontList" nowrap><!--回答納期-->
+            #foreach($!respItem in $!item.respItemList)
+                #if ($foreach.index != 0)<br>#end
+                #springFormInput("itemList.delivRespListItemList[$rowIndex].respItemList[$foreach.index].respDelivDate.dateOfymdFormat" 'class="SmallAnk noIME" maxlength="8" size="12" onblur="dateOnBlur(this);" onfocus="dateOnFocus(this);"')
+                <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('delivRespListItemList[$rowIndex].respItemList[$foreach.index].respDelivDate.dateOfymdFormat'));">
+            #end
+                <input id="partDelivButton" type="button" class="MiniButton" value="#customSpringMessage('PARTIAL_DELIV_DATE_REPLY_BUTTON')" onclick="addDetail(this,$foreach.index);">
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap><!--回答備考-->
+                #springFormTextarea("itemList.delivRespListItemList[$rowIndex].respBackup.respBackup.comment" 'class="Small onIME" style="word-break:break-all;" rows="3" cols="30" maxlength="200"')
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!item.forSupplierComment.comment)<!--発注担当者コメント-->
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!item.checkComment.comment)<!--確認備考-->
+            </td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!item.buyerCompanyName)<!--発注企業-->&nbsp;<br>
+                #out($!item.buyerSectionPlaceName)<!--発注事業所-->&nbsp;<br>
+                #out($!item.buyerSectionName)<!--発注部門-->&nbsp;<br>
+                #out($!item.buyerUserName)<!--発注担当者-->&nbsp;
+            </td>
+        </tr>
+    #end
+    </tbody>
+</table>
+</form>
+#end
+<table id="WAIT" class="NoBorder" style="display:none;width:100%;"><tr><td style="text-align:center;"><br><br>
+<img src="../../image/wait.gif"><br><span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')<!--問い合わせ中...--></span></td></tr></table>
+</body>
+</html>

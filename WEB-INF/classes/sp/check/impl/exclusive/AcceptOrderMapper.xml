@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.AcceptOrderMapper">
+
+    <select id="searchExclusive" resultType="fw.domain.sp.reportissue.ReportIssueIdentify">
+        SELECT
+               S_ORDER.ACC_CD AS "utlUserCd"
+          FROM S_ORDER
+         WHERE
+               S_ORDER.ACC_CD = #{utlUserCd}
+           AND S_ORDER.CUST_CD = #{buyerUserCd}
+           AND S_ORDER.ORDER_NO = #{orderNo}
+           AND S_ORDER.ORDER_VERSION = #{orderVersion}
+           AND S_ORDER.LAST_UPD_DATE = #{lastUpdDate}
+    </select>
+
+</mapper>

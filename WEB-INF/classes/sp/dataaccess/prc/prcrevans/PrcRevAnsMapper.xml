@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.prc.prcrevans.PrcRevAnsMapper">
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+        AND S_PRICE_REQ.DELETE_FLG = '0'
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(titleName)">
+          AND S_PRICE_REQ.TITLE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.pricerevision.pricerevisionresp.PriceRevisionRespSearchCondition","titleName")}  
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(displayObject)">
+          AND S_PRICE_REQ.ANS_FLG = #{displayObject}
+        </if>  
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateFrom.dateOfymd)">
+          AND S_PRICE_REQ.PRICE_REQ_DATE >= #{revisionReqDateFrom.dateOfymd, jdbcType=VARCHAR}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateTo.dateOfymd)">
+          AND S_PRICE_REQ.PRICE_REQ_DATE &lt;= #{revisionReqDateTo.dateOfymd, jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <!-- 検索 -->
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.pricerevision.pricerevisionresp.PriceRevisionRespSearchCondition"
+        resultType="fw.domain.sp.pricerevision.PriceRevisionIdentify">
+      SELECT 
+             S_PRICE_REQ.PRICE_REV_SEQ as "priceRevSeq"
+      FROM 
+          S_PRICE_REQ
+          INNER JOIN(
+                    SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                    FROM   M_SUPPLIER
+                    WHERE  M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                       <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                           AND M_SUPPLIER.COMPANY_CD IN
+                           <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                               #{custCdList}
+                           </foreach>
+                       </if>
+                       <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                       </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+      <where>
+        <include refid="listKeyIdentityWhereCondition"/>
+      </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    
+    <resultMap id="PriceRevisionRespItem_Map" type="fw.domain.sp.pricerevision.pricerevisionresp.PriceRevisionRespItem">
+        <id column="ACC_CD" property="priceRevisionIdentify.utlUserCd"/>
+        <id column="CUST_CD" property="priceRevisionIdentify.buyerUserCd"/>
+        <id column="PRICE_REV_SEQ" property="priceRevisionIdentify.priceRevSeq"/>
+        <id column="LAST_UPD_DATE" property="priceRevisionIdentify.lastUpdDate"/>
+        <id column="PRICE_RESP_FILE_SEQ" property="priceRevisionListAttachFile.seqNo"/>
+        <id column="ATTACH_FILE_NAME_A" property="priceRevisionListAttachFile.fileName"/>
+        <id column="ATTACH_FILE_SEQ" property="attachQuotAttachFile.seqNo"/>
+        <id column="ATTACH_FILE_NAME_B" property="attachQuotAttachFile.fileName"/>
+    </resultMap>
+
+    <select id="listPageItem"
+        resultMap="PriceRevisionRespItem_Map">
+      SELECT
+          S_PRICE_REQ.ACC_CD as "ACC_CD",
+          S_PRICE_REQ.CUST_CD as "CUST_CD",
+          S_PRICE_REQ.PRICE_REV_SEQ as "PRICE_REV_SEQ",
+          S_PRICE_REQ.ANS_FLG as "status", 
+          S_PRICE_REQ.PRICE_REQ_DATE as "revisionReqDate.dateOfymd", 
+          S_PRICE_REQ.TITLE_NAME as "titleName", 
+          S_PRICE_REQ.BUYER_COMPANY_CD as "buyerCompanyCd",
+          S_PRICE_REQ.BUYER_COMPANY_NAME as "buyerCompany",
+          S_PRICE_REQ.BUYER_SECTION_CD as "buyerSectionCd",
+          S_PRICE_REQ.BUYER_SECTION_NAME as "buyerSection", 
+          S_PRICE_REQ.BUYER_USER_NAME as "orderUser", 
+          S_PRICE_REQ.PRICE_REQ_FILE_SEQ as "priceListSeq",
+          S_PRICE_REQ_ATTACH.ATTACH_FILE_NAME as "priceListName",
+          S_PRICE_RESP.PRICE_RESP_FILE_SEQ as "PRICE_RESP_FILE_SEQ",
+          S_PRICE_RESP_ATTACH_A.ATTACH_FILE_NAME as "ATTACH_FILE_NAME_A",
+          S_PRICE_RESP.ATTACH_FILE_SEQ as "ATTACH_FILE_SEQ",
+          S_PRICE_RESP_ATTACH_B.ATTACH_FILE_NAME as "ATTACH_FILE_NAME_B",
+          S_PRICE_REQ.LAST_UPD_DATE as "LAST_UPD_DATE"
+     FROM S_PRICE_REQ
+          INNER JOIN(
+                    SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                    FROM   M_SUPPLIER
+                    WHERE  M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                       <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                           AND M_SUPPLIER.COMPANY_CD IN
+                           <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                               #{custCdList}
+                           </foreach>
+                       </if>
+                       <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                       </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          LEFT JOIN S_PRICE_RESP
+             ON
+                 S_PRICE_REQ.ACC_CD = S_PRICE_RESP.ACC_CD
+             AND S_PRICE_REQ.CUST_CD = S_PRICE_RESP.CUST_CD
+             AND S_PRICE_REQ.PRICE_REV_SEQ = S_PRICE_RESP.PRICE_REV_SEQ
+             AND S_PRICE_RESP.DELETE_FLG = '0'
+          LEFT JOIN S_PRICE_REQ_ATTACH
+             ON
+                 S_PRICE_REQ.PRICE_REQ_FILE_SEQ = S_PRICE_REQ_ATTACH.ATTACH_FILE_SEQ
+             AND S_PRICE_REQ_ATTACH.DELETE_FLG = '0'
+          LEFT JOIN S_PRICE_RESP_ATTACH S_PRICE_RESP_ATTACH_A
+             ON
+                 S_PRICE_RESP.PRICE_RESP_FILE_SEQ = S_PRICE_RESP_ATTACH_A.ATTACH_FILE_SEQ
+             AND S_PRICE_RESP_ATTACH_A.DELETE_FLG = '0'
+          LEFT JOIN S_PRICE_RESP_ATTACH S_PRICE_RESP_ATTACH_B
+             ON
+                 S_PRICE_RESP.ATTACH_FILE_SEQ = S_PRICE_RESP_ATTACH_B.ATTACH_FILE_SEQ
+             AND S_PRICE_RESP_ATTACH_B.DELETE_FLG = '0'
+     <where>
+          (S_PRICE_REQ.PRICE_REV_SEQ) IN
+          <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList"  open="(" separator="," close=")">
+               (#{keyList.priceRevSeq})
+          </foreach>
+          <include refid="listKeyIdentityWhereCondition"/>
+     </where>
+     ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    <!-- 価格改定依頼を更新する -->  
+    <update id="priceRevisionReqUpdate">
+      UPDATE S_PRICE_REQ 
+         SET
+             ANS_FLG='1',
+             LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+             LAST_UPD_USER_ID='${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+         WHERE PRICE_REV_SEQ IN
+              <foreach collection="priceRevisionRespItemList" item="priceRevisionRespItem" open="(" separator="," close=")">
+                   #{priceRevisionRespItem.priceRevisionIdentify.priceRevSeq}
+              </foreach> 
+         AND DELETE_FLG = '0'
+    </update> 
+    <!-- 価格改定回答を登録する --> 
+    <insert id="priceRevisionRespInsert"> 
+         INSERT INTO S_PRICE_RESP
+         (
+             ACC_CD,
+             CUST_CD,
+             PRICE_REV_SEQ, 
+             PRICE_RESP_DATE, 
+             PRICE_RESP_FILE_SEQ, 
+             ATTACH_FILE_SEQ, 
+             SEND_IND, 
+             RECEIPT_NUMBER, 
+             DELETE_FLG, 
+             AUTO_DELETE_FLG, 
+             AUTO_DELETE_DATE, 
+             LAST_UPD_DATE, 
+             LAST_UPD_USER_ID, 
+             REG_DATE, REG_USER_ID
+          )
+         SELECT
+         ACC_CD,
+         CUST_CD,
+         PRICE_REV_SEQ,
+         '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}',
+         #{priceRevisionRespItem.priceRevisionListAttachFile.seqNo}, 
+         #{priceRevisionRespItem.attachQuotAttachFile.seqNo}, 
+         '0',
+         '',
+         '0', 
+         AUTO_DELETE_FLG,
+         AUTO_DELETE_DATE,
+         '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}', 
+         '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+         '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+         '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        FROM  S_PRICE_REQ
+        WHERE PRICE_REV_SEQ = #{priceRevisionRespItem.priceRevisionIdentify.priceRevSeq}
+    </insert> 
+    <!--添付ファイルを登録する -->
+    <insert id="attachFileInsert" parameterType="fw.domain.slip.common.attachfile.AttachFile">
+        INSERT INTO S_PRICE_RESP_ATTACH(
+            ATTACH_FILE_SEQ,
+            ATTACH_FILE_NAME,
+            ATTACH_FILE,
+            ATTACH_FILE_SIZE,
+            DELETE_FLG,
+            LAST_UPD_DATE,
+            LAST_UPD_USER_ID,
+            REG_DATE,
+            REG_USER_ID
+        )
+        VALUES(
+            #{seqNo},
+            #{fileName, jdbcType=VARCHAR},
+            #{data, jdbcType=BLOB},
+            #{size},
+            '0',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        )
+    </insert>
+
+</mapper>

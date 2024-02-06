@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<configuration packages="fw.common.log">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout>
+                <pattern>[%X{companyCd_userId}] %d %p %C [%t] %m%n</pattern>
+            </PatternLayout>
+        </Console>
+        <RollingFile name="ApplicationLog" fileName="D:/ProcureSuite/IT2/SP/logs/application.log"
+            filePattern="D:/ProcureSuite/IT2/SP/logs/application.%i.log.zip">
+            <PatternLayout>
+                <pattern>[%X{companyCd_userId}] %d %p %C [%t] %m%n</pattern>
+            </PatternLayout>
+            <SizeBasedTriggeringPolicy size="10M" />
+            <DefaultRolloverStrategy max="100" />
+        </RollingFile>
+        <MyRouting name="Routing">
+            <Routes pattern="$${ctx:companyCd_userId}">
+                <Route>
+                    <RollingFile name="Rolling${ctx:companyCd_userId}"
+                        fileName="D:/ProcureSuite/IT2/SP/logs/${ctx:companyCd_userId}/${ctx:companyCd_userId}.log"
+                        filePattern="D:/ProcureSuite/IT2/SP/logs/${ctx:companyCd_userId}/${ctx:companyCd_userId}.%i.log.zip">
+                        <PatternLayout>
+                            <pattern>[%X{companyCd_userId}] %d %p %C [%t] %m%n
+                            </pattern>
+                        </PatternLayout>
+                        <SizeBasedTriggeringPolicy
+                            size="5M" />
+                        <DefaultRolloverStrategy max="100" />
+                    </RollingFile>
+                </Route>
+            </Routes>
+        </MyRouting>
+    </appenders>
+    <loggers>
+        <logger name="fw" level="debug" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="Routing" />
+            <appender-ref ref="ApplicationLog" />
+        </logger>
+        <logger name="sp" level="debug" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="Routing" />
+            <appender-ref ref="ApplicationLog" />
+        </logger>
+        <logger name="interf" level="debug" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="Routing" />
+            <appender-ref ref="ApplicationLog" />
+        </logger>
+        <logger name="java.sql" level="debug" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="Routing" />
+            <appender-ref ref="ApplicationLog" />
+        </logger>
+        <root level="debug">
+            <appender-ref ref="Routing" />
+            <appender-ref ref="ApplicationLog" />
+        </root>
+    </loggers>
+</configuration>

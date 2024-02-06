@@ -1,0 +1,135 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+## +++++ 強化-01586-000 2013/05/28 ADD SBO_WANGCHUN START +++++
+##<title>#set($commonTitle = "#customSpringMessage('PRINT_LIST')")</title><!--印刷一覧-->
+<title>#customSpringMessage('PRINT_LIST')</title><!--印刷一覧-->
+## +++++ 強化-01586-000 2013/05/28 ADD SBO_WANGCHUN END +++++
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link id="CSS_CORNERS" rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link id="CSS_CORNERS" rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+
+#set($searchCondition = $priceRevCreateSearchCondition)
+#parse("./common/common_js.vm")
+function onLoad() {
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        ## +++++ 強化-00852-000 2013/05/27 ADD SBO_CHENCHENG START +++++
+        buttonUsableForList(alertMessage);
+        ## +++++ 強化-00852-000 2013/05/27 ADD SBO_CHENCHENG -END- +++++
+        alert(alertMessage);
+         //if(alertMessage.indexOf("#customSpringMessage('E035')")!=-1){
+          //  parent.iframeChange("${flowExecutionUrl}&_eventId=page");
+        //}
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+     window.parent.getObj("SHOWPDFAREA").style.display = "";
+}
+
+
+function selectRow(size,no) {
+    for(var i=0;i<size;i++) {
+        if (i % 2 == 0) {
+           getObj("Row_"+i).style.backgroundColor = "#dce4ef";
+       } else {
+           getObj("Row_"+i).style.backgroundColor = "#ffffff";
+       }
+    }
+
+    getObj("Row_"+no).style.backgroundColor = "#ffff99";
+}
+
+function issue(){
+    var count = 0;
+    var checkStatus = 0;
+    var radio = document.getElementsByName('check');
+    var fileName;
+    for(var i = 0;i < radio.length; i++){
+        if (radio[i].checked) {
+           checkStatus = radio[i].value;
+           count = count + 1;
+           fileName = getObj("fileName_"+i).value;
+        }
+    }
+    if(count==0){
+        alert("#customMessageArgs("E247",[""])");
+        return;
+    }
+    if( !confirm("#customMessageArgs("W001",[$"#customSpringMessage('TARGET_SHEET')","#customSpringMessage('ACTION_DOWNLOAD')"])") ) {
+        return;
+    }
+    ## *****  ＩＴ２-01362-000 2013/03/22 MODIFY SBO_SOKOU START *****
+    ## メソッドprintPdfはSPPDF020.vmに移動する。
+    parent.printPdf(checkStatus,fileName,"${flowExecutionUrl}");
+    ## *****  ＩＴ２-01362-000 2013/03/22 MODIFY SBO_SOKOU END *****
+}
+//-->
+</script>
+</head>
+
+<body id="BODY" class="DataArea" onload="onLoad();">
+
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm"  method="post">
+#if($!itemList.printItemList.size() > 0)
+<table id="TABLEFIX" class="ListArea" width="100%">
+    <thead>
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage("SELECTION")<!--選択 --></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="PROCESS_STATUS" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=sort','column','PROCESS_STATUS')">#customSpringMessage("STATUS")<!--状態--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="NOTE02" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=sort','column','NOTE02')">#customSpringMessage("REPORT_NAME")<!--帳票名--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="FILE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=sort','column','FILE_NAME')">#customSpringMessage("CREATE_REQ_FILE_NAME")<!--作成依頼ファイル名--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=sort','column','REQ_DATE')">#customSpringMessage("CREATE_REQ_DAY_TIME")<!--作成依頼日時--></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="NOTE09" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=sort','column','NOTE09')">#customSpringMessage("DOWNLOAD_DATE_TIME")<!--ダウンロード日時--></th>
+        </tr>
+    </thead>
+    <tbody id="Tbody">
+        #foreach($!printList in $!itemList.printItemList)
+        <input type="hidden" id="fileName_$velocityCount" value="$!printList.createReqFileName" />
+          <tr id="Row_$velocityCount" #if($velocityCount % 2 == 0) bgcolor="#dce4ef" #end>
+            <td class="BoxDetailCenter FontList">#set( $index = $velocityCount + 1 )$index</td>
+            <td class="BoxDetailCenter">
+                 <input  class="Icon" type="radio" name="check" type="radio" value="$!printList.ifSeq" #if($!printList.status != '2') disabled="true" #end onclick="selectRow($!itemList.printItemList.size(), $velocityCount);">
+            </td>
+            <td class="BoxDetailCenter FontStatus">#out($!printList.status_PageValue)</td>
+            <td class="BoxDetailLeft FontList">#out($!printList.reportName)</td>
+            <td class="BoxDetailLeft FontList">#out($!printList.createReqFileName)</td>
+            <td class="BoxDetailCenter FontList">#out($!printList.createReqDayTime.dateOfymdDispYMDHMS)</td>
+            <td class="BoxDetailCenter FontList">#out($!printList.downloadDayTime.dateOfymdDispYMDHMS)</td>
+          </tr>
+        #end
+    </tbody>
+</table>
+#end
+<br>
+<table id="WAIT" class="NoBorder" style="display:none;width:100%;"><tr><td style="text-align:center;"><br><br>
+<img src="../../image/wait.gif"><br><span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')</span></td></tr></table><!--問い合わせ中...-->
+</form>
+</body>
+</html>

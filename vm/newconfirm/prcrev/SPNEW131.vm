@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('PRICE_REQ_INFORMATION')</title><!-- 価格改定依頼情報 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$priceRevReqInfoSearchCondition)
+
+#parse("./common/common_js.vm")
+
+function onLoad() {
+    parentButtonEnable();
+    #if($priceRevReqInfoList.priceRevReqInfoItemList.size()!=0)
+        function  block(){
+            parent.document.getElementById('none').style.display='';
+        }
+        block();
+    #else
+        function none(){
+            parent.document.getElementById('none').style.display='none';
+        }
+        none();
+    #end
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    paging();
+    setCheckedColor();
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $priceRevReqInfoParam1 = ["#customSpringMessage('PRICE_REQ_INFORMATION')"])
+        alert('#customMessageArgs("I002", $priceRevReqInfoParam1)');
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+}
+
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    var checkName = document.getElementsByName('Chk');
+    ## ----- 強化-00249-000 2013/03/23 DEL SBO_lizhe START -----
+    ###foreach ( $item in $acceptanceInfoList.acceptanceInfoItemList )
+    ##  var checkName = "_acceptSeqList[$velocityCount]";
+    ## ----- 強化-00249-000 2013/03/23 DEL SBO_lizhe -END- -----
+    ## +++++ 強化-00249-000 2013/03/23 ADD SBO_lizhe START +++++
+    #foreach ( $item in $priceRevReqInfoList.priceRevReqInfoItemList )
+        var checkName = "_priceRevReqSeqList[$velocityCount]";
+    ## +++++ 強化-00249-000 2013/03/23 ADD SBO_lizhe -END- +++++
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           ## ----- 強化-00249-000 2013/03/23 DEL SBO_lizhe START -----
+           ## parent.document.Body.PageNo.value = oldPage;
+           ## ----- 強化-00249-000 2013/03/23 DEL SBO_lizhe -END- -----
+           ## +++++ 強化-00249-000 2013/03/23 ADD SBO_lizhe START +++++
+           parent.document.Body.PageNo.value = parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)');
+           ## +++++ 強化-00249-000 2013/03/23 ADD SBO_lizhe -END- +++++
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+         #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+         #end
+
+         #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+         #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+         #end
+    #end
+}
+
+function chkHead(target) {
+            #set($rows = $priceRevReqInfoList.priceRevReqInfoItemList.size())
+            var rows = #jsEscape($rows);
+            if(target.checked) {
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_priceRevReqSeqList['+m+']')){
+                        getObj('_priceRevReqSeqList['+m+']').checked = true;
+                        checkOne(getObj('_priceRevReqSeqList['+m+']'),m);
+                    }
+                }
+
+            } else {
+
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_priceRevReqSeqList['+m+']')){
+                        getObj('_priceRevReqSeqList['+m+']').checked = false;
+                        checkOne(getObj('_priceRevReqSeqList['+m+']'),m);
+                    }
+                }
+            }
+
+
+}
+
+function setCheckedColor(){
+    var rows = #jsEscape($rows);
+    var allSelected = true;
+    var hasOneSelected= false ;
+    for(var m = 0; m<rows; m++){
+        if(getObj('_priceRevReqSeqList['+m+']')){
+            if(getObj('_priceRevReqSeqList['+m+']').checked){
+                hasOneSelected = true;
+                getObj('Row_' + m).style.backgroundColor = "#ffff99";
+            }else{
+                allSelected = false;
+            }
+        }
+    }
+    if(allSelected&&hasOneSelected){
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = true;
+    }else{
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+
+
+}
+function checkOne(onecheck,index){
+    var rows = #jsEscape($rows);
+    if(onecheck.checked){
+        getObj('Row_' + index).style.backgroundColor = "#ffff99";
+            var allSelected = true;
+            var hasOneSelected= false ;
+            for(var m = 0; m<rows; m++){
+                if(getObj('_priceRevReqSeqList['+m+']')){
+                    if(getObj('_priceRevReqSeqList['+m+']').checked){
+                        hasOneSelected = true;
+                    }else{
+                        allSelected = false;
+                    }
+                }
+            }
+            if(allSelected){
+                 if(getObj("ParentCheck"))
+                  getObj("ParentCheck").checked = true;
+            }else{
+                if(getObj("ParentCheck"))
+                  getObj("ParentCheck").checked = false;
+            }
+    }else{
+        if (index % 2 == 0) {
+            getObj('Row_' + index).style.backgroundColor = "#dce4ef";
+        } else {
+            getObj('Row_' + index).style.backgroundColor = "#ffffff";
+        }
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+    if(onecheck.checked) {
+        getObj('priceRevReqSeqList['+index+'].checkStatus').value = "1";
+    }
+    else {
+        getObj('priceRevReqSeqList['+index+'].checkStatus').value = "";
+    }
+}
+
+
+function update() {
+    //parent.getObj("ERRORAREA").src="../../layout/error.vm";
+    var count=0;
+    #foreach ( $item in $priceRevReqInfoList.priceRevReqInfoItemList)
+        var checkName = "_priceRevReqSeqList[$velocityCount]";
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count==0){
+        #set( $mPriceRevReqReply = "#customSpringMessage('PRICE_REQ_INFORMATION')" );
+        ## 2013.02.07 DEL DAIKO_WANG
+        ## alert('#customMessageArgs("I010",[$mPriceRevReqReply])');
+        ## 2013.02.07 ADD DAIKO_WANG
+        alert("#nothingSelectedMessage()");
+    }else{
+        #set( $priceReqParam2 = ["#customSpringMessage('PRICE_REQ_INFORMATION')","#customSpringMessage('NEW_CHECK')"])
+        if( !confirm("#customMessageArgs("W001",$priceReqParam2)") ) {
+            return;
+        }
+        parentButtonDisable();
+        getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newConfirm";
+        getObj("BodyForm").submit();
+    }
+}
+
+
+function allupdate(){
+        #set( $priceReqParam3 = ["#customSpringMessage('PRICE_REQ_INFORMATION')","#customSpringMessage('NEW_ALL_COUNT_CHECK')"])
+        if( !confirm("#customMessageArgs("W001",$priceReqParam3)") ) {
+            return;
+        }
+        parentButtonDisable();
+        iframeChange("${flowExecutionUrl}&_eventId=newConfirmAll");
+}
+
+
+function downloadFile(seqNo) {
+  if(seqNo!=""){
+    iframeChange('${flowExecutionUrl}&_eventId=download&&seqNo='+seqNo);
+  }
+}
+
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();" >
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form name="Body" id="BodyForm" method="post">
+<table id="TABLE" class="ListArea" width="100%">
+    <thead>
+        #if($priceRevReqInfoList.priceRevReqInfoItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall" width="10%">No.</th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall" width="10%"><input name="ParentCheck" id="ParentCheck" type="checkbox" onclick="chkHead(this);"></th><!--全選択/全選択解除-->
+
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.DPO_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.DPO_FLG')">
+            #customSpringMessage('STATUS')<!-- 状態 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.PRICE_REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.PRICE_REQ_DATE')">
+            #customSpringMessage('REVISION_REQ_DATE')<!-- 改定依頼日 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.TITLE_NAME')">
+            #customSpringMessage('TITLE_NAME')<!-- 件名 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.BUYER_COMPANY_NAME')">
+            #customSpringMessage('BUYER_COMPANY')<!-- 発注企業 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.BUYER_SECTION_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.BUYER_SECTION_NAME')">
+            #customSpringMessage('ORDER_SECTION')<!-- 発注部門 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_PRICE_REQ.BUYER_USER_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_PRICE_REQ.BUYER_USER_NAME')">
+            #customSpringMessage('ORDER_USER')<!-- 発注担当者 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_PRICE_REQ_ATTACH.ATTACH_FILE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_PRICE_REQ_ATTACH.ATTACH_FILE_NAME')">
+            #customSpringMessage('PRICE_LIST')<!-- 改定価格表 -->
+            </th>
+        </tr>
+    </thead>
+
+    <tbody id="Tbody">
+    #foreach($!priceRevReqInfoItem in $priceRevReqInfoList.priceRevReqInfoItemList)
+        #customFormHiddenInput("priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.priceRevSeq" "$!priceRevReqInfoItem.priceRevisionIdentify.priceRevSeq")
+        #customFormHiddenInput("priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.utlUserCd" "$!priceRevReqInfoItem.priceRevisionIdentify.utlUserCd")
+        #customFormHiddenInput("priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.buyerUserCd" "$!priceRevReqInfoItem.priceRevisionIdentify.buyerUserCd")
+        #customFormHiddenInput("priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.lastUpdDate" "$!priceRevReqInfoItem.priceRevisionIdentify.lastUpdDate")
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+            <td id="CheckCol_$velocityCount" class="BoxDetailCenter">
+                #if($!priceRevReqInfoItem.status=='0')
+                      #if($priceRevReqInfoItem.priceRevisionIdentify.checkStatus=='1')
+                            <input name="priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.checkStatus" id="priceRevReqSeqList[$velocityCount].checkStatus" type="hidden" value = "1">
+                            <input class="Icon" name="Chk" id="_priceRevReqSeqList[$velocityCount]" checked  type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #else
+                            <input name="priceRevReqInfoItemList[$velocityCount].priceRevisionIdentify.checkStatus" id="priceRevReqSeqList[$velocityCount].checkStatus" type="hidden" value = "">
+                            <input class="Icon" name="Chk" id="_priceRevReqSeqList[$velocityCount]" type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #end
+                #end
+            </td>
+            <td class="BoxDetailLeft FontMiniAnkBold">#out($!priceRevReqInfoItem.status_PageValue)</td><!-- 状態 -->
+            <td class="BoxDetailCenter FontList">#out($!priceRevReqInfoItem.revisionReqDate.dateOfymdFormat)</td><!-- 改定依頼日 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevReqInfoItem.titleName)</td><!-- 件名 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevReqInfoItem.buyerCompany)</td><!-- 発注企業 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevReqInfoItem.buyerSection)</td><!-- 発注部門 -->
+            <td class="BoxDetailLeft FontList">#out($!priceRevReqInfoItem.orderUser)</td><!-- 発注担当者 -->
+            <td class="BoxDetailLeft">
+                <span class="FontList"><a href="#" onclick="downloadFile('#jsEscapeInHTML($!priceRevReqInfoItem.priceListFileSeq)');">#out($!priceRevReqInfoItem.attachFileName)</a></span><!-- 改定価格表 -->
+            </td>
+        </tr>
+     #end
+    </tbody>
+   #end
+</table>
+</form>
+</body>
+</html>

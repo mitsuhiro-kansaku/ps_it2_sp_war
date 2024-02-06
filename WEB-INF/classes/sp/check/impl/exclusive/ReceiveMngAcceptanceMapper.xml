@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.ReceiveMngAcceptanceMapper">
+
+    <select id="searchExclusive" resultType="fw.domain.slip.receive.receive.Identify">
+        SELECT
+               T_RECEIVE_MNG.DELIV_KEY_NO AS "delivKeyNo.delivKeyNo"
+          FROM T_RECEIVE_MNG
+         WHERE
+               T_RECEIVE_MNG.DELIV_KEY_NO = #{delivKeyNo}
+           AND T_RECEIVE_MNG.LAST_UPD_DATE = #{lastUpdDate}
+    </select>
+
+</mapper>

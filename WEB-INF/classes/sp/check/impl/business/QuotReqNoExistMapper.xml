@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.QuotReqNoExistMapper">
+
+    <select id="getAplNoCount" resultType="int">
+       SELECT COUNT(APL_NO)
+         FROM S_QUOT_REQ
+        WHERE
+              S_QUOT_REQ.ACC_CD = #{accCd}
+          AND S_QUOT_REQ.CUST_CD = #{custCd}
+          AND APL_NO = #{aplNo}
+    </select>
+    
+    <select id="getCorrentCd" resultType="String">
+       SELECT S_QUOT_REQ.CORRECT_CD
+         FROM S_QUOT_REQ
+       WHERE
+         S_QUOT_REQ.ACC_CD = #{accCd}
+         AND S_QUOT_REQ.CUST_CD = #{custCd}
+         AND S_QUOT_REQ.APL_NO = #{aplNo}
+         AND S_QUOT_REQ.APL_VERSION = #{aplVersion}
+    </select>
+
+</mapper>

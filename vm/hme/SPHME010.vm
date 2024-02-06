@@ -1,0 +1,145 @@
+<!--*************************************************************************-->
+<!--*          Copyright (C)2010 Masayuki MUTO. All Rights Reserved.        *-->
+<!--*************************************************************************-->
+<!doctype html>
+<HTML LANG="ja">
+    <HEAD>
+        <META http-equiv="Content-type" content="text/html; charset=UTF-8">
+        <META http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <META http-equiv="Content-script-type" CONTENT="text/javascript">
+        <title>PROCURESUITE</title>
+        <link id="CSS_FONT" rel="stylesheet" href="../include/FontS.css" type="text/css">
+        <link rel="stylesheet" href="../include/Layout.css" type="text/css">
+        <link rel="stylesheet" href="../include/Color.css" type="text/css">
+        <LINK REL="stylesheet" HREF="../include/searchbox.css" TYPE="text/css">
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/common.js"></SCRIPT>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/check.js"></SCRIPT>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../include/searchbox.js"></SCRIPT>
+        <script language="javascript" type="text/javascript" src="../include/jquery-1.7.2.min.js"></script>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript">
+<!--
+var backUrl="";
+var homeUrl="";
+function back(){
+    if(backUrl!=""){
+        iframeChange(backUrl);
+        backUrl="";
+        homeUrl="";
+    }
+}
+
+function home(){
+    backUrl="";
+    if(homeUrl!=""){
+        iframeChange(homeUrl);
+        homeUrl="";
+    }else{
+        iframeChange('../hme/data');
+    }
+}
+
+// homeとbackリンクのEnterキーを押した場合の処理
+function procEnterKey(e){
+    var ev = e || window.event;
+    var obj = ev.target || ev.srcElement;
+
+    if (ev.keyCode==13){
+        if (obj.id == 'linkHome'){
+            if($("#linkHome").is(":focus")){
+                home();
+            }
+        }else if (obj.id == 'linkBack'){
+            if($("#linkBack").is(":focus")){
+                back();
+            }
+        }
+    }
+}
+
+function setMenuButton() {
+    getObj("menuButton").style.display = "";
+    getObj("menuInfo").style.display = "";
+}
+document.onkeydown=procEnterKey;
+//-->
+        </SCRIPT>
+    </HEAD>
+
+    <BODY CLASS="Body" ALIGN="center" topmargin="0" leftmargin="0" STYLE="overflow-y:hidden;">
+        <FORM NAME="Body">
+            #customFormHiddenInput("quickLink" "")
+            <TABLE ID="MENU" CLASS="NoBorder" STYLE="width: 100%; height: 100%;">
+                <TR>
+                    <TD  nowrap CLASS="NoBorder" STYLE="height: 50px; border-bottom: 1px solid black;" BGCOLOR="#819cc9">
+                        <TABLE CLASS="NoBorder" STYLE="width: 100%; height: 50px; z-index: 0;">
+                            <TR>
+                                <TD  nowrap STYLE="height: 50px; background-repeat: no-repeat;">
+                                    <TABLE CLASS="NoBorder" STYLE="width: 100%;">
+                                        <TR>
+                                            <TD  nowrap STYLE="text-align: left;"><img src="../image/title2.gif" ></TD>
+                                            <TD  nowrap STYLE="text-align: left; padding-top: 4px;">
+                                                <TABLE id="menuInfo" CLASS="NoBorder" style="display:none;">
+                                                    <TR>
+                                                        <TD  nowrap STYLE="vertical-align: top;" ROWSPAN="3">
+                                                            <IMG SRC="../image/mrkUsericon.gif">
+                                                        </TD>
+                                                        <TD  nowrap CLASS="RoleName" ALIGN="left" COLSPAN="2">
+                                                            <SPAN CLASS="FontMiniAnk" style="color: lightcyan;">#customSpringMessage('LAST_LOGIN_DATE')：</SPAN>
+                                                            <SPAN id="LastLoginDate" CLASS="FontMiniAnk" style="color: lightcyan;"></SPAN><BR>
+                                                        </TD>
+                                                    </TR>
+                                                    <TR>
+                                                        <TD  nowrap ALIGN="left" VALIGN="middle">
+                                                            <SPAN id="LoginUserName" CLASS="FontBig" style="color: #FFFFFF;font-weight:bold;"></SPAN>&nbsp;&nbsp;
+                                                        </TD>
+                                                    <TR>
+                                                        <TD  nowrap STYLE="vertical-align: top; color: lightcyan;" COLSPAN="2">
+                                                            <SPAN CLASS="FontMiniAnk">#customSpringMessage('BUYER_COMPANY')：</SPAN>
+                                                            <SPAN id="OrderCompanyName" CLASS="FontMiniAnk"></SPAN>
+                                                        </TD>
+                                                    </TR>
+                                                </TABLE>
+                                            </TD>
+                                            <TD NOWRAP STYLE="text-align: right; white-space: nowrap;">
+                                                <TABLE id="menuButton" CLASS="NoBorder" STYLE="width: 100%;display:none;">
+                                                    <TR>
+                                                        <TD  nowrap CLASS="NoBorder">
+                                                            <A HREF="#" id = 'linkHome'>
+                                                                <IMG SRC="../image/cmdHome.gif" ONMOUSEOVER="this.src='../image/cmdHome_.gif'" ONMOUSEOUT="this.src='../image/cmdHome.gif'" BORDER="0" onclick="home()">
+                                                            </A>
+                                                        </TD>
+                                                        <TD  nowrap CLASS="NoBorder">
+                                                            <A HREF="#" id = 'linkBack'>
+                                                                <IMG SRC="../image/cmdBack.gif" ONMOUSEOVER="this.src='../image/cmdBack_.gif'" ONMOUSEOUT="this.src='../image/cmdBack.gif'" BORDER="0" onclick="back()">
+                                                            </A>
+                                                        </TD>
+                                                        <td  nowrap class="NoBorder" id="CMDUSEROFF">
+                                                            <a href="javascript:top.iframeChange('../lgn/password/SPLGN020','pageid','SPLGN020');">
+                                                                <img class="Icon" src="../image/cmdUser.gif" onmouseover="this.src='../image/cmdUser_.gif'" onmouseout="this.src='../image/cmdUser.gif'">
+                                                            </a>
+                                                        </td>
+                                                        <TD  nowrap CLASS="NoBorder">
+                                                            <A HREF="../lgn/logout/logout">
+                                                                <IMG SRC="../image/cmdLogout.gif" ONMOUSEOVER="this.src='../image/cmdLogout_.gif'" ONMOUSEOUT="this.src='../image/cmdLogout.gif'" BORDER="0">
+                                                            </A>
+                                                        </TD>
+                                                    </TR>
+                                                </TABLE>
+                                            </TD>
+                                        </TR>
+                                    </TABLE>
+                                </TD>
+                            </TR>
+                        </TABLE>
+                    </td>
+                </tr>
+                <tr style="height:100%; vertical-align:top">
+                    <TD  nowrap CLASS="NoBorder" style="height:100%;">
+                        <IFRAME ID="BODYAREA" NAME="BODYAREA" SRC="../hme/body" ></IFRAME>
+                    </TD>
+                </TR>
+            </TABLE>
+        </FORM>
+    </BODY>
+</HTML>

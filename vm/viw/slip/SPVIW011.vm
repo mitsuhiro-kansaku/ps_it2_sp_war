@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('UTL_REFERENCE')</title><!-- 受注照会 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" CONTENT="text/javascript">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" type="text/javascript">
+<!--//
+#parse("./common/common_js.vm")
+
+// 初期化
+function onLoad() {
+    TableSort.init();
+    dataLoadHasPage();
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        ## +++++ 強化-00852-000 2013/05/27 ADD SBO_CHENCHENG START +++++
+        buttonUsableForList(alertMessage);
+        ## +++++ 強化-00852-000 2013/05/27 ADD SBO_CHENCHENG -END- +++++
+        alert(alertMessage);
+    }
+
+}
+
+//詳細画面遷移
+function openDetail(orderSeq, lastUpdDate) {
+    poppage('${flowExecutionUrl}&_eventId=detail&orderSeq='+orderSeq, 'DETAIL', '800', '700');
+}
+
+//-->
+</script>
+</head>
+
+<body class="DataArea" onload="onLoad();setTablefix('#TABLE',1,2);">
+#if($!errorMessage && $!errorMessage!="")
+<div id="error" name="error" class="error">
+    $!errorMessage
+</div>
+#end
+<form name="Body" id="Body" method="post">
+<table id="TABLE" class="ListArea" WIDTH="100%">
+    <thead>
+        #if($!orderList.utlSearchItemList.size() != 0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th><!-- No. -->
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th><!-- 詳細 -->
+            <th label="img" class="BoxHeaderCenter FontSmall"><img border="0" src="../../image/mrkAttache.gif"></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_VERSION')">
+                #customSpringMessage('REVISION_NUMBER')<!-- 履歴番号 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_STATUS" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_STATUS')">
+                #customSpringMessage('STATUS') <!-- 状態  -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_NO')">
+                #customSpringMessage('ORDER_NO') <!-- 注文番号  -->
+            </th>
+            ## 2013.01.09 DEL DAIKO_YAMAGUCHI START
+            #*
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.QUOT_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.QUOT_NO')">
+                #customSpringMessage('QUOT_REQ_NO') <!-- 見積依頼番号 -->
+            </th>
+            *#
+            ## 2013.01.09 DEL DAIKO_YAMAGUCHI -END-
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_COMPANY_NAME')">
+                #customSpringMessage('BUYER_COMPANY') <!-- 発注企業  -->
+            </th>
+            ## ----- 2013/04/17 DEL DAIKO_TAKEDA
+            ## <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_DATE')">
+            ## +++++ 2013/04/17 ADD DAIKO_TAKEDA
+            ## ----- 2013/05/28 DEL DAIKO_TAKEDA
+            ## <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_FIRST_DATE')">
+            ## +++++ 2013/05/28 ADD DAIKO_TAKEDA
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_FIRST_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_FIRST_DATE')">
+                #customSpringMessage('ORDER_DATE') ## 注文日
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="'S_ORDER.ORDER_DATE'" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_DATE')">
+                #customSpringMessage('CHANGE_ORDER_DATE') ## 注文変更日
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ITEM_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ITEM_NAME')">
+                #customSpringMessage('ITEM_NAME') <!-- 品名  -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CUST_ITEM_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CUST_ITEM_CD')">
+                #customSpringMessage('ITEM_CD') <!-- 品名コード  -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.KATASHIKI" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.KATASHIKI')">
+                #customSpringMessage('KATASHIKI') <!-- 型式  -->
+            </th>
+            ## ----- 2013/03/22 DEL DAIKO_TAKEDA START
+            #*
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VOL" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_VOL')">
+                #customSpringMessage('ORDER_VOL') <!-- 注文数量  -->
+            </th>
+            *#
+            ## ----- 2013/03/22 DEL DAIKO_TAKEDA -END-
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA START
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VOL">
+                #customSpringMessage('ORDER_VOL') <!-- 注文数量  -->
+            </th>
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA -END-
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.REMAINING_VOL" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.REMAINING_VOL')">
+                #customSpringMessage('ORDER_REMAIN_AMOUNT') <!-- 注文残数量  -->
+            </th>
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA START
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_CANCEL_VOL">
+                #customSpringMessage('ORDER_CANCEL_VOL')</th>
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA -END-
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.UNIT_NAME')">
+                #customSpringMessage('UNIT') <!-- 単位  -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.DELIVERY_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.DELIVERY_DATE')">
+                #customSpringMessage('ORDER_DELIV_DATE') <!-- 注文納期  -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CURRENCY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CURRENCY_CD')">
+                #customSpringMessage('CURRENCY_CD') <!-- 通貨コード  -->
+            </th>
+            ## 2013.03.29 ADD DAIKO_WANG START
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_PRICE">
+                #customSpringMessage('ORDER_UNIT_PRICE') ## 注文単価
+            </th>
+            ## 2013.03.29 ADD DAIKO_WANG -END-
+            ## ----- 2013/03/22 DEL DAIKO_TAKEDA START
+            #*
+            <th label="num" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_AMOUNT" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_AMOUNT')">
+                #customSpringMessage('ORDER_AMOUNT') <!-- 注文金額  -->
+            </th>
+            *#
+            ## ----- 2013/03/22 DEL DAIKO_TAKEDA -END-
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA START
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_AMOUNT">
+                #customSpringMessage('ORDER_AMOUNT') ## 注文金額
+            </th>
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_CANCEL_AMOUNT">
+                #customSpringMessage('ORDER_CANCEL_AMOUNT') ## 打切取消金額
+            </th>
+            ## +++++ 2013/03/22 ADD DAIKO_TAKEDA -END-
+            #if($!reqUserDispInd == "1" || $!reqUserDispInd == "3")
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.REQ_SECTION_PLACE_NAME">
+                #customSpringMessage('REQ_SECTION_PLACE_NAME') ## 依頼元事業所名
+            </th>
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.REQ_SECTION_NAME">
+                #customSpringMessage('REQ_SECTION_NAME') ## 依頼元部門名
+            </th>
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.REQ_USER_NAME">
+                #customSpringMessage('REQ_USER') ## 依頼元担当者名
+            </th>
+            <th class="BoxHeaderCenter FontSmall" id="S_ORDER.REQ_TEL_NO">
+                #customSpringMessage('REQ_USER_TEL_NO') ## 依頼元担当外線番号
+            </th>
+            #end
+            #if ($!SPVIW011Cooperation.isCooperation())
+                #foreach($!cooperationConfig in $SPVIW011Cooperation.Configs)
+                    #if ($!cooperationConfig.itemType == "8")
+            <th class="BoxHeaderCenter FontSmall" id="$!{cooperationConfig.cooperationId}">
+                    #else
+            <th label="case" class="BoxHeaderCenter FontSmall" id="$!{cooperationConfig.cooperationId}" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','$!SPVIW011Cooperation.getCooperationIdOfSort($!cooperationConfig)')">
+                    #end
+                    #customSpringMessage($!cooperationConfig.displayItemId)
+            </th>
+                #end
+            #end
+        </tr>
+        #end
+    </thead>
+    <tbody id="Tbody">
+        #set($index = 0)
+        #foreach($!orderItem in $!orderList.utlSearchItemList)
+            <tr id="Row_$velocityCount" #if($velocityCount % 2 == 0) bgcolor="#dce4ef" #else bgcolor="#ffffff" #end>
+            <td class="BoxDetailCenter FontList">#set( $index = $index + 1 )$index</td>
+            <td class="BoxDetailCenter">
+                <img id="DetailButton_$velocityCount" class="Icon" src="../../image/btnDetailDisp.gif"
+                    onclick="openDetail(#jsEscapeInHTML($!orderItem.utlSearchIdentify.orderSeq),#jsEscapeInHTML($!orderItem.utlSearchIdentify.lastUpdDate));"/>
+            </td>
+            <td class="BoxDetailCenter">
+                #if($!orderItem.attachFlg != "")
+                <img border="0" src="../../image/mrkAttache.gif">
+                #end
+            </td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.revisionNumber)</td>
+            <td id="Stat_0" class="BoxDetailCenter FontMiniAnkBold">#out($!orderItem.status_PageValue)</td>
+            <td class="BoxDetailLeft FontSlipNo">#out($!orderItem.orderNo)</td>
+            ## 2013.01.09 DEL DAIKO_YAMAGUCHI START
+            #*
+            <td class="BoxDetailLeft FontSlipNo">#out($!orderItem.aplNo)</td>
+            *#
+            ## 2013.01.09 DEL DAIKO_YAMAGUCHI -END-
+            <td class="BoxDetailLeft FontList">#out($!orderItem.buyerCompany)</td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.orderDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.changeOrderDate.dateOfymdFormat)</td>
+            <td class="BoxDetailLeft FontList">#out($!orderItem.itemName)</td>
+            <td class="BoxDetailLeft FontList">#out($!orderItem.itemCd)</td>
+            <td class="BoxDetailLeft FontList" nowrap>#out($!orderItem.katashiki)</td>
+            ## ----- 2013/03/24 DEL DAIKO_TAKEDA
+            ##<td class="BoxDetailRight FontList2" nowrap>#out($!orderItem.orderVol.volFormat)</td>
+            ## +++++ 2013/03/24 ADD DAIKO_TAKEDA
+            <td class="BoxDetailRight FontList2" nowrap>#out($!orderItem.originVol.volFormat)</td>
+            <td class="BoxDetailRight FontList2" nowrap>#out($!orderItem.orderRemainAmount.volFormat)</td>
+            ## +++++ 2013/03/24 ADD DAIKO_TAKEDA
+            <td class="BoxDetailRight FontList2" nowrap>#out($!orderItem.orderCancelVol.volFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.unit)</td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.orderDelivDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!orderItem.currencyCd)</td>
+            ## 2013.03.29 ADD DAIKO_WANG START
+            #if ($!orderItem.unitPrice.moneyDisp)
+            <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+            <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                #out($!orderItem.unitPrice.amountMarkDispForSP)
+                #if($!orderItem.unitPriceInd == '0')
+                    <BR><font class="FontMini" color=red>【#customSpringMessage('PROV_PRICE')】</font>
+                #end
+            </td>
+            ## 2013.03.29 ADD DAIKO_WANG -END-
+            #if ($!orderItem.utlAmount.moneyDisp)
+            <td class="BoxDetailRight FontCurrSmall" nowrap>
+                ## ----- 2013/03/24 DEL DAIKO_TAKEDA
+                ## #out($!orderItem.utlAmount.amountMarkDispForSP)
+                ## +++++ 2013/03/24 ADD DAIKO_TAKEDA
+                #out($!orderItem.originAmount.amountMarkDispForSP)
+                ## 2013.03.29 DEL DAIKO_WANG START
+                #*
+                #if($!orderItem.unitPriceInd == '0')
+                    <BR><font class="FontMini" color=red>【#customSpringMessage('PROV_PRICE')】</font>
+                #end
+                *#
+                ## 2013.03.29 DEL DAIKO_WANG -END-
+            </td>
+            #else
+            <td class="BoxDetailCenter FontCurrSmall" nowrap>
+                ## ----- 2013/03/24 DEL DAIKO_TAKEDA
+                ## #out($!orderItem.utlAmount.amountMarkDispForSP)
+                ## +++++ 2013/03/24 ADD DAIKO_TAKEDA
+                #out($!orderItem.originAmount.amountMarkDispForSP)
+            </td>
+            #end
+                #if($!orderItem.orderCancelAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall">
+                #else
+                <td class="BoxDetailCenter FontCurrSmall">
+                #end
+                    #out($!orderItem.orderCancelAmount.amountMarkDispForSP)
+                </td>
+                #if($!reqUserDispInd == "1" || $!reqUserDispInd == "3")
+                <td class="BoxDetailLeft FontList">#out($!orderItem.reqSectionPlaceName)</td>
+                <td class="BoxDetailLeft FontList">#out($!orderItem.reqSectionName)</td>
+                <td class="BoxDetailLeft FontList">#out($!orderItem.reqUserName)</td>
+                <td class="BoxDetailLeft FontList">#out($!orderItem.reqTelNo)</td>
+                #end
+            #if ($!SPVIW011Cooperation.isCooperation())
+                #foreach($!cooperationConfig in $SPVIW011Cooperation.Configs)
+            <td class="$!SPVIW011Cooperation.getCooperationClass($!cooperationConfig)">
+                    #if ($!cooperationConfig.itemType != "8")
+                        #out($!SPVIW011Cooperation.getCooperationItem($!orderItem, $!cooperationConfig))
+                    #else
+                        $!SPVIW011Cooperation.getCooperationItem($!orderItem, $!cooperationConfig)
+                    #end
+            </td>
+                #end
+            #end
+            </tr>
+        #end
+    </tbody>
+</table>
+<table id="WAIT" class="NoBorder" style="display:none;width:100%;">
+    <tr>
+        <td style="text-align:center;">
+            <br><br>
+            <img src="../../image/wait.gif">
+            <br>
+            ## ＩＴ３-00202-000 2013.07.11 DEL SBO_WANGXM
+            ##<span class="Font8"><br>問い合わせ中...</span>
+            ## ＩＴ３-00202-000 2013.07.11 ADD SBO_WANGXM
+            <span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')</span>
+        </td>
+    </tr>
+</table>
+</form>
+</body>
+
+
+</html>

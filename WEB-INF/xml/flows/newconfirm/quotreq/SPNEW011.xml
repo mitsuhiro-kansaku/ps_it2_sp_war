@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="quotReqNewDop" class="fw.domain.sp.quot.quotreq.QuotReqNewDop" />
+    <var name="quotReqNewAllDop" class="fw.domain.sp.quot.quotreq.QuotReqNewAllDop" />
+    <var name="identify" class="fw.domain.sp.quot.quotreq.QuotReqIdentify" />
+    
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+        <on-start>
+           <set name="flowScope.pageid" value="'spnew010'"/>
+        </on-start>
+        
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPNEW011Service.init(searchCondition)"
+            result="flowScope.quotReqList" />
+        <transition to="SPNEW011" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPNEW011Service.page(searchCondition)"
+            result="flowScope.quotReqList" />
+        <transition to="SPNEW011" />
+    </action-state>
+
+    <view-state id="SPNEW011" model="quotReqNewDop"
+        view="newconfirm/quotreq/SPNEW011">
+        <transition on="order" validate="false">
+            <evaluate expression="SPNEW011Service.order(searchCondition)"
+                result="flowScope.quotReqList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPNEW011Service.page(searchCondition)"
+                result="flowScope.quotReqList" />
+        </transition>
+        <transition on="back" to="home" validate="false" />
+        <transition on="newConfirm" validate="true" to="searchByKey">
+            <evaluate expression="SPNEW011Service.newConfirm(quotReqNewDop)" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+        <transition on="newConfirmAll" validate="true" to="searchByKey">
+            <evaluate expression="SPNEW011Service.newConfirmAll(quotReqNewAllDop)" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+        <transition on="detailPrice" to="SPNEW012" validate="false" >
+         <set name="identify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+         </transition>
+        <transition on="detail" to="SPNEW012Other" validate="false" >
+            <set name="identify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+            </transition>
+    </view-state>
+    <subflow-state id="SPNEW012" subflow="newconfirm/quotReq/SPNEW012">
+        <input name="identify" value="identify" />
+    </subflow-state>
+    <subflow-state id="SPNEW012Other" subflow="newconfirm/quotReq/SPNEW012Other">
+        <input name="identify" value="identify" />
+    </subflow-state>
+</flow>

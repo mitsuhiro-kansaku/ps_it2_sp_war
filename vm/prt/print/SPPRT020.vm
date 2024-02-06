@@ -1,0 +1,436 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('REPORT_ISSUE')</title> ##  帳票発行
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+
+<script language="javascript" TYPE="text/javascript">
+<!--
+
+#parse("./common/common_js.vm")
+var PageFirstOnClick;
+var PagePrevOnClick;
+var PageNextOnClick;
+var PageLastOnClick;
+var PageSelectClick;
+var oldPage;
+
+## 初期化
+function onLoad() {
+
+    fillHidden();
+    TableSort.init();
+    dataLoadHasPage();
+    pagingNoSave();
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+
+    ## 帳票発行処理が成功の場合
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $param1 = ["#customSpringMessage('REPORT_ISSUE')"])
+        alert('#customMessageArgs("I002",$param1)');
+    }
+
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+    #if($reportIssueList.reportIssueItemList.size() != 0)
+        window.parent.getObj("PRINTAREA_ROW").style.display = "";
+    #end
+    PageFirstOnClick = parent.document.Body.PageFirstOn.onclick;
+    PagePrevOnClick = parent.document.Body.PagePrevOn.onclick;
+    PageNextOnClick = parent.document.Body.PageNextOn.onclick;
+    PageLastOnClick = parent.document.Body.PageLastOn.onclick;
+    PageSelectClick = parent.document.Body.PAGENO.onchange;
+    parent.document.Body.PageFirstOn.onclick = function() {checkSelectedBox(PageFirstOnClick) };
+    parent.document.Body.PagePrevOn.onclick = function() {checkSelectedBox(PagePrevOnClick) };
+    parent.document.Body.PageNextOn.onclick = function() {checkSelectedBox(PageNextOnClick) };
+    parent.document.Body.PageLastOn.onclick = function() {checkSelectedBox(PageLastOnClick) };
+    parent.document.Body.PAGENO.onchange = function() {checkSelectedBox(PageSelectClick) };
+}
+
+function fillHidden(){
+    #foreach($reportIssueItem in $!reportIssueList.reportIssueItemList)
+        getObj("reportIssueItemList[$velocityCount].notes").value="#jsEscape($!reportIssueItem.notes)";
+    #end
+}
+
+function checkSelectedBox(clickFunction){
+    var count=0;
+    $("input:[type=checkbox][name^=check_status_]").each(function(){
+        if($(this).prop("checked"))
+            count ++;
+    });
+    if(count>0){
+        if(confirm("#customSpringMessage('W004')")){
+            clickFunction();
+        } else {
+            parent.document.Body.PageNo.value = oldPage;
+            return false;
+        }
+    }else{
+        clickFunction();
+    }
+}
+
+## 詳細画面遷移
+function openDetail(seqNo, lastUpdDate) {
+    #if($searchCondition.reportName == 'RPT050')## 納品書の場合
+        ## 出荷詳細画面
+        poppage('${flowExecutionUrl}&_eventId=shippmentDetail&shipmentSeq='+seqNo, 'DETAIL', '800', '700');
+    #end
+    #if($searchCondition.reportName == 'RPT030')## 注文書の場合
+        ## 注文詳細画面
+        poppage('${flowExecutionUrl}&_eventId=orderDetail&orderSeq='+seqNo+'&lastUpDate='+lastUpdDate+'&type=detailLedger', 'DETAIL', '800', '700');
+    #end
+}
+
+## 備考入力画面遷移
+function inputRemark(shipmentSeq,lineNo, deliverySeq) {
+    var notes = getObj("reportIssueItemList["+lineNo+"].notes").value;
+    poppage('${flowExecutionUrl}&_eventId=remarkInput', 'REMARK', '700', '500');
+    iframeChange("${flowExecutionUrl}&_eventId=remarkInput",
+        "shipmentSeq",shipmentSeq,
+        "lineNo",lineNo,
+        "notes",notes,
+        "deliverySeq",deliverySeq,
+        "REMARK");
+}
+## 帳票発行
+function issue(){
+    var count=0;
+    $("input:[type=checkbox][name^=check_status_]").each(function(){
+        if($(this).prop("checked"))
+            count ++;
+    });
+    if(count==0){
+        alert("#nothingSelectedMessage()");
+        return;
+    }
+    #if($searchCondition.reportName == 'RPT050') ## 納品書の場合
+        #set( $ReportName = "#customSpringMessage('INVOICE')")
+    #end
+    #if($searchCondition.reportName == 'RPT030') ## 注文書の場合
+        #set( $ReportName = "#customSpringMessage('ORDER_SHEET')")
+    #end
+    if( !confirm("#customMessageArgs("W001",[$ReportName,"#customSpringMessage('ISSUE')"])") ) {
+        return;
+    }
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=print";
+    getObj('BodyForm').submit();
+}
+
+function pagingNoSave(){
+    #if($searchCondition)
+         oldPage = parseInt(parent.document.Body.PageNo.value);
+    #end
+}
+
+##全選択/全選択解除
+$(function(){
+    $(document).delegate('#ParentCheck','change',function() {
+        var chk = $(this).prop("checked");
+        var status = "";
+        $("input:[type=checkbox][name^=check_status_]").prop("checked",chk)
+
+        if(chk){
+            $("tr:[id^=Row_]").css("background-color","#ffff99");
+            status = "1";
+        }else{
+            $("tr:[id^=Row_]").each(function(){
+                var count = $(this).attr("id").substring(4);
+                if (Number(count) % 2 != 0) {
+                    $(this).css("background-color","#ffffff");
+                } else {
+                    $(this).css("background-color","#dce4ef");
+                }
+            });
+        }
+        $("input:[type=hidden][id^=reportIssueItemList][id$=checkStatus]").val(status);
+    });
+});
+## 行選択
+function selectRow(no, obj) {
+    var status = "";
+    var backgroundColor = "";
+    if(no % 2 == 0) {
+        backgroundColor = "#dce4ef";
+    } else {
+        backgroundColor = "#ffffff";
+    }
+    if( obj.checked ) {
+        backgroundColor = "#ffff99";
+        status = "1";
+    }
+    $("[id=" + 'Row_' + no + "]").css({"backgroundColor":backgroundColor});
+    document.getElementById("reportIssueItemList[" + no + "].checkStatus").value = status;
+}
+
+function setApr(notes,lineNo,lastUpdDate) {
+    getObj("reportIssueItemList["+lineNo+"].notes").value = notes;
+    getObj("reportIssueItemList["+lineNo+"].reportIssueIdentify.lastUpdDate").value = lastUpdDate;
+}
+//-->
+</script>
+</head>
+
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLEFIX', 1, 4);">
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm" method="post" enctype="multipart/form-data">
+#foreach($reportIssueItem in $!reportIssueList.reportIssueItemList)
+    #customFormHiddenInput("reportIssueItemList[$velocityCount].checkStatus" "")
+    #customFormHiddenInput("reportIssueItemList[$velocityCount].notes" "$!reportIssueItem.notes")
+    #customFormHiddenInput("reportIssueItemList[$velocityCount].reportIssueIdentify.lastUpdDate" "$!reportIssueItem.reportIssueIdentify.lastUpdDate")
+    #customFormHiddenInput("reportIssueItemList[$velocityCount].buyerCompanyCd" "$!reportIssueItem.buyerCompanyCd")
+#end
+    ##  ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊
+    <iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0" scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+    <table id="TABLEFIX" class="ListArea" WIDTH="100%">
+    <thead>
+        #if($!reportIssueList.reportIssueItemList.size() != 0)
+            <tr id="Header">
+                <th class="BoxHeaderCenter FontSmall">No.</th>##  No.
+                <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th> ##  詳細
+                <th label="chk" class="BoxHeaderCenter FontSmall">
+                    <input id="ParentCheck" name="ParentCheck" type="checkbox">
+                </th>
+                #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                    <th class="BoxHeaderCenter FontSmall">#customSpringMessage('NOTES_INPUT')</th> ##  備考入力
+                #end
+                #if($searchCondition.reportName == 'RPT030')##  注文書の場合
+                    ##  区分
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.INFO_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.INFO_CD')">
+                        #customSpringMessage('DIVISION')
+                    </th>
+                    ##  履歴番号
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_VERSION')">
+                        #customSpringMessage('REVISION_NUMBER')
+                    </th>
+                    ##  状態
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.PRINT_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.PRINT_IND')">
+                        #customSpringMessage('STATUS')
+                    </th>
+                    ##  注文番号
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_NO')">
+                        #customSpringMessage('ORDER_NO')
+                    </th>
+                #end
+                #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                    ##  区分
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.CORRECT_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.CORRECT_CD')">
+                        #customSpringMessage('CORRECT_NAME')
+                    </th>
+                    ##  履歴番号
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.UPD_CNT" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.UPD_CNT')">
+                        #customSpringMessage('REVISION_NUMBER')
+                    </th>
+                    ##  状態
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.PRINT_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.PRINT_IND')">
+                        #customSpringMessage('STATUS')
+                    </th>
+                    ##  納品キー番号
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.DELIV_KEY_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.DELIV_KEY_NO')">
+                        #customSpringMessage('DELIV_KEY_NO')
+                    </th>
+                #end
+                ##  発注企業
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_COMPANY_NAME')">
+                    #customSpringMessage('BUYER_COMPANY')
+                </th>
+                ##  品名
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ITEM_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ITEM_NAME')">
+                    #customSpringMessage('ITEM_NAME')
+                </th>
+                ##  品名コード
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CUST_ITEM_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CUST_ITEM_CD')">
+                    #customSpringMessage('ITEM_CD')
+                </th>
+                ##  型式
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.KATASHIKI" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.KATASHIKI')">
+                    #customSpringMessage('KATASHIKI')
+                </th>
+                #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                    ##  注文数量
+                    <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VOL">
+                        #customSpringMessage('ORDER_VOL')
+                    </th>
+                    ##  未出荷数量
+                    <th label="num" class="BoxHeaderCenter FontSmall" id="S_ORDER.REMAINING_VOL" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.REMAINING_VOL')">
+                        #customSpringMessage('NOT_SHIPMENT_AMOUNT')
+                    </th>
+                    ##  出荷数量
+                    <th label="num" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.SHIPMENT_VOL" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.SHIPMENT_VOL')">
+                        #customSpringMessage('SHIPMENT_VOL')
+                    </th>
+                    ##  単位
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.UNIT_NAME')">
+                        #customSpringMessage('UNIT')
+                    </th>
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_FIRST_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_FIRST_DATE')">
+                        #customSpringMessage('ORDER_DATE')
+                    </th>
+                    ##  注文納期
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.DELIVERY_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.DELIVERY_DATE')">
+                        #customSpringMessage('ORDER_DELIV_DATE')
+                    </th>
+                    ##  出荷日
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.SHIPMENT_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.SHIPMENT_DATE')">
+                        #customSpringMessage('SHIPMENT_DATE')
+                    </th>
+                    ##  着荷予定日
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.ARVEXP_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.ARVEXP_DATE')">
+                        #customSpringMessage('ARVEXP_DATE')
+                    </th>
+                #end
+                #if($searchCondition.reportName == 'RPT030')##  注文書の場合
+                    ##  注文日
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_FIRST_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_FIRST_DATE')">
+                        #customSpringMessage('ORDER_DATE')
+                    </th>
+                    ## 注文変更日
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_DATE')">
+                        #customSpringMessage('CHANGE_ORDER_DATE')
+                    </th>
+                    ##  注文納期
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.DELIVERY_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.DELIVERY_DATE')">
+                        #customSpringMessage('ORDER_DELIV_DATE')
+                    </th>
+                    ##  注文数量
+                    <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VOL">
+                        #customSpringMessage('ORDER_VOL')
+                    </th>
+                    ##  単位
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.UNIT_NAME')">
+                        #customSpringMessage('UNIT')
+                    </th>
+                    ##  通貨コード
+                    <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CURRENCY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CURRENCY_CD')">
+                        #customSpringMessage('CURRENCY_CD')
+                    </th>
+                    ##  注文単価
+                    <th class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_PRICE">
+                        #customSpringMessage('ORDER_UNIT_PRICE')
+                    </th>
+
+                    ##  注文金額
+                    <th class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_VOL">
+                        #customSpringMessage('ORDER_AMOUNT')
+                    </th>
+                #end
+            </tr>
+    </thead>
+    <tbody id="Tbody">
+        #set($index = 0)
+        #foreach($!reportIssueItem in $!reportIssueList.reportIssueItemList)
+            <tr id="Row_$velocityCount" #if($velocityCount % 2 == 0) bgcolor="#dce4ef" #else bgcolor="#ffffff" #end>
+            <td class="BoxDetailCenter FontList">#set( $index = $index + 1 )$index</td>##  No.
+            <td class="BoxDetailCenter">
+                <img id="DetailButton_$velocityCount" class="Icon" src="../../image/btnDetailDisp.gif"
+                    onclick="openDetail(#jsEscapeInHTML($!reportIssueItem.reportIssueIdentify.seqNo), #jsEscapeInHTML($!reportIssueItem.reportIssueIdentify.lastUpdDate));"/>
+            </td>##  詳細
+            <td class="BoxDetailCenter">
+                <input class="Icon" name="check_status_$velocityCount" id="check_status_$velocityCount" type="checkbox" onclick="selectRow('$velocityCount', this)"/>
+            </td>
+            #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                <td class="BoxDetailCenter">
+                    <input type="button" class="SmallButton" value="#customSpringMessage('NOTES_INPUT')" onclick="inputRemark('$!reportIssueItem.delivKeyNo',$velocityCount, $!reportIssueItem.reportIssueIdentify.seqNo);"/>##  備考入力
+                </td>##  備考入力
+            #end
+            <td class="BoxDetailCenter FontMiniAnkBold" nowrap>#out($!reportIssueItem.divisionName)</td>##  区分
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!reportIssueItem.revisionNumber)
+            </td>##  履歴番号
+            <td class="BoxDetailLeft FontMiniAnkBold" nowrap>#out($!reportIssueItem.status_PageValue)</td>##  状態
+            #if($searchCondition.reportName == 'RPT030')##  注文書の場合
+                <td class="BoxDetailLeft FontSlipNo" nowrap>#out($!reportIssueItem.orderNo)</td>##  注文番号
+            #end
+            #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                <td class="BoxDetailLeft FontSlipNo" nowrap>#out($!reportIssueItem.delivKeyNo)</td>##  納品キー番号
+            #end
+            <td class="BoxDetailLeft FontList" nowrap>#out($!reportIssueItem.buyerCompanyName)</td>##  発注企業
+            <td class="BoxDetailLeft FontList" nowrap>#out($!reportIssueItem.itemName)</td>##  品名
+            <td class="BoxDetailLeft FontList" nowrap>#out($!reportIssueItem.itemCd)</td>##  品名コード
+            <td class="BoxDetailLeft FontList" nowrap>#out($!reportIssueItem.katashiki)</td>##  型式
+            #if($searchCondition.reportName == 'RPT050')##  納品書の場合
+                <td class="BoxDetailRight" nowrap>$!reportIssueItem.originVol.volFormat</td>##  注文数量
+                <td class="BoxDetailRight" nowrap>$!reportIssueItem.notShipmentVol.volFormat</td>##  未出荷数量
+                <td class="BoxDetailRight" nowrap>#out($!reportIssueItem.ShipmentVol.volFormat)</td>##  出荷数量
+                <td class="BoxDetailCenter FontList" nowrap>$!reportIssueItem.unit</td>##  単位
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.orderDate.dateOfymdFormat)</td>##注文日
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.orderDelivDate.dateOfymdFormat)</td>##  注文納期
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.shipmentDate.dateOfymdFormat)</td>##  出荷日
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.arvexpDate.dateOfymdFormat)</td>##  着荷予定日
+            #end
+            #if($searchCondition.reportName == 'RPT030')##  注文書の場合
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.orderDate.dateOfymdFormat)</td>##注文日
+                <td class="BoxDetailCenter FontList" nowrap>##注文変更日
+                    #out($!reportIssueItem.changeOrderDate.dateOfymdFormat)
+                </td>
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.orderDelivDate.dateOfymdFormat)</td>##  注文納期
+                <td class="BoxDetailRight" nowrap>#out($!reportIssueItem.originVol.volFormat)</td>##  注文数量
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.unit)</td>##  単位
+                <td class="BoxDetailCenter FontList" nowrap>#out($!reportIssueItem.currencyCd)</td>##  通貨コード
+                #if($!reportIssueItem.orderUnitPrice.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+                        #out($!reportIssueItem.orderUnitPrice.amountMarkDispForSP)##  注文単価
+                        #if($!reportIssueItem.unitInd == '0')
+                            <BR><font class="FontMini" color=red>【#customSpringMessage('PROV_PRICE')】</font>##  仮単価
+                        #end
+                </td>
+                #else
+                    <td class="BoxDetailCenter FontCurrSmall" nowrap>
+                        #out($!reportIssueItem.orderUnitPrice.amountMarkDispForSP)##  ********
+                    </td>
+                #end
+                #if($!reportIssueItem.orderAmount.moneyDisp)
+                    <td class="BoxDetailRight FontCurrSmall" nowrap>
+                        #out( $!reportIssueItem.originAmount.amountMarkDispForSP)##  注文金額
+                    </td>
+				#else
+					<td class="BoxDetailCenter FontCurrSmall" nowrap>
+                        #out( $!reportIssueItem.originAmount.amountMarkDispForSP)##  注文金額
+					</td>
+                #end
+            #end
+        </tr>
+        #end
+    </tbody>
+    #end
+    </table>
+    <table id="WAIT" class="NoBorder" style="display:none;width:100%;">
+        <tr>
+            <td style="text-align:center;">
+                <br><br>
+                <img src="../../image/wait.gif">
+                <br>
+                <span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')</span>
+            </td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>

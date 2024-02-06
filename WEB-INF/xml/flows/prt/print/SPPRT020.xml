@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <!-- 注文識別情報 -->
+    <var name="orderIdentify" class="fw.domain.sp.order.OrderIdentify" />
+    
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+    <input name="reportName" />
+    
+    
+    <decision-state id="isCurrentPageSearch">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPPRT020Service.init(searchCondition)" result="flowScope.reportIssueList" />
+        <transition to="SPPRT020" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPPRT020Service.page(searchCondition)" result="flowScope.reportIssueList" />
+        <transition to="SPPRT020" />
+    </action-state>
+
+    <view-state id="SPPRT020" model="reportIssueList" view="prt/print/SPPRT020">
+        <!-- クリックすると項目でソート -->
+        <transition on="order" validate="false">
+            <evaluate expression="SPPRT020Service.order(searchCondition)"
+                result="flowScope.reportIssueList" />
+        </transition>
+        
+        <!-- ページ共通処理 -->
+        <transition on="page" validate="false">
+            <evaluate expression="SPPRT020Service.page(searchCondition)"
+                result="flowScope.reportIssueList" />
+        </transition>
+        
+        <!-- 納品詳細 -->
+        <transition on="shippmentDetail" to="SPSHP040" validate="false" />
+        <!-- 注文詳細 -->
+        <transition on="orderDetail" to="SPNEW032" validate="false" >
+            <set name="orderIdentify.orderSeq" value="requestParameters.orderSeq"/><!-- 注文シーケンス番号 -->
+            <set name="orderIdentify.lastUpdDate" value="requestParameters.lastUpdDate"/><!-- 最終更新日時 -->
+        </transition>
+        <!-- 発行を押下 -->
+        <transition on="print" validate="true" to="searchByKey">
+            <evaluate expression="SPPRT020Service.print(reportIssueList)" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+        <!-- 備考入力を押下 -->
+        <transition on="remarkInput" to="SPCMN020" validate="false">
+            <evaluate expression="new fw.domain.sp.shipment.ShipmentManagement(
+                requestParameters.shipmentSeq, 
+                requestParameters.notes)" result="flowScope.shipmentManagement"></evaluate>
+        </transition>
+        <!-- 戻るボタンを押下 -->
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+    
+    <subflow-state id="SPSHP040" subflow="shp/shipping/SPSHP040">
+        <input name="shipmentSeq" value="requestParameters.shipmentSeq" />
+    </subflow-state>
+    <subflow-state id="SPNEW032" subflow="newconfirm/order/SPNEW032">
+        <input name="orderIdentify" value="orderIdentify" />
+    </subflow-state>
+    
+    <subflow-state id="SPCMN020" subflow="cmn/remark/SPCMN020">
+        <input name="shipmentManagement" value="shipmentManagement" />
+        <input name="lineNo" value="requestParameters.lineNo" />
+        <input name="deliverySeq" value="requestParameters.deliverySeq"/>
+    </subflow-state>
+</flow>

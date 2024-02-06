@@ -1,0 +1,579 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<!--見積回答入力（価格登録品）-->
+<title>#customSpringMessage('QUOT_ANS_INPUT')</title><!--見積回答入力-->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+function onLoad() {
+    setFocus();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg == ""){
+          var isAnswer = '#jsEscape($!isAnswer)';
+          if(isAnswer == 'true'){
+               #set( $mQuotReply = "#customSpringMessage('QUOT_REPLY')" )
+                     alert('#customMessageArgs("I005",[$mQuotReply])');
+                     buttonDisable();
+                     top.iframeChange("${flowExecutionUrl}&_eventId=back");
+               }
+                var isDismiss = '#jsEscape($!isDismiss)';
+                if(isDismiss == 'true'){
+                   #set( $mQuotReply = "#customSpringMessage('QUOT_REPLY')" )
+                      alert('#customMessageArgs("I033",[$mQuotReply])');
+                      buttonDisable();
+                      top.iframeChange("${flowExecutionUrl}&_eventId=back");
+                 }
+    }
+    convertToComma();
+}
+
+function exec() {
+     #set( $mmQuotReply = "#customSpringMessage('QUOT_REQ')" )
+     #set( $reply = "#customSpringMessage('REQ_REPLY')" )
+     if( !confirm('#customMessageArgs("W001",[$mmQuotReply,$reply])') ) {
+          return;
+     }
+     setFileDeleteFlg();
+     ## +++++ 強化-00041-000 2013/04/03 ADD SBO_KANGJW START +++++
+     buttonDisable();
+     ## +++++ 強化-00041-000 2013/04/03 ADD SBO_KANGJW END +++++
+     getObj("Body").action="${flowExecutionUrl}&_eventId=answer";
+     getObj("Body").submit();
+}
+
+function dismiss(){
+    #set( $mmQuotReply = "#customSpringMessage('QUOT_REQ')" )
+    #set( $refuse = "#customSpringMessage('REFUSE')" )
+    if( !confirm('#customMessageArgs("W001",[$mmQuotReply,$refuse])') ) {
+        return;
+    }
+    setFileDeleteFlg();
+    ## +++++ 強化-00041-000 2013/04/03 ADD SBO_KANGJW START +++++
+    buttonDisable();
+    ## +++++ 強化-00041-000 2013/04/03 ADD SBO_KANGJW END +++++
+    getObj("Body").action="${flowExecutionUrl}&_eventId=dismiss";
+    getObj("Body").submit();
+}
+
+function clearfile(no) {
+    var obj = document.getElementById("file"+no);
+    var str = obj.innerHTML;
+    obj.innerHTML = str;
+}
+function setFileDeleteFlg() {
+     var mount=#jsEscape($!{quotRespPrice.quotDetail.quotItemList.size()});
+     for(var i = 0; i < mount; i++){
+        var del = getObj("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].attachFile.screenDelFlg").value;
+        var file = getObj("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].attachFile.screenFile").value;
+        if("1" == del && file.length > 0) {
+            getObj("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].attachFile.screenDelFlg").value = "0";
+        }
+
+     }
+}
+
+function downloadFile(index) {
+  parent.iframeChange('${flowExecutionUrl}&_eventId=download','index',index);
+}
+
+ function convert(){
+    //delete ','
+    var mount=#jsEscape($!{quotRespPrice.quotDetail.quotItemList.size()});
+    for(var i = 0; i < mount; i++){
+        var tmp1=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot1.unitPrice.amount.amountFormat");
+         	tmp1.value=tmp1.value.replace(/,/g,"");
+        var tmp2=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot2.unitPrice.amount.amountFormat");
+            tmp2.value=tmp2.value.replace(/,/g,"");
+        var tmp3=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot3.unitPrice.amount.amountFormat");
+            tmp3.value=tmp3.value.replace(/,/g,"");
+        var tmp4=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot4.unitPrice.amount.amountFormat");
+            tmp4.value=tmp4.value.replace(/,/g,"");
+        var tmp5=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot5.unitPrice.amount.amountFormat");
+            tmp5.value=tmp5.value.replace(/,/g,"");
+     }
+}
+function convertToComma(){
+     var mount=#jsEscape($!{quotRespPrice.quotDetail.quotItemList.size()});
+     for(var i = 0; i < mount; i++){
+         var tmp1=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot1.unitPrice.amount.amountFormat");
+         editVal( tmp1);
+         var tmp2=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot2.unitPrice.amount.amountFormat");
+         editVal( tmp2);
+         var tmp3=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot3.unitPrice.amount.amountFormat");
+         editVal( tmp3);
+         var tmp4=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot4.unitPrice.amount.amountFormat");
+         editVal( tmp4);
+         var tmp5=document.getElementById("quotRespInfoPriceManagement.quotRespInputItemPriceList["+i+"].lotList.lot5.unitPrice.amount.amountFormat");
+         editVal( tmp5);
+      }
+}
+
+           //-->
+        </script>
+</head>
+<body topmargin="0" leftmargin="0" marginwidth="0" marginheight="0" align="center" class="CreateArea" onload="onLoad();">
+    <table class="NoBorder" width="70%">
+        <tr>
+            <td class="error">
+                $!errorMessage
+            </td>
+        </tr>
+    </table>
+    <form name="Body" id="Body" method="post" enctype="multipart/form-data">
+        <table class="HomeBox" width="700" >
+            <tr>
+                <td class!!="BoxCreateSlip" style="padding:20px 20px 20px 20px">
+                    <!-- ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊ -->
+                    <iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0" scrolling="no" frameborder="0" src="../../sbxCalendar/body.html"></iframe>
+                    <table width="100%">
+                        <tr>
+                            <td align="left">
+                                <!-- ＊＊＊＊＊＊＊＊＊＊左サイド＊＊＊＊＊＊＊＊＊＊ -->
+                                <table class="NoBorder" width="100%">
+                                    <tr>
+                                        <td>
+                                            <u><img src="../../image/mrkCircle.gif">
+                                                <span id="StepTitle" class="FontStepTitle">#customSpringMessage('QUOT_ANS_INPUT')<!--見積回答の入力--></span>
+                                            </u>
+                                            <br>
+                                            <br>
+                                            <span class="FontSmallBold DarkBlue">#customSpringMessage('SPRES030_HEADER_COMMENT')</span>
+                                        </td>
+                                        <td align="right" valign="middle">
+                                            <input type="button" class="LargeButton" value="#customSpringMessage('REFUSE')" onclick="dismiss();"><!--辞　退-->
+                                                <input type="button" class="LargeButton" value="#customSpringMessage('REQ_REPLY')" onclick="convert();exec();"><!--回　答-->
+                                        </td>
+                                    </tr>
+                                </table>
+                            <!-- ＊＊＊＊＊＊＊＊＊＊１番目の四角＊＊＊＊＊＊＊＊＊＊ -->
+                            <table class="NoBorder" width="100%">
+                                <tbody class="Box1G">
+                                    <tr>
+                                        <td class="Box1H FontBoxHeader" width="30%">#customSpringMessage('QUOT_REQ_NO')<!--見積依頼番号--></td>
+                                        <td nowrap class="Box1D FontSlipNo">
+                                            #out($!quotRespPrice.quotRespInfoPriceManagement.quotRespIdentify.aplNo)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('REVISION_NUMBER')<!--履歴番号-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotRespInfoPriceManagement.quotRespIdentify.aplVersion)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_REQ_IND')<!--見積依頼区分-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.quotInd.quotInd_PageValue)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('TITLE_NAME')<!--件名-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.titleName.titleName)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_REQ_DATE')<!--見積依頼日-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.quotPeriod.quotReqDate.quotReqDate.dateOfymdFormat)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('QUOT_ANS_LIMIT')<!--見積回答期限-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.quotPeriod.quotRespLimitDate.dateOfymdFormat)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('BUYER_COMPANY')<!--発注企業-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.custInfo.custCompany.code)
+                                            #out($!quotRespPrice.quotDetail.custInfo.custCompany.name)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('BUYER_USER')<!--購買担当者-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            <span class="DetailSection">
+                                                #out($!quotRespPrice.quotDetail.custInfo.custUser.sectionPlaceName)
+                                                #out($!quotRespPrice.quotDetail.custInfo.custUser.sectionName)
+                                            </span>
+                                            <br><b>#out($!quotRespPrice.quotDetail.custInfo.custUser.userName)</b>
+                                            <br>
+                                              <table>
+                                                <tr>
+                                                    <td valign="top"><img src="../../image/mrkTel.gif" ></td>
+                                                    <td  nowrap><span class="FontMini">#customSpringMessage('TEL')</span> <!--連絡先-->
+                                                        #out($!quotRespPrice.quotDetail.custInfo.custUser.contact.telNo.telNo) &nbsp;&nbsp;
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td nowrap class="Box1H FontBoxHeader">
+                                            #customSpringMessage('FOR_SUPPRIER_COMMENT')<!--取引先向けコメント-->
+                                        </td>
+                                        <td nowrap class="Box1D FontSmallAnk">
+                                            #out($!quotRespPrice.quotDetail.custInfo.comment.comment)
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br>
+                                <table class="NoBorder" width="100%">
+                                    <tbody class="Box1H FontBoxHeader">
+                                        <tr>
+                                            <th class="Box1H FontBoxHeader" width="30%">
+                                                #customSpringMessage('COMMENT')<!--コメント-->
+                                            </th>
+                                            <td class="Box1D FontSmallAnk">
+                                                #springFormTextarea("quotRespPrice.quotRespInfoPriceManagement.comment.comment" "class='Small' cols='82' rows='3' maxLength='200'")
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <br>
+
+                                    #set($lastIndex = $!{quotRespPrice.quotDetail.quotItemList.size()} - 1)
+                                    #if($lastIndex>=0)
+                                    #foreach($index in [0.. $lastIndex])
+                                        <table id="DetailTable" class="NoBorder" width="100%">
+                                            <tbody id="Detail1" class="Box1G">
+                                                <tr>
+                                                    <td class="Box1H FontBoxHeader" width="30%">
+                                                        #customSpringMessage('QUOT_REQ_DTL_NO')<!--見積依頼明細番号-->
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <span class="FontMiddleAnkBold">
+                                                            #out($!quotRespPrice.quotDetail.quotItemList[$index].quotReqItemNo.quotReqItemNo)
+                                                        </span>
+                                                    <br>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                       #customSpringMessage('ITEM_CD')<!--品名コード-->
+                                                     </th>
+                                                     <td nowrap class="Box1D FontSmallAnk">
+                                                       <span class="MiddleBoldAnk">
+                                                        #out($!quotRespPrice.quotDetail.quotItemList[$index].itemCd)
+                                                        </span>
+                                                        </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('ITEM_NAME')<!--品名-->
+                                                        #if($!quotRespPrice.quotDetail.quotItemList[$index].itemCd == "")
+                                                            <span class="FontMini Red">&nbsp;※</span>
+                                                        #end
+                                                    </th>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                     #if($!quotRespPrice.quotDetail.quotItemList[$index].itemCd == "")
+                                                        #springFormInput("quotRespPrice.quotDetail.quotItemList[$index].itemName" "size='120' maxLength='60' value='$!quotRespPrice.quotDetail.quotItemList[$index].itemName' class='Small'" "")
+
+                                                     #else
+                                                        #out($!quotRespPrice.quotDetail.quotItemList[$index].itemName)
+                                                     #end
+
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('MANUFACT_NAME')<!--メーカー名-->
+                                                    </th>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        #if($!quotRespPrice.quotDetail.quotItemList[$index].itemCd == "")
+                                                             #springFormInput("quotRespPrice.quotDetail.quotItemList[$index].manufactName" "size='60' maxLength='30' value='$quotRespPrice.quotDetail.quotItemList[$index].manufactName' class='Small'" "")
+
+                                                        #else
+                                                           #out($!quotRespPrice.quotDetail.quotItemList[$index].manufactName)
+                                                        #end
+
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('KATASHIKI')<!--型式-->
+                                                    </th>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        #if($!quotRespPrice.quotDetail.quotItemList[$index].itemCd == "")
+                                                             #springFormInput("quotRespPrice.quotDetail.quotItemList[$index].katashiki" "size='120' maxLength='60' value='$quotRespPrice.quotDetail.quotItemList[$index].katashiki' class='Small'" "")
+
+                                                        #else
+                                                           #out($!quotRespPrice.quotDetail.quotItemList[$index].katashiki)
+                                                        #end
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('UNIT')<!--単位-->
+                                                    </th>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        #if($!quotRespPrice.quotDetail.quotItemList[$index].itemCd == "")
+                                                             #springFormInput("quotRespPrice.quotDetail.quotItemList[$index].unitName" "size='20' maxLength='10' value='$quotRespPrice.quotDetail.quotItemList[$index].unitName' class='Small'" "")
+
+                                                        #else
+                                                           #out($quotRespPrice.quotDetail.quotItemList[$index].unitName)
+                                                        #end
+                                                    </td>
+                                                </tr>
+
+                                                <th nowrap class="Box1H FontBoxHeader">
+                                                    #customSpringMessage('VALID_PERIOD')<!--有効期間 -->
+                                                </th>
+                                                <td nowrap class="Box1D FontSmallAnk">
+                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].validityPeriod.period.startDate.dateOfymdFormat" "maxLength=8 size=12 class='SmallAnk noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                   <img class="Icon" src="../../image/btnCalendar.gif" onclick="var obj1= document.getElementById('quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].validityPeriod.period.startDate.dateOfymdFormat');initSearchBox(1,obj1);"><!--カレンダー-->
+                                                   <span class="FontSmall">～</span>
+                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].validityPeriod.period.endDate.dateOfymdFormat" "maxLength=8 size=12 class='SmallAnk noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                   <img class="Icon" src="../../image/btnCalendar.gif" onclick="var obj2 = document.getElementById('quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].validityPeriod.period.endDate.dateOfymdFormat');initSearchBox(1,obj2);"><!--カレンダー-->
+                                                </td>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('CURRENCY_CD')<!--通貨コード -->
+                                                    </th>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        #*springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].currencyCd" " ")       *#
+                                                        #out($quotRespPrice.quotDetail.quotItemList[$index].currencyCd)
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                     <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('ATTACH_FILE')<!--添付ファイル  -->
+                                                    </th>
+                                                    <td class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                #if($!quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.fileName!='')
+                                                                <td id="FileLink1" nowrap>
+                                                                <a href="#" onclick="downloadFile('$index');"> #out($!quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.fileName)</a>
+                                                                    #out($!quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.fileName)
+                                                                    <input type="checkbox" onclick="getObj('File$index').disabled =!this.checked;getObj('quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenDelFlg').value = this.checked?'1':'0';"/>#customSpringMessage('ACTION_DELETE')
+                                                                    #customFormHiddenInput("quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenDelFlg" "$!quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenDelFlg")
+                                                                </td>
+                                                                <td id="File$index" disabled="false" nowrap width="427px">
+                                                                    #else
+                                                                <td id="File$index" nowrap width="427px">
+                                                                    #customFormHiddenInput("quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenDelFlg" "0")
+                                                                    #end
+                                                                   <span id="file$index">
+                                                                       <input type="file"
+                                                                           id="quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenFile"
+                                                                           name="quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.screenFile"
+                                                                           class="Small" style="width:80%;"
+                                                                           #if($!dspFlg=='1')
+                                                                            readonly
+                                                                           #end
+                                                                           value="$!quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].attachFile.fileName">
+                                                                   </span>&nbsp;
+                                                                   <input type="button" onclick="clearfile($index);" value="#customSpringMessage('ACTION_CLEAR')"><!--クリア-->
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th nowrap class="Box1H FontBoxHeader">
+                                                        #customSpringMessage('ORDER_UNIT')<!--発注単位数量--><span class="FontMini Red">&nbsp;※</span>
+                                                    </th>
+                                                <td nowrap class="Box1D FontSmallAnk">
+                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].custUnitVol.custUnitVol.volFormat" "maxLength=9 size=16 class='SmallRight noIME'")
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th nowrap class="Box1H FontBoxHeader">
+                                                    #customSpringMessage('MIN_ORDER_VOL')<!--最小発注数量--><span class="FontMini Red">&nbsp;※</span>
+                                                </th>
+                                                <td nowrap class="Box1D FontSmallAnk">
+                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].minCustVol.minCustVol.volFormat" "maxLength=9 size=16 class='SmallRight noIME'")
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th nowrap class="Box1H FontBoxHeader">
+                                                    #customSpringMessage('STD_ORDER_LT') <!--標準納入日数 -->
+                                                </th>
+                                                <td nowrap class="Box1D FontSmallAnk">
+                                                 #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].standardDelivDayCount.standardDelivDayCount.dayCount" "maxLength=3 size=12 class='SmallRight noIME'")
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th nowrap class="Box1H FontBoxHeader">
+                                                  #customSpringMessage('TAX_IND')<!--課税区分--><span class="FontMini Red">&nbsp;※</span>
+                                                </th>
+                                                <td nowrap class="Box1D FontSmallAnk">
+                                                 #customFormSingleSelect("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].taxInd.taxInd" $TAX_CD "")
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                    <table id="DetailTable" class="NoBorder" width="100%">
+                                            <tbody id="Detail1" class="Box1G">
+                                                <tr>
+                                                    <th class="Box1H FontBoxHeader" rowspan="6" width="30%">
+                                                        #customSpringMessage('price_table')<!--価格表-->
+                                                    </th>
+                                                    <th class="Box1H FontBoxHeader" width="30%">#customSpringMessage('MIN_AMOUNT')<!--下限数量--></th>
+                                                    <!--下限数量-->
+                                                    <th class="Box1H FontBoxHeader">#customSpringMessage('UNIT_PRICE')</th>
+                                                    <!--単価-->
+                                                </tr>
+                                                <tr>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        0
+                                                        #customFormHiddenInput("quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot1.lowerVol.volFormat" "0")
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="center">
+                                                                    <span class="FontCurrSmall">#out($quotRespPrice.quotDetail.QuotItemList[$index].currencyMark)</span>
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot1.unitPrice.amount.amountFormat" "size=20  maxLength='17' class='SmallRight noIME' onblur='editVal(this)' onfocus='deleteComma(this)'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="right">
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot2.lowerVol.volFormat" "maxLength=9 size=12 class='SmallRight noIME'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="center">
+                                                                    <span class="FontCurrSmall">#out($quotRespPrice.quotDetail.QuotItemList[$index].currencyMark)</span>
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot2.unitPrice.amount.amountFormat" "size=20 maxLength='17' class='SmallRight noIME' onblur='editVal(this)' onfocus='deleteComma(this)'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="right">
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot3.lowerVol.volFormat" "maxLength=9 size=12 class='SmallRight noIME'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="center">
+                                                                    <span class="FontCurrSmall">#out($quotRespPrice.quotDetail.QuotItemList[$index].currencyMark)</span>
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot3.unitPrice.amount.amountFormat" "size=20 maxLength='17' class='SmallRight noIME' onblur='editVal(this)' onfocus='deleteComma(this)' ")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="right">
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot4.lowerVol.volFormat" "maxLength=9 size=12 class='SmallRight noIME'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="center">
+                                                                    <span class="FontCurrSmall">#out($quotRespPrice.quotDetail.QuotItemList[$index].currencyMark)</span>
+                                                                     #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot4.unitPrice.amount.amountFormat" "size=20 maxLength='17' class='SmallRight noIME'onblur='editVal(this)' onfocus='deleteComma(this)'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="right">
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot5.lowerVol.volFormat" "maxLength=9 size=12 class='SmallRight noIME'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td nowrap class="Box1D FontSmallAnk">
+                                                        <table>
+                                                            <tr>
+                                                                <td class="FontSmall" align="center">
+                                                                    <span class="FontCurrSmall">#out($quotRespPrice.quotDetail.QuotItemList[$index].currencyMark)</span>
+                                                                    #springFormInput("quotRespPrice.quotRespInfoPriceManagement.quotRespInputItemPriceList[$index].lotList.lot5.unitPrice.amount.amountFormat" "size=20 maxLength='17' class='SmallRight noIME' onblur='editVal(this)' onfocus='deleteComma(this)'")
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                    </table>
+                                <br/>
+                                #end
+                                #end
+                                        <table class="NoBorder" width="100%">
+                                            <tr>
+                                                <td>#customSpringMessage('SPRES030_FOOTER_COMMENT')</td>
+                                                <td align="right" valign="middle">
+                                                    <input type="button" class="LargeButton" value="#customSpringMessage('REFUSE')" onclick="dismiss();"><!--辞　退-->
+                                                    <input type="button" class="LargeButton" value="#customSpringMessage('REQ_REPLY')" onclick="convert();exec();"><!--回　答-->
+                                                </td>
+                                            </tr>
+                                        </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+        </table>
+</form>
+</body>
+</html>
+

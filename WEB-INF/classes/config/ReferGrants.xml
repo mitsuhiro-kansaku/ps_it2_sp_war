@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pages>
+    <page>
+        <name>SPNEW010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW011</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW012</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW020</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW021</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW022</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW030</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW031</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW032</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW090</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW091</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW092</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW040</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW041</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 20 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW042</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 20 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW050</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW051</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW052</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW060</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW061</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW062</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW130</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPNEW131</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPRES010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPRES020</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPRES030</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS010</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 20 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS020</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 20 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS030</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS040</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS041</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPANS042</name>
+        <grant>
+            <no>SP_SHIPPING_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPSHP010</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPSHP020</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPSHP040</name>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPRT010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPRT020</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPRT030</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPRC010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPRC020</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPDF010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPPDF020</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+        <grant>
+            <no>SP_DELIVERY_GRANT</no><!-- 30 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPACP010</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPACP011</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPACP012</name>
+        <grant>
+            <no>SP_ORDER_GRANT</no><!-- 10 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPMST030</name>
+        <grant>
+            <no>SP_MANG_GRANT</no><!-- 40 -->
+        </grant>
+    </page>
+    <page>
+        <name>SPMST040</name>
+        <grant>
+            <no>SP_MANG_GRANT</no><!-- 40 -->
+        </grant>
+    </page>
+</pages>

@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#out($!procuresuite)</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+
+<!--
+
+top.backUrl="../hme/data";
+top.homeUrl="";
+function onLoad() {
+    #optionalScriptList('SP_HOME_ONLOAD_PRE')
+    getObj("companyCd").focus();
+    top.document.title = document.title;
+
+    top.setMenuButton();
+    top.setText("LastLoginDate", "#jsEscape($!loginDate)");
+    top.setText("LoginUserName", "#jsEscape($!loginInfo.loginUserName)");
+    top.setText("OrderCompanyName", "#jsEscape($!buyerCompanyName)");
+
+    #if($!passwordChangeAlertValid)
+    if(confirm("#customMessageArgs('W049',["$!passwordValidDate"])")){
+        top.iframeChange('../lgn/password/SPLGN020','pageid','SPLGN020');
+        return;
+    }
+    #end
+    quickLinkCountByAjax();
+    #optionalScriptList('SP_HOME_ONLOAD_POST')
+}
+
+function changeUrl() {
+    document.Body.action="../hme/buyerCompanyChange";
+    document.Body.submit();
+}
+var $ajaxs=[];
+## クイックリンク件数を取得し、セットします。
+function quickLinkCountByAjax(){
+    $('td.DTL_OUTBODY').each(function(){
+        var ids=[];
+        $(this).find('span.QuickLinkId').each(function(){
+            ids.push(cleanXss($(this).attr('id')));
+        });
+        if(ids.length==0){return;}
+        $ajax=$.ajax({
+            type:"POST",
+            url:"../quickLinkCountController/getCount",
+            data:{ids:ids.toString()},
+            success:function(data){
+                for(var key in data.map){
+                    if ($('span:[id=\"'+key+'\"]').text() == '#customSpringMessage('PAGING_COUNTING')'){
+                        $('span:[id=\"'+key+'\"]').text(data.map[key]);
+                    }
+                }
+            },
+            error:function(xhr,textStatus,errorThrown){
+                if(textStatus=="timeout"){
+                    top.location.href="$!requestContext.contextPath/layout/sessiontimeout"
+                }
+            }
+        });
+        $ajaxs.push($ajax);
+    });
+};
+## アンロードされる直前に発生します。
+window.addEventListener('beforeunload',function(e){
+    $.each($ajaxs,function(index,value){
+        value.abort();## キャンセルする
+    });
+},false);
+//-->
+</script>
+<style>
+.HomeBox2 {
+    background-color:#FFFFFF;
+    border: 1px solid #666666;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
+    behavior: url("../include/ie-css3.htc");
+    zoom:1;
+    box-shadow: 3px 3px 3px #CCCCFF;
+}
+</style>
+</head>
+<body class="Body" onload="onLoad();">
+<FORM NAME="Body" method="post">
+    <br>
+    <table class="NoBorder" style="width:90%;margin:auto;"><tr><td valign="top">
+    <table class="NoBorder" style="width:100%;">
+        <tr>
+            <td colspan="2" style="width:95%;">
+                <span class="CornerTopBrown">
+                <span class="Corner1"></span> <span class="Corner2"></span> <span class="Corner3"></span><span class="Corner4"></span>
+                </span>
+                <table class="NoBorder CornerMidBrown">
+                    <tr>
+                        <td align="left">
+                            <img src="../image/home.gif"/>
+                        </td>
+                        <td align="right">
+                            #customFormSingleSelect("searchCondition.companyCd" $buyerCompanyList "onchange='changeUrl();'")
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        </td>
+                    </tr>
+                </table>
+                <span class="CornerBtmBrown">
+                <span class="Corner4"></span> <span class="Corner3"></span> <span class="Corner2"></span><span class="Corner1"></span>
+                </span>
+            </td>
+        </tr>
+        #if($authHelper.contain('10'))
+        <tr>
+            <td style="width:35%;text-align:left;vertical-align:top;padding-left:10px;" nowrap>
+                <table id="Menu20" class="NoBorder" style="width:95%;">
+                    <tr>
+                        <td colspan="2" class="FontBigBold" style="padding-top:12px;color:brown;border-bottom:1px solid #999999;" nowrap><!--見積業務-->#customSpringMessage('QUOT_WORK')<img src="../image/mrkCircle.gif">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/quotReq/SPNEW010','pageid','companySearch');"><!--見積依頼情報-->#customSpringMessage('QUOT_REQ_INFO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/quotReq/SPNEW010','pageid','SPNEW010','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="1.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap><img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../res/quotresp/SPRES010','pageid','quotrespSearch');"><!--見積回答入力-->#customSpringMessage('QUOT_ANS_INPUT')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../res/quotresp/SPRES010','pageid','quotrespSearch','quickLink',true,'quickLinkId','Tempsave');"><!--一時保存-->
+                                #customSpringMessage('TEMPORARY_PRESERVATION')<span class="FontMiddleAnkBold QuickLinkId" id="1.2.2">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')
+                            </a>
+                            &nbsp;|&nbsp;
+                            <a class="FontSmall" href="javascript:top.iframeChange('../res/quotresp/SPRES010','pageid','quotrespSearch','quickLink',true,'quickLinkId','UnAnswer');"><!--未回答-->#customSpringMessage('NOTHING_RCV')<span class="FontMiddleAnkBold QuickLinkId" id="1.2.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap><img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/quotAdo/SPNEW020','pageid','companySearch');"><!--見積採否情報-->#customSpringMessage('QUOT_ADO_INFO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap><a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/quotAdo/SPNEW020','pageid','SPNEW020','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="1.3.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    #optionalMenuList('SP_QUOT_WORK')
+                </table>
+            </td>
+            <td style="width:35%;text-align:left;vertical-align:top;padding-left:10px;" nowrap>
+                <table id="Menu20" class="NoBorder" style="width:95%;">
+                    <tr>
+                        <td colspan="2" class="FontBigBold" style="padding-top:12px;color:brown;border-bottom:1px solid #999999;" nowrap><!--価格改定業務-->#customSpringMessage('PRICE_WORK')<img src="../image/mrkCircle.gif">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/prcrev/SPNEW130','pageid','SPNEW130');"><!--価格改定依頼情報-->#customSpringMessage('PRICE_REQ_INFORMATION')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/prcrev/SPNEW130','pageid','SPNEW130','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="2.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../prc/prcrevans/SPPRC010','pageid','SPPRC010');"><!--価格改定一覧-->#customSpringMessage('PRICE_REQ_ADO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../prc/prcrevans/SPPRC010','pageid','SPPRC010','quickLink',true,'quickLinkId','UnAnswer');"><!--未回答-->#customSpringMessage('NOTHING_RCV')<span class="FontMiddleAnkBold QuickLinkId" id="2.2.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+
+                    #optionalMenuList('SP_PRICE_WORK')
+                </table>
+
+            </td>
+        </tr>
+        #end
+        <tr>
+            <td style="width:35%;text-align:left;vertical-align:top;padding-left:10px;" nowrap>
+                <table id="Menu20" class="NoBorder" style="width:95%;">
+                    <tr>
+                        <td colspan="2" class="FontBigBold" style="padding-top:12px;color:brown;border-bottom:1px solid #999999;" nowrap><!--受注業務-->#customSpringMessage('UTL_WORK')<img src="../image/mrkCircle.gif">
+                        </td>
+                    </tr>
+                #if($authHelper.contain('10'))<!-- 受注管理権限 -->
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/order/SPNEW030','pageid','SPNEW030');"><!--注文情報-->#customSpringMessage('ORDER_INFO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/order/SPNEW030','pageid','SPNEW030','quickLink',true,'infoCd','0502','quickLinkId','NewOrderConfirmed');"><!--新着件数（確定）-->#customSpringMessage('NEW_COUNT')（#customSpringMessage('CONFIRMED_ORDER')）<span class="FontMiddleAnkBold QuickLinkId" id="3.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>&nbsp;
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:javascript:top.iframeChange('../newconfirm/order/SPNEW030','pageid','SPNEW030','quickLink',true,'infoCd','0503','quickLinkId','NewOrderModify');"><!--新着件数（変更）-->#customSpringMessage('NEW_COUNT')（#customSpringMessage('ORDER_MODIFY')）<span class="FontMiddleAnkBold QuickLinkId" id="3.1.2">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>&nbsp;
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/order/SPNEW030','pageid','SPNEW030','quickLink',true,'infoCd','0504','quickLinkId','NewOrderCancel');"><!--新着件数（取消）-->#customSpringMessage('NEW_COUNT')（#customSpringMessage('ORDER_CANCEL')）<span class="FontMiddleAnkBold QuickLinkId" id="3.1.3">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>&nbsp;
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/order/SPNEW030','pageid','SPNEW030','quickLink',true,'infoCd','0505','quickLinkId','NewOrderStop');"><!--新着件数（打切）-->#customSpringMessage('NEW_COUNT')（#customSpringMessage('DISCONTINUED_ORDER')）<span class="FontMiddleAnkBold QuickLinkId" id="3.1.4">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                #end <!-- 受注管理権限 -->
+                #if($authHelper.contain('20'))<!-- 納期管理権限 -->
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/delivery/SPNEW040','pageid','delivCheckSearch');"><!--納期確認情報-->#customSpringMessage('DELIV_CHECK_INFO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/delivery/SPNEW040','pageid','delivCheckSearch','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="3.3.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../ans/delivery/SPANS040','pageid','SPANS040');"><!--納期一括回答-->#customSpringMessage('DELIV_DATE_COLLECTIVE_REPLY')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../ans/delivery/SPANS040','pageid','SPANS040','quickLink',true,'quickLinkId','UnAnswerDelivResp');");"><!--未回答(納期回答)-->#customSpringMessage('NOTHING_RCV_DELIV_RESP')<span class="FontMiddleAnkBold QuickLinkId" id="3.2.2">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>&nbsp;
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../ans/delivery/SPANS040','pageid','SPANS040','quickLink',true,'quickLinkId','UnAnswerDelivCheckResp');");"><!--未回答(納期確認回答)-->#customSpringMessage('NOTHING_RCV_DELIV_CHECK_RESP')<span class="FontMiddleAnkBold QuickLinkId" id="3.2.3">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../ans/delivery/SPANS010','pageid','SPANS010');"><!--納期回答入力-->#customSpringMessage('DELIV_RCV_INPUT')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>&nbsp;
+                        </td>
+                    </tr>
+                #end <!-- 納期管理権限 -->
+                    <tr>
+                        <td colspan="2" class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../viw/slip/SPVIW010','pageid','SPVIW010');"><!--受注照会-->#customSpringMessage('UTL_REFERENCE')</a>
+                        </td>
+                    </tr>
+                #if($authHelper.contain('30'))<!-- 出荷管理権限 -->
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/arrival/SPNEW050','pageid','SPNEW050');"><!--入荷情報-->#customSpringMessage('ARRIVAL_INFO')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/arrival/SPNEW050','pageid','SPNEW050','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="4.2.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                #end
+                #if($authHelper.contain('10'))<!-- 受注管理権限 -->
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../newconfirm/acceptance/SPNEW060','pageid','SPNEW060');"><!--検収情報-->#customSpringMessage('INSPECTION_INFORMATION')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                             <a class="FontSmall" href="javascript:top.iframeChange('../newconfirm/acceptance/SPNEW060','pageid','SPNEW060','quickLink',true,'quickLinkId','New');"><!--新着件数-->#customSpringMessage('NEW_COUNT')<span class="FontMiddleAnkBold QuickLinkId" id="5.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../acp/acceptancedtl/SPACP010','pageid','SPACP010');"><!--検収明細-->#customSpringMessage('FAX_IND_ACCPAY')</a>
+                        </td>
+                    </tr>
+                    #optionalMenuList('SP_UTL_WORK')
+                #end
+                </table>
+            </td>
+            <td style="width:35%;text-align:left;vertical-align:top;padding-left:10px;" nowrap>
+                <table id="Menu20" class="NoBorder" style="width:95%;">
+                #if($authHelper.contain('30'))<!-- 出荷管理権限 -->
+                    <tr>
+                        <td colspan="2" class="FontBigBold" style="padding-top:12px;color:brown;border-bottom:1px solid #999999;" nowrap><!--出荷業務-->#customSpringMessage('SHPMENT_WORK')<img src="../image/mrkCircle.gif">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../shp/shipping/SPSHP010', 'pageid', 'SPSHP010');"><!--出荷処理-->#customSpringMessage('SHIP_MANAGEMENT')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                            <a class="FontSmall" href="javascript:top.iframeChange('../shp/shipping/SPSHP010','pageid','SPSHP010','quickLink',true,'quickLinkId','UnShipment');"><!--未出荷-->#customSpringMessage('NOT_SHIPMENT')<span class="FontMiddleAnkBold QuickLinkId" id="4.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                        </td>
+                    </tr>
+                    #optionalMenuList('SP_SHPMENT_WORK')
+                #end <!-- 出荷管理権限 -->
+                    <tr><td height="85px"></td></tr>
+                    <tr>
+                        <td colspan="2" class="FontBigBold" style="padding-top:12px;color:brown;border-bottom:1px solid #999999;" nowrap><!--その他-->#customSpringMessage('OTHER_ACCOUNT')<img src="../image/mrkCircle.gif">
+                        </td>
+                    </tr>
+                #if($authHelper.contain('10') || $authHelper.contain('30'))<!-- 出荷管理権限 or 受注管理権限 -->
+                    <tr>
+                        <td class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../prt/print/SPPRT010','pageid','SPPRT010');"><!--帳票発行-->#customSpringMessage('REPORT_ISSUE')</a>
+                        </td>
+                        <td class="DTL_OUTBODY" style="text-align:right;vertical-align:bottom;" nowrap>
+                        <span class="FontSmall"><!--未発行-->#customSpringMessage('NOT_ISSUE')(&nbsp;</span>
+                            #if($authHelper.contain('30'))
+                            <a class="FontSmall" href="javascript:top.iframeChange('../prt/print/SPPRT010','pageid','SPPRT010','quickLink',true,'reportName','RPT050','quickLinkId','UnIssueDelev');"><!-- 納品書 -->#customSpringMessage('INVOICE')<span class="FontMiddleAnkBold QuickLinkId" id="6.1.1">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>&nbsp;
+                            #end
+                            #if($authHelper.contain('10') && $authHelper.contain('30'))
+                            |
+                            #end
+                            #if($authHelper.contain('10'))
+                            &nbsp;
+                            <a class="FontSmall" href="javascript:top.iframeChange('../prt/print/SPPRT010','pageid','SPPRT010','quickLink',true,'reportName','RPT030','quickLinkId','UnIssueOrder');"><!-- 注文書 -->#customSpringMessage('ORDER_SHEET')<span class="FontMiddleAnkBold QuickLinkId" id="6.1.2">#customSpringMessage('PAGING_COUNTING')</span><!--件-->#customSpringMessage('PAGING_COUNT')</a>
+                            #end
+                            <span class="FontSmall">&nbsp;)</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../pdf/print/SPPDF010','pageid','SPPDF010');"><!--印刷一覧-->#customSpringMessage('PRINT_LIST')</a>
+                        </td>
+                    </tr>
+                #end <!-- 出荷管理権限 or 受注管理権限 -->
+                    <tr>
+                        <td colspan="2" class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../mst/library/SPMST010','pageid','SPMST010');""><!--ライブラリ-->#customSpringMessage('M_LIBRALY')</a>
+                        </td>
+                    </tr>
+                #if($authHelper.contain('40'))<!-- 管理者権限 -->
+                    <tr>
+                        <td colspan="2" class="DTL_OUTBODY" style="padding-top:10px;vertical-align:bottom;" nowrap>
+                            <img src="../image/mnu2.gif" align="left"><a class="FontLarge" href="javascript:top.iframeChange('../mst/user/SPMST030');"><!--ユーザマスタ保守-->#customSpringMessage('M_USER_MAINTAIN')</a>
+                        </td>
+                    </tr>
+                #end <!-- 管理者権限 -->
+                    #optionalMenuList('SP_OTHER')
+                </table>
+            </td>
+        </tr>
+    </table>
+    </td>
+        <td  class="RightArea" width="20%">
+                <table class="HomeBox2" width="90%">
+                    <tr>
+                        <td align="left" style="padding: 4px;">
+                            <span class="CornerTopBlue">
+                            <span class="Corner1"></span><span class="Corner2"></span><span class="Corner3"></span><span class="Corner4"></span>
+                            </span>
+                            <table class="CornerMidBlue" width="100%">
+                                <tr>
+                                    <td class="FontMiniAnkBold" align="left">
+                                        <!-- ログイン情報 -->#customSpringMessage('LOGIN_INFO'):<br>
+                                        <span class="FontMini" style="color: brown; padding: 4px;">
+                                            <!--前回ログイン -->#customSpringMessage('PREV_LOGIN')：
+                                        </span><br>
+                                        <span class="FontMini" style="color: brown; padding: 8px;">
+                                            #out($!lastLoginDate)
+                                        </span><br>
+                                    #if ($!passwordValidEnabled && $!passwordValidDate && $!passwordValidDate != "")
+                                        <span class="FontMini" style="color: brown; padding: 4px;">
+                                            <!--パスワード有効期限 -->#customSpringMessage('PASSWORD_LIMIT_TIME')：
+                                        </span><br>
+                                        #if ($!passwordChangeNoticeValid)
+                                        <span class="FontSmallBold" style="color: red; padding: 8px;">
+                                        #else
+                                        <span class="FontMini" style="color: brown; padding: 8px;">
+                                        #end
+                                            #out($!passwordValidDate)
+                                        </span><br>
+                                    #end
+                                    </td>
+                                </tr>
+                            </table>
+                            <span class="CornerBtmBlue">
+                            <span class="Corner4"></span><span class="Corner3"></span><span class="Corner2"></span><span class="Corner1"></span>
+                            </span>
+                        </td>
+                    </tr>
+                </table><br>
+                <span class="FontBigBold" style="padding-top:12px;color:brown; solid #999999;"><!--Information-->#customSpringMessage('INFORMATION')</span><img src="../image/mrkCircle.gif">
+                <table class="HomeBox2" width="90%">
+                    <tr>
+                        <td align="center" style="padding:4px;">
+                            <span class="CornerTopYellow">
+                            <span class="Corner1"></span> <span class="Corner2"></span> <span class="Corner3"></span><span class="Corner4"></span>
+                            </span>
+                            <table class="CornerMidYellow" width="100%">
+                            #foreach( $newsItem in $newsList )
+                                <tr>
+                                    <td class="NewsTitle">
+                                        <a class="FontSmallBold" href="javascript:window.open('../mst/information/SPMST060','informationPopup','width=600,height=420,left=400,top=250');top.iframeChange('../mst/information/SPMST060','newsSeq','$!newsItem.newsIdentify.newsSeq','informationPopup');">#out($!newsItem.title)</a><br>
+                                        <span class="FontMini">#out($!newsItem.newsIdentify.lastUpdDateDispYMD)</span>
+                                         <br>
+                                        <span class="FontMini" style="color:green;">#out($!newsItem.companySummary.companyName)</span>
+                                        <span class="FontMini" style="color:green;">#out($!newsItem.sendUserName)</span>
+                                    </td>
+                                </tr>
+                            #end
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <br/>
+</FORM>
+</body>
+</html>

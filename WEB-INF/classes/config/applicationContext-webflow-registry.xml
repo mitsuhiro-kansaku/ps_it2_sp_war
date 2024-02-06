@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:webflow="http://www.springframework.org/schema/webflow-config"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/webflow-config
+        http://www.springframework.org/schema/webflow-config/spring-webflow-config-2.3.xsd" default-lazy-init="true">
+
+    <webflow:flow-registry id="flowRegistry" parent="standardFlowRegistory"
+        flow-builder-services="flowBuilderServices" base-path="classpath*:flows/addons">
+        <webflow:flow-location-pattern value="/**/*.xml" />
+    </webflow:flow-registry>
+    
+    <webflow:flow-registry id="standardFlowRegistory" 
+        flow-builder-services="flowBuilderServices" base-path="WEB-INF/xml/flows/">
+        <webflow:flow-location path="base/base.xml" id="base"/>
+        <webflow:flow-location path="base/search.xml" id="baseSearch"/>
+        <webflow:flow-location path="base/searchInsert.xml" id="baseSearchInsert"/>
+        <webflow:flow-location path="base/list.xml" id="baseList"/>
+        <webflow:flow-location path="base/listNoButton.xml" id="baseListNoButton"/>
+        <webflow:flow-location path="base/listNoDelete.xml" id="baseListNoDelete"/>
+        <webflow:flow-location path="base/insert.xml" id="baseInsert"/>
+        <webflow:flow-location path="base/update.xml" id="baseUpdate"/>
+        <webflow:flow-location path="base/delete.xml" id="baseDelete"/>
+        
+        <!-- ログイン  -->
+        <webflow:flow-location path="lgn/login/SPLGN010.xml" id="lgn/login/SPLGN010"/>
+        
+        <!-- 新着見積依頼 -->
+        <webflow:flow-location path="newconfirm/quotreq/SPNEW012Other.xml" id="newconfirm/quotReq/SPNEW012Other"/>
+        <webflow:flow-location path="newconfirm/quotreq/SPNEW012.xml" id="newconfirm/quotReq/SPNEW012"/>
+        <webflow:flow-location path="newconfirm/quotreq/SPNEW011.xml" id="newconfirm/quotReq/SPNEW011"/>
+        <webflow:flow-location path="newconfirm/quotreq/SPNEW010.xml" id="newconfirm/quotReq/SPNEW010"/>
+        
+        <!-- 見積回答 -->
+        <webflow:flow-location path="res/quotresp/SPRES010.xml" id="res/quotresp/SPRES010"/>
+        <webflow:flow-location path="res/quotresp/SPRES020.xml" id="res/quotresp/SPRES020"/>
+        <webflow:flow-location path="res/quotresp/SPRES030.xml" id="res/quotresp/SPRES030"/>
+        <webflow:flow-location path="res/quotresp/SPRES030Input.xml" id="res/quotresp/SPRES030Input"/>
+        
+        <!-- 新着納期確認 -->
+        <webflow:flow-location path="newconfirm/delivery/SPNEW040.xml" id="newconfirm/delivery/SPNEW040"/>
+        <webflow:flow-location path="newconfirm/delivery/SPNEW041.xml" id="newconfirm/delivery/SPNEW041"/>
+        <webflow:flow-location path="newconfirm/delivery/SPNEW042.xml" id="newconfirm/delivery/SPNEW042"/>
+        
+        <!-- 新着注文 -->
+        <webflow:flow-location path="newconfirm/order/SPNEW030.xml" id="newconfirm/order/SPNEW030"/>
+        <webflow:flow-location path="newconfirm/order/SPNEW031.xml" id="newconfirm/order/SPNEW031"/>
+        <webflow:flow-location path="newconfirm/order/SPNEW032.xml" id="newconfirm/order/SPNEW032"/>
+        
+        <!-- 新着見積採否 -->
+        <webflow:flow-location path="newconfirm/quotado/SPNEW022Other.xml" id="newconfirm/quotAdo/SPNEW022Other"/>
+        <webflow:flow-location path="newconfirm/quotado/SPNEW022.xml" id="newconfirm/quotAdo/SPNEW022"/>
+        <webflow:flow-location path="newconfirm/quotado/SPNEW021.xml" id="newconfirm/quotAdo/SPNEW021"/>
+        <webflow:flow-location path="newconfirm/quotado/SPNEW020.xml" id="newconfirm/quotAdo/SPNEW020"/>
+        
+        <!-- 新着入荷情報 -->
+        <webflow:flow-location path="newconfirm/arrival/SPNEW050.xml" id="newconfirm/arrival/SPNEW050"/>
+        <webflow:flow-location path="newconfirm/arrival/SPNEW051.xml" id="newconfirm/arrival/SPNEW051"/>
+        <webflow:flow-location path="newconfirm/arrival/SPNEW052.xml" id="newconfirm/arrival/SPNEW052"/>
+        
+        <!-- 価格改定依頼情報 -->
+        <webflow:flow-location path="newconfirm/prcrev/SPNEW130.xml" id="newconfirm/prcrev/SPNEW130"/>
+        <webflow:flow-location path="newconfirm/prcrev/SPNEW131.xml" id="newconfirm/prcrev/SPNEW131"/>
+        
+        <!-- 価格改定回答 -->
+        <webflow:flow-location path="prc/prcrevans/SPPRC010.xml" id="prc/prcrevans/SPPRC010"/>
+        <webflow:flow-location path="prc/prcrevans/SPPRC020.xml" id="prc/prcrevans/SPPRC020"/>
+        
+        <!-- 納期回答 -->
+        <webflow:flow-location path="ans/delivery/SPANS010.xml" id="ans/delivery/SPANS010"/>
+        <webflow:flow-location path="ans/delivery/SPANS020.xml" id="ans/delivery/SPANS020"/>
+        <webflow:flow-location path="ans/delivery/SPANS030.xml" id="ans/delivery/SPANS030"/>
+        <webflow:flow-location path="ans/delivery/SPANS040.xml" id="ans/delivery/SPANS040"/>
+        <webflow:flow-location path="ans/delivery/SPANS041.xml" id="ans/delivery/SPANS041"/>
+        <webflow:flow-location path="ans/delivery/SPANS042.xml" id="ans/delivery/SPANS042"/>
+        
+        <!-- 出荷 -->
+        <webflow:flow-location path="shp/shipping/SPSHP010.xml" id="shp/shipping/SPSHP010"/>
+        <webflow:flow-location path="shp/shipping/SPSHP020.xml" id="shp/shipping/SPSHP020"/>
+        <webflow:flow-location path="shp/shipping/SPSHP040.xml" id="shp/shipping/SPSHP040"/>
+        
+        <!-- 備考入力 -->
+        <webflow:flow-location path="cmn/remark/SPCMN020.xml" id="cmn/remark/SPCMN020"/>
+        
+        <!-- 検収情報 -->
+        <webflow:flow-location path="newconfirm/acceptance/SPNEW061.xml" id="newconfirm/acceptance/SPNEW061"/>
+        <webflow:flow-location path="newconfirm/acceptance/SPNEW060.xml" id="newconfirm/acceptance/SPNEW060"/>
+        <webflow:flow-location path="newconfirm/acceptance/SPNEW062.xml" id="newconfirm/acceptance/SPNEW062"/>
+        <!-- 検収明細 -->
+        <webflow:flow-location path="acp/acceptancedtl/SPACP010.xml" id="acp/acceptancedtl/SPACP010"/>
+        <webflow:flow-location path="acp/acceptancedtl/SPACP011.xml" id="acp/acceptancedtl/SPACP011"/>
+        <webflow:flow-location path="acp/acceptancedtl/SPACP012.xml" id="acp/acceptancedtl/SPACP012"/>
+        
+        <!-- ライブラリ一覧 -->
+        <webflow:flow-location path="mst/library/SPMST010.xml" id="mst/library/SPMST010"/>
+        <webflow:flow-location path="mst/library/SPMST020.xml" id="mst/library/SPMST020"/>
+        
+         <!-- パスワード変更 -->
+        <webflow:flow-location path="lgn/password/SPLGN020.xml" id="lgn/password/SPLGN020"/>
+        
+        <!-- ユーザーマスタ保守 -->
+        <webflow:flow-location path="mst/user/SPMST030.xml" id="mst/user/SPMST030"/>
+        <webflow:flow-location path="mst/user/SPMST040.xml" id="mst/user/SPMST040"/>
+        <webflow:flow-location path="mst/user/SPMST050.xml" id="mst/user/SPMST050"/>
+        <webflow:flow-location path="mst/user/SPMST050_edit.xml" id="mst/user/SPMST050Edit"/>
+        <webflow:flow-location path="mst/user/SPMST050_delete.xml" id="mst/user/SPMST050Delete"/>
+        
+         <!-- 帳票発行 -->
+        <webflow:flow-location path="prt/print/SPPRT010.xml" id="prt/print/SPPRT010"/>
+        <webflow:flow-location path="prt/print/SPPRT020.xml" id="prt/print/SPPRT020"/>
+        <!-- 印刷一覧  -->
+        <webflow:flow-location path="pdf/print/SPPDF010.xml" id="pdf/print/SPPDF010"/>
+        <webflow:flow-location path="pdf/print/SPPDF020.xml" id="pdf/print/SPPDF020"/>
+        
+        <!-- 受注照会 -->
+        <webflow:flow-location path="viw/slip/SPVIW010.xml" id="viw/slip/SPVIW010"/>
+        <webflow:flow-location path="viw/slip/SPVIW011.xml" id="viw/slip/SPVIW011"/>
+        <webflow:flow-location path="viw/slip/SPVIW012.xml" id="viw/slip/SPVIW012"/>
+        
+    </webflow:flow-registry>
+</beans>

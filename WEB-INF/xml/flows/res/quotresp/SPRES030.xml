@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    <!-- 見積回答（入力）　都度品、参考見積の場合-->
+    <input name="quotReqIdentify" />
+    <input name="patternName" />
+
+    <on-start>
+        <evaluate expression="SPRES030Service.init(quotReqIdentify,patternName)"
+            result="flowScope.quotRespEach" />
+    </on-start>
+
+    <view-state id="SPRES030" model="quotRespEach" view="res/quotresp/SPRES030">
+        <!-- 回答 -->
+        <transition on="answer" validate="true">
+            <evaluate expression="SPRES030Service.answer(quotRespEach)" />
+            <set name="flashScope.isAnswer" value="true"></set>
+        </transition>
+        <transition on="dismiss" validate="true">
+            <evaluate expression="SPRES030Service.dismiss(quotRespEach)" />
+            <set name="flashScope.isDismiss" value="true"></set>
+        </transition>
+        <transition on="tempSave" validate="true">
+            <evaluate expression="SPRES030Service.tempSave(quotRespEach)" />
+            <set name="flashScope.isTempSave" value="true"></set>
+        </transition>
+
+        <!-- 2013/02/12 ADD DAIKO_YAMAGUCHI START -->
+        <transition on="downloadReqHeaderAttachment" validate="false">
+            <evaluate expression="SPRES030Service.downloadReqHeaderAttachment(quotRespEach, requestParameters.index)" />
+        </transition>
+
+        <transition on="downloadReqDetailAttachment" validate="false">
+            <evaluate expression="SPRES030Service.downloadReqDetailAttachment(quotRespEach, requestParameters.index)" />
+        </transition>
+        <!-- 2013/02/12 ADD DAIKO_YAMAGUCHI -END- -->
+
+         <transition on="download" validate="false">
+         <!-- 2015/06/17 ADD RIKI_SUGIYAMA START -->
+            <evaluate
+                expression="SPRES030Service.download(quotRespEach, requestParameters.index, requestParameters.attachNo)" />
+         <!-- 2015/06/17 ADD RIKI_SUGIYAMA END -->
+         <!-- 2015/06/17 DELETE RIKI_SUGIYAMA START -->
+<!--             <evaluate -->
+<!--                 expression="SPRES030Service.download(quotRespEach, requestParameters.index)" /> -->
+         <!-- 2015/06/17 DELETE RIKI_SUGIYAMA END -->
+        </transition>
+    </view-state>
+</flow>

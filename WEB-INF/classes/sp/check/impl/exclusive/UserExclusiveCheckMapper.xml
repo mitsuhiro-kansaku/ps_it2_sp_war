@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.check.impl.exclusive.UserExclusiveCheckMapper">
+
+   <select id="searchExclusive" parameterType="fw.domain.sp.usermaster.UserMasterIdentify" 
+        resultType="String">
+        SELECT
+            M_S_USER.S_USER_ID
+        FROM M_S_USER 
+        WHERE
+            M_S_USER.S_USER_ID = #{supplierUserId}
+            AND M_S_USER.LAST_UPD_DATE = #{lastUpdDate}
+    </select> 
+</mapper>

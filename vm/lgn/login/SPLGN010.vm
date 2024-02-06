@@ -1,0 +1,99 @@
+<!doctype html>
+<HTML LANG="ja">
+    <HEAD>
+        <META http-equiv="Content-type" content="text/html; charset=UTF-8">
+        <META http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <META http-equiv="Content-script-type" CONTENT="text/javascript">
+        <title>#customSpringMessage('LOGIN')</title>
+        <link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+        <link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+        <link rel="stylesheet" href="../../include/Color.css" type="text/css">
+        <link rel="stylesheet" href="../../include/ime.css" type="text/css">
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../../include/common.js"></SCRIPT>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../../include/check.js"></SCRIPT>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript" SRC="../../include/searchbox.js"></SCRIPT>
+        <script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+        <SCRIPT LANGUAGE="javascript" TYPE="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+function onLoad(){
+	setFocusForInput();
+    var alertMessage = "$!alertInfo";
+    if (alertMessage != ""){
+        alert(alertMessage);
+    }
+}
+//-->
+        </script>
+        <style type="text/css">
+            .btnClass {
+                width:          106px;
+                height:         27px;
+                background:     url(../../image/login.gif);
+                border:         0px;
+            }
+            .bodyClass {
+                height:         100%;
+                text-align:     center;
+                vertical-align: middle;
+                margin-top:     0px;
+                margin-left:    0px;
+            }
+            .tableClass {
+                width:              700px;
+                height:             380px;
+                margin:             auto;
+                background-repeat:  no-repeat;
+                background-image:   url('../../image/sup_title.gif');
+            }
+            .labelClass
+            {
+                width:              45%;
+                text-align:         right;
+                vertical-align:     middle;
+            }
+            .inputClass
+            {
+                width:              55%;
+                text-align:         left;
+                vertical-align:     middle;
+            }
+            .outputClass{
+                text-align:         center;
+                vertical-align:     middle;
+                padding:            5px;
+            }
+        </style>
+    </HEAD>
+    <BODY ONLOAD="onLoad();" CLASS="Body bodyClass">
+        <FORM NAME="Body" action="$!requestContext.contextPath/j_spring_security_check" method="post">
+            <TABLE CLASS="NoBorder tableClass">
+                <TR>
+                    <TD COLSPAN="2" STYLE="height:350px;">&nbsp;</TD>
+                </TR>
+                <TR>
+                    <TD CLASS="FontMiniAnkBold labelClass">#customSpringMessage('USER_ID_LOGIN'):&nbsp;</TD>
+                    <TD class="inputClass">#springFormInput("domain.userId" "maxlength='12' CLASS='Small noIME' SIZE='20' tabindex='1' autocomplete='off'")</TD>
+                </TR>
+                <TR>
+                    <TD CLASS="FontMiniAnkBold labelClass">#customSpringMessage('PASSWORD_LOGIN'):&nbsp;</TD>
+                    <TD class="inputClass">#customFormPasswordInput("domain.password" "maxlength='128' CLASS='Small' SIZE='20' tabindex='2'")
+                    </TD>
+                </TR>
+                <TR>
+                    <TD COLSPAN="2" class="outputClass">
+                        <input type='button' class="btnClass" onclick="submit();" tabindex="3"></input>
+                    </TD>
+                </TR>
+                <TR>
+                    <TD COLSPAN="2" class="outputClass">
+                        <div class="FontMiniAnk" style="color:#999999;font-size:7pt;font-style:italic;">$!versionInfo.versionString</div>
+                    </TD>
+                </TR>
+            </TABLE>
+            #customFormHiddenInput("xToken" "$xToken")
+            <div class="error" STYLE="margin:auto;width:500px;">$!errorInfo</div>
+        </FORM>
+    </BODY>
+</HTML>

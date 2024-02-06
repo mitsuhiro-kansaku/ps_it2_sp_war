@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+	parent="base">
+    <!-- 見積依頼情報識別情報 -->
+    <var name="quotReqIdentify" class="fw.domain.sp.quot.quotreq.QuotReqIdentify" />
+
+    <!-- 注文識別情報 -->
+    <input name="orderIdentify" />
+	<on-start>
+		<evaluate expression="SPNEW032Service.detail(orderIdentify)"
+			result="flowScope.detailItem" />
+	</on-start>
+
+    <!-- 注文（詳細） -->
+	<view-state id="SPNEW032" model="detailItem"
+		view="newconfirm/order/SPNEW032">
+        <!-- 2013.01.08 DEL DAIKO_YAMAGUCHI START -->
+        <!-- 詳細 価格登録品の場合-->
+        <!-- 
+        <transition on="detail" to="SPNEW012" validate="false">
+            <set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq" />
+        </transition>
+        -->
+        <!-- 詳細 都度品、参考見積の場合-->
+        <!-- 
+        <transition on="detailOther" to="SPNEW012Other" validate="false">
+            <set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq" />
+        </transition>
+        -->
+        <!-- 2013.01.08 DEL DAIKO_YAMAGUCHI -END- -->
+        <transition on="download" validate="false">
+            <evaluate expression="SPAttachFileService.downloadFromOrderAttachMng(requestParameters.seqNo)" />
+        </transition>
+        <transition on="downloadCooperation" validate="false">
+            <evaluate expression="SPNEW032Service.downloadFileCooperation()"/>
+        </transition>
+    </view-state>
+    <!-- 2013.01.08 DEL DAIKO_YAMAGUCHI START -->
+    <!-- 詳細 価格登録品の場合-->
+    <!--
+    <subflow-state id="SPNEW012" subflow="newconfirm/quotReq/SPNEW012">
+        <input name="identify" value="quotReqIdentify" />
+    </subflow-state>
+    -->
+    <!-- 詳細 都度品、参考見積の場合-->
+    <!--
+    <subflow-state id="SPNEW012Other" subflow="newconfirm/quotReq/SPNEW012Other">
+        <input name="identify" value="quotReqIdentify" />
+    </subflow-state>
+    -->
+    <!-- 2013.01.08 DEL DAIKO_YAMAGUCHI -END- -->
+</flow>

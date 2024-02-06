@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    
+    <input name="identify" />
+    
+    <on-start>
+        <evaluate expression="SPMST050Service.init(identify)"
+            result="flowScope.userMasterManagement" />
+    </on-start>
+    
+    <view-state id="SPMST050" view="mst/user/SPMST050" model="userMasterManagement">  
+        <transition on="addLanguage" validate="false">
+            <evaluate
+                expression="SPMST050Service.addLanguage(userMasterManagement)" />
+        </transition>
+        <transition on="deleteLanguage" validate="false">
+            <evaluate
+                expression="SPMST050Service.deleteLanguage(userMasterManagement, requestParameters.languageIndex)" />
+        </transition>
+        <transition on="save" validate="true">
+            <evaluate expression="SPMST050Service.save(userMasterManagement)" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+    </view-state>
+
+</flow>

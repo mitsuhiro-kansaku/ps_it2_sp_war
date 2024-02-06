@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.RemainingVolOrderCancelVolConformityMapper">
+
+    <select id="getObtainQuantitativeDifference" resultType="String">
+        SELECT 
+               NVL(S_ORDER.REMAINING_VOL, 0) - NVL(S_NEW_ORDER.ORDER_CANCEL_VOL, 0)
+          FROM S_ORDER,S_NEW_ORDER
+        <where>
+           S_ORDER.ACC_CD = #{utlUserCd}
+           AND S_ORDER.CUST_CD = #{buyerCompanyCd}
+           AND S_ORDER.ORDER_NO = #{orderNo}
+           AND S_ORDER.ORDER_VERSION = (
+                SELECT 
+                    MAX(S_ORDER.ORDER_VERSION)
+                FROM 
+                    S_ORDER
+                WHERE
+                    S_ORDER.ACC_CD = #{utlUserCd}
+                AND S_ORDER.CUST_CD = #{buyerCompanyCd}
+                AND S_ORDER.ORDER_NO = #{orderNo}
+                AND S_ORDER.DELETE_FLG = '0'
+            )
+           AND S_ORDER.DELETE_FLG = '0'
+           AND S_ORDER.ACC_CD = S_NEW_ORDER.ACC_CD
+           AND S_ORDER.CUST_CD = S_NEW_ORDER.CUST_CD
+           AND S_ORDER.ORDER_NO = S_NEW_ORDER.ORDER_NO
+           AND S_NEW_ORDER.ORDER_VERSION = #{orderVersion}
+        </where>   
+    </select>    
+
+</mapper>

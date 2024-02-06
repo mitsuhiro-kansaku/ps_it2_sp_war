@@ -1,0 +1,210 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('REPORT_ISSUE')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+
+<script language="javascript" type="text/javascript">
+<!--
+var pinName="SPPRT010_Pin";
+#parse("./common/common_js.vm")
+
+function onLoad(){
+
+    bodyLoad();
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != "") {
+        alert(alertMessage);
+    }
+
+    var errorMsg = "$!errorMessage";
+
+    if (errorMsg != "") {
+        getObj("TR_ERROR").style.display = "";
+        setErrorMessage("ERRORDIV", errorMsg, "DATAAREA");
+        return;
+    }
+
+    var isQuickLink = '#jsEscape($!isQuickLink)';
+    var isShowList = "#jsEscape($isShowList)";
+    var reportName = "#jsEscape($reportName)";
+    if (isShowList == 'true') {
+        iframeChange("${flowExecutionUrl}&_eventId=search", "pageid", "SPPRT010");
+    } else if (isQuickLink == 'true') {
+        iframeChange("${flowExecutionUrl}&_eventId=search", "pageid", "SPPRT010",'quickLink',true,'reportName',reportName);
+    }
+}
+
+function issue(){
+    var dataArea = document.getElementById('DATAAREA').contentWindow;
+    if(dataArea != null && typeof(eval(dataArea.issue))!="undefined"){
+        dataArea.issue();
+    }
+}
+## +++++ 強化-00041-000 2013/04/07 ADD SBO_KANGJW START +++++
+function execSearch(){
+    buttonDisable();
+    getObj('Body').action = "${flowExecutionUrl}&_eventId=validate";
+    getObj('Body').submit();
+}
+## +++++ 強化-00041-000 2013/04/07 ADD SBO_KANGJW END +++++
+//-->
+</script>
+</head>
+<body class="BodyArea" onload="onLoad();">
+<form id="Body" name="Body" action="${flowExecutionUrl}&_eventId=validate" method="post">
+    #customFormHiddenInput("searchCondition.page.pageRecorders.hidden" "$!defaultSearchCondition.searchCondition.page.pageRecorders")
+    #customFormHiddenInput("quickLink" "false")
+    #customFormHiddenInput("displayObject.hidden" "$!defaultSearchCondition.displayObject")
+    #customFormHiddenInput("reportName.hidden" "$!defaultSearchCondition.reportName")
+    <!-- ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊ -->
+    <iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0"scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+<!--検索部テーブル開始-->
+    <table class="NoBorder" width="100%" height="100%">
+        <tr id="SEARCH_AREA0">
+            <td id="SEARCH_AREA" class="SearchArea"><!-- onLoadで変更 -->
+                #parse("./common/common_title_nonew.vm")
+                <table width="100%">
+                    <tr id="SEARCH_AREA2">
+                        <td id="Adjust" align="right" valign="top">
+                            <!-- 検索条件入力部 -->
+                            <table class="NoBorder"  width="100%">
+                               <tr>
+                                    <td align="left" colspan="4" nowrap>
+                                        #customSpringMessage('SPPRT010_HEADER_COMMENT')
+                                    </td>
+                               </tr>
+                               <tr>
+                                    <td>
+                                        <!--検索条件表示エリア-->
+                                        <table class="NoBorder" width="100%">
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('REPORT_NAME')<span class="FontWarn">&nbsp;※</span>
+                                                </td><!--帳票名-->
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                    #customFormSingleSelect("searchCondition.reportName" $reportNameList "")
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="right">
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('ORDER_DATE')## 注文日
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                    #springFormInput("searchCondition.orderDateFrom.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('orderDateFrom.dateOfymdFormat'));">
+                                                    &nbsp;～&nbsp;
+                                                    #springFormInput("searchCondition.orderDateTo.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('orderDateTo.dateOfymdFormat'));">
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('CHANGE_ORDER_DATE')## 注文日変更日
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                    #springFormInput("searchCondition.changeOrderDateFrom.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('changeOrderDateFrom.dateOfymdFormat'));">
+                                                    &nbsp;～&nbsp;
+                                                    #springFormInput("searchCondition.changeOrderDateTo.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('changeOrderDateTo.dateOfymdFormat'));">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('ORDER_DELIV_DATE')<!-- 注文納期 -->
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                    #springFormInput("searchCondition.orderDelivDateFrom.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('orderDelivDateFrom.dateOfymdFormat'));">
+                                                    &nbsp;～&nbsp;
+                                                    #springFormInput("searchCondition.orderDelivDateTo.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('orderDelivDateTo.dateOfymdFormat'));">
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="right">
+                                                    #customSpringMessage('SHIPMENT_DATE') ## 出荷日
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                    #springFormInput("searchCondition.shipmentDateFrom.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('shipmentDateFrom.dateOfymdFormat'));">
+                                                    &nbsp;～&nbsp;
+                                                    #springFormInput("searchCondition.shipmentDateTo.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                                    <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('shipmentDateTo.dateOfymdFormat'));">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td nowrap class="FontSmallBold" align="right">#customSpringMessage('DISPLY_OBJECT')<!-- 表示対象--></td>
+                                                <td nowrap class="FontSmall" align="left">
+                                                <input type="radio" name="displayObject" value="" #if($searchCondition.displayObject == '') checked="checked" #end>#customSpringMessage('SEARCH_TERM_ALL')
+                                                #customFormRadioButtons("searchCondition.displayObject" $displayObjectList "" "")
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="right">
+                                                </td>
+                                                <td nowrap class="FontSmallBold" align="left">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="left" colspan="4" nowrap class="FontComment">
+                                                    #customSpringMessage("SPPRT010_FOOTER_COMMENT") ## ＊:前方一致 / ％:中間一致 / なし:完全一致
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <!--検索ボタンエリア-->
+                                    <td nowrap class="FontSmallBold" align="right" valign="top">
+                                        <br>
+                                        <!-- ＊＊＊＊＊　検索実行　＊＊＊＊＊ -->
+                                        <input type="button" onclick="javascript:execSearch();" class="LargeButton" value="#customSpringMessage('ACTION_SEARCH')"><!--検索-->
+
+                                        <br>
+                                        <br><a href="javascript:clear();" id="clearSearch">#customSpringMessage("ACTION_CLEAR_SEARCH_CRITERIA")<!--検索条件をクリアする--></a>&nbsp;
+                                    </td>
+                                </tr>
+                            </table>
+                             <!-- 検索条件入力部 -->
+                        </td>
+                    </tr>
+                </table>
+            </td>
+         </tr>
+         <tr id="PRINTAREA_ROW" style="display:none">
+            <td class="UploadArea">
+                <table class="NoBorder" width="100%" style="margin:auto;">
+                    <tr>
+                        <td align="left">
+                            <input class="SmallButton" type="button" value="#customSpringMessage('ISSUE')" onclick="javascript:issue()">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="TR_ERROR" style="display: none;">
+            <td class="error" style="height:0px;">
+                <div id="ERRORDIV">$!errorMessage</div>
+            </td>
+        </tr>
+        <tr style="vertical-align:top;height:100%;">
+            <td class="NoBorder" style="height:100%;">
+                <iframe id="DATAAREA" name="DATAAREA" class="DataArea" framespacing="0" frameborder="0" src="../../layout/default.vm" scrolling="no" frameborder="no"></iframe>
+            </td>
+        </tr>
+    </table>
+<iframe id="HIDDENAREA" name="HIDDENAREA" framespacing="0" frameborder="0" src="" scrolling="no" frameborder="no" style="display:none"></iframe>
+
+</form>
+</body>
+
+</html>

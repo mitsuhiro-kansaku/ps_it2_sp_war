@@ -1,0 +1,426 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('INSPECTION_INFORMATION')</title><!-- 検収情報 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$acceptanceInfoSearchCondition)
+
+#parse("./common/common_js.vm")
+
+function onLoad() {
+    parentButtonEnable();
+    #if($acceptanceInfoList.acceptanceInfoItemList.size()!=0)
+        function  block(){
+            parent.document.getElementById('none').style.display='';
+        }
+        block();
+    #else
+        function none(){
+            parent.document.getElementById('none').style.display='none';
+        }
+        none();
+    #end
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    paging();
+    setCheckedColor();
+
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $acceptanceInfoParam1 = ["#customSpringMessage('INSPECTION_INFORMATION')"])
+        alert('#customMessageArgs("I002",$acceptanceInfoParam1)');
+    }
+
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+
+}
+
+
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    var checkName = document.getElementsByName('Chk');
+    #foreach ( $item in $acceptanceInfoList.acceptanceInfoItemList )
+        var checkName = "_acceptSeqList[$velocityCount]";
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           ## ----- 強化-01172-000 2013/04/28 ADD SBO_KANGJW START -----
+           ##parent.document.Body.PageNo.value = oldPage;
+           ## ----- 強化-01172-000 2013/04/28 ADD SBO_KANGJW END -----
+           ## +++++ 強化-01172-000 2013/04/28 ADD SBO_KANGJW START +++++
+           parent.document.Body.PageNo.value = parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)');
+           ## +++++ 強化-01172-000 2013/04/28 ADD SBO_KANGJW END +++++
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+        #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+        #end
+
+        #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+        #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+        #end
+    #end
+}
+
+function chkHead(target) {
+            #set($rows = $acceptanceInfoList.acceptanceInfoItemList.size())
+            var rows = #jsEscape($rows);
+            if(target.checked) {
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_acceptSeqList['+m+']')){
+                        getObj('_acceptSeqList['+m+']').checked = true;
+                        getObj('acceptSeqList['+m+'].checkStatus').value="1";
+                        $('tr:[id=Row_' + m + ']').css("background-color","#ffff99");
+                    }
+                }
+
+            } else {
+
+                for(var m = 0; m<rows; m++){
+                    if(getObj('_acceptSeqList['+m+']')){
+                        getObj('_acceptSeqList['+m+']').checked = false;
+                        getObj('acceptSeqList['+m+'].checkStatus').value="0";
+                        if (Number(m) % 2 != 0) {
+                            $('tr:[id=Row_' + m + ']').css("background-color","#ffffff");
+                        } else {
+                            $('tr:[id=Row_' + m + ']').css("background-color","#dce4ef");
+                        }
+                    }
+                }
+            }
+
+
+}
+
+function setCheckedColor(){
+    var rows = #jsEscape($rows);
+    var allSelected = true;
+    var hasOneSelected= false ;
+    for(var m = 0; m<rows; m++){
+        if(getObj('_acceptSeqList['+m+']')){
+            if(getObj('_acceptSeqList['+m+']').checked){
+                hasOneSelected = true;
+                $('tr:[id=Row_' + m + ']').css("backgroundColor","#ff9");
+            }else{
+                allSelected = false;
+            }
+        }
+    }
+    if(allSelected&&hasOneSelected){
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = true;
+    }else{
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+
+
+}
+function checkOne(onecheck,index){
+    var rows = #jsEscape($rows);
+    if(onecheck.checked){
+        $('tr:[id=Row_' + index + ']').css("backgroundColor","#ff9");
+        getObj('acceptSeqList['+index+'].checkStatus').value="1";
+        var allSelected = true;
+        var hasOneSelected= false ;
+        for(var m = 0; m<rows; m++){
+            if(getObj('_acceptSeqList['+m+']')){
+                if(getObj('_acceptSeqList['+m+']').checked){
+                    hasOneSelected = true;
+                }else{
+                    allSelected = false;
+                }
+            }
+        }
+        if(allSelected){
+             if(getObj("ParentCheck"))
+              getObj("ParentCheck").checked = true;
+        }else{
+            if(getObj("ParentCheck"))
+              getObj("ParentCheck").checked = false;
+        }
+    }else{
+        getObj('acceptSeqList['+index+'].checkStatus').value="0";
+        if (index % 2 == 0) {
+            $('tr:[id=Row_' + index + ']').css("backgroundColor","#dce4ef");
+        } else {
+            $('tr:[id=Row_' + index + ']').css("backgroundColor","#fff");
+        }
+        if(getObj("ParentCheck"))
+        getObj("ParentCheck").checked = false;
+    }
+}
+
+function update() {
+    var count=0;
+    #foreach ( $item in $acceptanceInfoList.acceptanceInfoItemList )
+        var checkName = "_acceptSeqList[$velocityCount]";
+        if(getObj(checkName)!=null && getObj(checkName).checked){
+            count++;
+        }
+    #end
+    if(count==0){
+        #set( $mAcceptReply = "#customSpringMessage('INSPECTION_INFORMATION')" );
+        ## 2013.02.07 DEL DAIKO_WANG
+        ## alert('#customMessageArgs("I010",[$mAcceptReply])');
+        ## 2013.02.07 ADD DAIKO_WANG
+        alert("#nothingSelectedMessage()");
+
+    }else{
+        #set( $acceptParam2 = ["#customSpringMessage('INSPECTION_INFORMATION')","#customSpringMessage('NEW_CHECK')"])
+        if( !confirm("#customMessageArgs("W001",$acceptParam2)") ) {
+            return;
+        }
+        parentButtonDisable();
+        getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newConfirm";
+        getObj("BodyForm").submit();
+    }
+}
+
+
+
+function allupdate(){
+        #set( $acceptParam3 = ["#customSpringMessage('INSPECTION_INFORMATION')","#customSpringMessage('NEW_ALL_COUNT_CHECK')"])
+        if( !confirm("#customMessageArgs("W001",$acceptParam3)") ) {
+            return;
+        }
+        parentButtonDisable();
+        iframeChange("${flowExecutionUrl}&_eventId=newConfirmAll");
+}
+
+
+function openDetail(acceptSeq) {
+
+     poppage('${flowExecutionUrl}&_eventId=detail&&acceptSeq=' + acceptSeq ,'DETAIL','800','700');
+}
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE', 1, 3)"><!-- テーブル幅と固定内容を設定(テーブルID,ヘッダ固定行数,固定列数)-->
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form name="Body" id="BodyForm" method="post">
+<table id="TABLE" class="ListArea" WIDTH="100%">
+    <thead>
+    #if($acceptanceInfoList.acceptanceInfoItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall"><input name="ParentCheck" type="checkbox" onclick="chkHead(this);"></th><!--全選択/全選択解除-->
+
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.CORRECT_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.CORRECT_CD')">
+            #* ----- 2013/01/21 DEL DAIKO_YAMAGUCHI
+            #customSpringMessage('DIVISION')<!-- 区分 -->
+            *#
+            ## +++++ 2013/01/21 ADD DAIKO_YAMAGUCHI START
+            #customSpringMessage('CORRECT_NAME') ## 訂正区分
+            ## +++++ 2013/01/21 ADD DAIKO_YAMAGUCHI -END-
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.DELIV_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.DELIV_VERSION')">
+            #customSpringMessage('REVISION_NUMBER')<!-- 履歴番号 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.DPO_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.DPO_FLG')">
+            #customSpringMessage('STATUS')<!-- 状態 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.REQ_TYPE_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.REQ_TYPE_IND')">
+            #customSpringMessage('REQ_TYPE_IND')<!-- 依頼区分 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.DELIV_KEY_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.DELIV_KEY_NO')">
+            #customSpringMessage('DELIV_KEY_NO')<!-- 納品キー番号 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_COMPANY_NAME')">
+            #customSpringMessage('BUYER_COMPANY')<!-- 発注企業 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ITEM_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ITEM_NAME')">
+            #customSpringMessage('ITEM_NAME')<!-- 品名 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CUST_ITEM_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CUST_ITEM_CD')">
+            #customSpringMessage('ITEM_CD')<!-- 品名コード -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.KATASHIKI" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.KATASHIKI')">
+            #customSpringMessage('KATASHIKI')<!-- 型式 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.ACCEPT_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.ACCEPT_DATE')">
+            #customSpringMessage('ACCEPT_DATE')<!-- 検収日 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.ARRIV_EXP_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.ARRIV_EXP_DATE')">
+            #customSpringMessage('ARRIV_EXP_DATE')<!-- 納入日 -->
+            </th>
+			<th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.ACCEPT_VOL" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.ACCEPT_VOL')">
+            #customSpringMessage('ACCEPT_VOL')<!-- 検収数量 -->
+            </th>
+			<th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.UNIT_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.UNIT_NAME')">
+            #customSpringMessage('UNIT')<!-- 単位 -->
+            </th>
+			<th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.CURRENCY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.CURRENCY_CD')">
+            #customSpringMessage('CURRENCY_CD')<!-- 通貨コード -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.UNIT_PRICE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.UNIT_PRICE')">
+            #customSpringMessage('ACCEPT_UNIT_PRICE')<!-- 検収単価 -->
+            </th>
+			<th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.ACCEPT_AMOUNT" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.ACCEPT_AMOUNT')">
+            #customSpringMessage('ACCEPT_AMOUNT')<!-- 検収金額 -->
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.TAX_RATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.TAX_RATE')">
+            #customSpringMessage('TAX_RATE')##税率
+            </th>
+            #if($!acceptConsumptAmountDispInd == '1')
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.TOTAL_AMOUNT" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.TOTAL_AMOUNT')">
+            #customSpringMessage('TOTAL_AMOUNT')##合計金額
+            </th>
+            #end
+			<th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_RCV.FISCAL_MONTH" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_RCV.FISCAL_MONTH')">
+            #customSpringMessage('FISCAL_YEAR_MONTH')<!-- 計上年月 -->
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+    #foreach($!acceptanceInfoItem in $acceptanceInfoList.acceptanceInfoItemList)
+
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+            <td class="BoxDetailCenter FontList">
+                <img id="DetailButton_0" class="Icon" src="../../image/btnDetailDisp.gif" style="margin-right:4px;" onclick="openDetail('#jsEscapeInHTML($!acceptanceInfoItem.acceptanceIdentify.acceptSeq)');">
+            </td>
+            <td id="CheckCol_$velocityCount" class="BoxDetailCenter">
+                #if($!acceptanceInfoItem.status=='0')
+                      #if($acceptanceInfoItem.acceptanceIdentify.checkStatus=='1')
+                            <input name="acceptanceInfoItemList[$velocityCount].acceptanceIdentify.checkStatus" id="acceptSeqList[$velocityCount].checkStatus" type="hidden" value = "1">
+                            <input class="Icon" name="Chk" id="_acceptSeqList[$velocityCount]" checked  type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #else
+                            <input name="acceptanceInfoItemList[$velocityCount].acceptanceIdentify.checkStatus" id="acceptSeqList[$velocityCount].checkStatus" type="hidden" value = "">
+                            <input class="Icon" name="Chk" id="_acceptSeqList[$velocityCount]" type="checkbox" onclick="checkOne(this,'$velocityCount');"/>
+                      #end
+                #end
+            </td>
+            #if($!acceptanceInfoItem.division == '3')
+                <td class="BoxDetailCenter FontStatus" style="color:red"> #out($!acceptanceInfoItem.division_PageValue)</td>
+            #elseif($!acceptanceInfoItem.division == '2')
+                <td class="BoxDetailCenter FontStatus" style="color:green"> #out($!acceptanceInfoItem.division_PageValue)</td>
+            #else
+                <td class="BoxDetailCenter FontStatus"> #out($!acceptanceInfoItem.division_PageValue)</td>
+            #end
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.revisionNumber)</td>
+            <td class="BoxDetailCenter FontStatus">#out($!acceptanceInfoItem.status_PageValue)</td>
+            <td class="BoxDetailCenter FontStatus">#out($!acceptanceInfoItem.reqTypeInd_PageValue)</td>
+            <td class="BoxDetailCenter FontSlipNo">#out($!acceptanceInfoItem.delivKeyNo)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptanceInfoItem.buyerCompany)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptanceInfoItem.itemName)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptanceInfoItem.itemCd)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptanceInfoItem.katashiki)</td>
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.acceptDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.arrivExpDate.dateOfymdFormat)</td>
+			<td class="BoxDetailRight FontList">#out($!acceptanceInfoItem.acceptVol.volFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.unit)</td>
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.currencyCd)</td>
+            #if($!acceptanceInfoItem.acceptUnitPrice.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall">
+            #else
+                <td class="BoxDetailCenter FontCurrSmall">
+            #end
+                    #out($!acceptanceInfoItem.acceptUnitPrice.amountMarkDispForSP)
+                </td>
+			#if($!acceptanceInfoItem.acceptAmount.moneyDisp)
+				<td class="BoxDetailRight FontCurrSmall">
+					#out($!acceptanceInfoItem.acceptAmount.amountMarkDispForSP)
+				</td>
+			#else
+				<td class="BoxDetailCenter FontCurrSmall">
+					#out($!acceptanceInfoItem.acceptAmount.amountMarkDispForSP)
+				</td>
+            #end
+            <td class="BoxDetailRight FontList">
+                #out($!acceptanceInfoItem.taxRate)#if($!acceptanceInfoItem.taxRate != "")&nbsp;%#end
+            </td>
+            #if($!acceptConsumptAmountDispInd == '1')
+                #if($!acceptanceInfoItem.totalAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall">
+                    #out($!acceptanceInfoItem.totalAmount.amountMarkDispForSP)
+                </td>
+                #else
+                <td class="BoxDetailCenter FontCurrSmall">
+                    #out($!acceptanceInfoItem.totalAmount.amountMarkDispForSP)
+                </td>
+                #end
+            #end
+            <td class="BoxDetailCenter FontList">#out($!acceptanceInfoItem.fiscalYearMonth.dateOfymFormat)</td>
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+</form>
+</body>
+</html>

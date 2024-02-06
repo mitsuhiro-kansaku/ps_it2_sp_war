@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+	parent="base">
+
+	<!-- 新着入荷（検索部） -->
+	<var name="defaultSearchCondition" class="fw.domain.sp.arrival.ArrivalInfoSearchCondition" />
+    <on-start>
+        <evaluate expression="SPNEW050Service.init()"
+            result="flowScope.searchCondition" />
+        <set name="flowScope.isCurrentPageSearch" value="false" />
+    </on-start>
+	<view-state id="SPNEW050" model="searchCondition"
+		view="newconfirm/arrival/SPNEW050">
+		<transition on="validate" validate="true">
+			<set name="flowScope.isCurrentPageSearch" value="false" />
+			<set name="flowScope.isShowList" value="true"></set>
+		  <evaluate expression="SPNEW050Service.search(searchCondition)"></evaluate>
+		</transition>
+		<transition on="search" to="list" validate="false"/>
+		
+		<transition on="downloadValidate" validate="true">
+            <evaluate expression="SPNEW050Service.downloadValidate(searchCondition)" result="flashScope.isDownLoadValidate"/>
+        </transition>
+		<transition on="download" validate="false">
+            <evaluate expression="SPNEW050Service.download(searchCondition)"/>
+        </transition>
+		<transition on="back" to="home" validate="false" />
+	</view-state>
+
+	<subflow-state id="list" subflow="newconfirm/arrival/SPNEW051">
+		<input name="searchCondition" value="searchCondition" />
+		<input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+		<transition on="back" to="SPNEW050">
+			<set name="flowScope.isCurrentPageSearch" value="true" />
+		</transition>
+	</subflow-state>
+</flow>

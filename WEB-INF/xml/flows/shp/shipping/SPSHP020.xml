@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+    <input name="isQuickLinkSearch" />
+
+    <decision-state id="isCurrentPageSearch">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPSHP020Service.init(searchCondition)" result="flowScope.shipmentList" />
+        <transition to="SPSHP020" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPSHP020Service.page(searchCondition)" result="flowScope.shipmentList" />
+        <transition to="SPSHP020" />
+    </action-state>
+
+    <view-state id="SPSHP020" model="shipmentList" view="shp/shipping/SPSHP020">
+        <!-- クリックすると項目でソート -->
+        <transition on="order" validate="false">
+            <evaluate expression="SPSHP020Service.order(searchCondition)"
+                result="flowScope.shipmentList" />
+        </transition>
+        
+        <!-- ページ共通処理 -->
+        <transition on="page" validate="false">
+            <evaluate expression="SPSHP020Service.page(searchCondition)"
+                result="flowScope.shipmentList" />
+                <set name="flowScope.hasDeliveryed" value="false"></set>
+                <set name="flowScope.hasDeleted" value="false"></set>
+        </transition>
+        
+        <!-- 出荷処理ボタンを押下 -->
+        <transition on="shippingProcessing"  validate="false"> 
+            <evaluate expression="SPSHP020Service.updateDelivery(shipmentList)"/>
+            <set name="flowScope.hasDeliveryed" value="true"></set>
+            <set name="flowScope.hasDeleted" value="false"></set>
+        </transition>
+        
+        <!-- 取消ボタンを押下 -->
+        <transition on="deleteDetail"  validate="false">
+            <evaluate expression="SPSHP020Service.deleteDetail(shipmentList, requestParameters.lineNo)"/>
+            <set name="flowScope.hasDeleted" value="true"></set>
+            <set name="flowScope.hasDeliveryed" value="false"></set>
+            
+            
+        </transition>
+        
+        <!-- 詳細ボタンを押下 -->
+        <transition on="detailValidate" validate="false" >
+            <set name="flowScope.shipmentSeq" value="requestParameters.shipmentSeq" />
+            <set name="flashScope.isShowDetail" value="true" />
+        </transition>
+        <transition on="detail" to="SPSHP040" validate="false" />
+        
+        <!-- 備考入力を押下 -->
+        <transition on="remarkValidate" validate="false" >
+            <set name="flowScope.shipmentSeq" value="requestParameters.shipmentSeq" />
+            <set name="flowScope.notes" value="requestParameters.notes" />
+            <set name="flowScope.lineNo" value="requestParameters.lineNo" />
+            <set name="flowScope.deliverySeq" value="requestParameters.deliverySeq"/>
+            <set name="flashScope.isShowRemark" value="true" />
+        </transition>
+        <transition on="remarkInput" to="SPCMN020" validate="false" >
+            <evaluate expression="new fw.domain.sp.shipment.ShipmentManagement(
+                flowScope.shipmentSeq, 
+                flowScope.notes)" result="flowScope.shipmentManagement"></evaluate>
+        </transition>
+        
+        <!-- 戻るボタンを押下 -->
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+    
+    <subflow-state id="SPSHP040" subflow="shp/shipping/SPSHP040">
+        <input name="shipmentSeq" value="flowScope.shipmentSeq" />
+    </subflow-state>
+    
+    <subflow-state id="SPCMN020" subflow="cmn/remark/SPCMN020">
+        <input name="shipmentManagement" value="shipmentManagement" />
+        <input name="lineNo" value="flowScope.lineNo" />
+        <input name="deliverySeq" value="flowScope.deliverySeq"/>
+    </subflow-state>
+</flow>

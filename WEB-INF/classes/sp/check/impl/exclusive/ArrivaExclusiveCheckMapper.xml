@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.ArrivaExclusiveCheckMapper">
+
+    <select id="searchExclusive" resultType="String">
+        SELECT
+               S_NEW_ARV.ACC_CD
+          FROM S_NEW_ARV
+         WHERE
+         <!-- ＩＴ２-01471-000 2013/05/29 DEL SBO_wangzf START -->
+            <!--S_NEW_ARV.ACC_CD  = #{utlUserCd}
+           AND S_NEW_ARV.CUST_CD  = #{buyerCompanyCd}
+           AND S_NEW_ARV.ORDER_NO = #{orderNo}
+           AND S_NEW_ARV.DELIV_KEY_NO = #{delivKeyNo}
+           AND S_NEW_ARV.DELIV_VERSION = #{delivVersion}-->
+           <!-- 強化-00852-000 2013/05/29 DEL SBO_CHENCHENG START -->
+           <!-- AND S_NEW_ARV.DPO_FLG = '1' -->
+           <!-- 強化-00852-000 2013/05/29 DEL SBO_CHENCHENG -END- -->
+           <!-- 強化-00852-000 2013/05/29 ADD SBO_CHENCHENG START -->
+           <!--AND S_NEW_ARV.DPO_FLG = '0'-->
+           <!--  ＩＴ２-01471-000  2013/05/29 DEL SBO_wangzf END -->
+           <!--  ＩＴ２-01471-000 2013/05/29 ADD SBO_wangzf START -->
+           S_NEW_ARV.ARV_SEQ = #{arvSeq}
+           <!--  ＩＴ２-01471-000 2013/05/29 ADD SBO_wangzf END -->
+           AND S_NEW_ARV.LAST_UPD_DATE = #{lastUpdDate}
+           FOR UPDATE NOWAIT
+    </select>
+
+</mapper>

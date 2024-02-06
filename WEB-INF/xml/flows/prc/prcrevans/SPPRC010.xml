@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    
+    <var name="defaultSearchCondition" class="fw.domain.sp.pricerevision.pricerevisionresp.PriceRevisionRespSearchCondition" />
+
+    <decision-state id="isQuickLinkSearch">
+       <if test="requestParameters.quickLink" then="searchByQuickLinkSearch" else="searchBySearchCondition"/>
+    </decision-state>
+
+    <action-state id="searchByQuickLinkSearch">
+        <evaluate expression="SPPRC010Service.quickLink()"
+            result="flowScope.searchCondition" />
+        <transition on="success" to="SPPRC010">
+            <set name="flashScope.isQuickLink" value="true"/>
+        </transition>
+    </action-state>
+    
+    <action-state id="searchBySearchCondition">
+        <evaluate expression="SPPRC010Service.init()"
+            result="flowScope.searchCondition" />
+         <transition on="success" to="SPPRC010">
+        </transition>
+    </action-state>
+
+    <view-state id="SPPRC010" model="searchCondition"
+        view="prc/prcrevans/SPPRC010">
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+            <evaluate expression="SPPRC010Service.saveSearchCondition(searchCondition)"></evaluate>
+        </transition>
+        <transition on="search" to="SPPRC020" validate="false"/>
+        <transition on="quickLinkSearch" to="SPPRC020" validate="false">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+        </transition>
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+
+    <subflow-state id="SPPRC020" subflow="prc/prcrevans/SPPRC020">
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <transition on="back" to="SPPRC010">
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+
+</flow>

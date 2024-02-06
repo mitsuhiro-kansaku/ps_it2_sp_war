@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ja">
+<head>
+## 受注詳細
+<title>#customSpringMessage('ORDER_DTL')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" CONTENT="text/javascript">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--//
+
+//受注添付ファイルリンクをクリック
+function downloadFile(seqNo) {
+    if (seqNo != "") {
+        iframeChange('${flowExecutionUrl}&_eventId=download&seqNo=' + seqNo);
+    }
+}
+function downloadFileCooperation(filename, file) {
+    iframeChange("${flowExecutionUrl}&_eventId=downloadCooperation", 'filename', filename, 'file', file);
+}
+//-->
+</script>
+</head>
+
+<body class="DetailBody" onload="getObj('printButton').focus();">
+<table class="NoBorder" width="95%">
+    <tr>
+        <td>
+            <span id="StepTitle" class="FontEDItitle">
+                #customSpringMessage('ORDER_DTL')
+            </span>
+        </td>
+    </tr>
+</table>
+
+<table class="NoBorder" style="width:100%;">
+    <tr><td>#customSpringMessage('SPVIW012_HEADER_COMMENT')</td></tr>
+    <tr>
+        <td class="DTL_MSGBOX" align="right" nowrap>
+            ## 印刷
+            <input id="printButton" type="button" class="MiddleButton" value="#customSpringMessage('PRINT')" onClick="window.print();">
+            ## 閉じる
+            <input type="button" class="MiddleButton" value="#customSpringMessage('CLOSE')" onClick="window.close();">
+        </td>
+    </tr>
+</table>
+
+##受注者名
+<p class="FontVender">#out($!orderDetail.orderBaseInfo.accAbbrName)</p>
+
+<table class="Box1G" width="760px">
+<tbody class="Box1G">
+    <tr>
+        ## 注文番号
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ORDER_NO')</td>
+        <td class="Box1D FontSlipNo" colspan="3">#out($!orderDetail.orderBaseInfo.orderNo.orderNo)</td>
+        ## 履歴番号
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('REVISION_NUMBER')</td>
+        <td class="Box1D FontSmallAnk">#out($!orderDetail.orderBaseInfo.historyNo.historyNo)</td>
+        ## 区分
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('DIVISION')</td>
+        <td class="Box1D FontSmallAnkBold">#out($!orderDetail.orderBaseInfo.infoCd_PageValue)</td>
+    </tr>
+    <tr>
+        ## 件名
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('TITLE_NAME')</td>
+        <td class="Box1D FontSmallAnkBold" colspan="3">#out($!orderDetail.orderBaseInfo.titleName.titleName)</td>
+        ## 依頼区分
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('REQ_TYPE_IND')</td>
+        <td class="Box1D FontSmallAnkBold">#out($!orderDetail.orderBaseInfo.reqInd.reqInd_PageValue)</td>
+        ## 単価区分
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('UNIT_PRICE_IND')</td>
+        <td class="Box1D FontSmallAnkBold">#out($!orderDetail.orderBaseInfo.unitPriceInd_PageValue)</td>
+    </tr>
+    <tr>
+        ##注文日
+        <td class="Box1H FontBoxHeader" rowspan="2" nowrap>#customSpringMessage('ORDER_DATE')</td>
+        <td class="Box1D FontSmallAnk"  colspan="3" rowspan="2">#out($!orderDetail.orderBaseInfo.orderInfo.orderDate.dateOfymdFormat)</td>
+        ##注文変更日
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CHANGE_ORDER_DATE')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.orderInfo.changeOrderDate.dateOfymdFormat)</td>
+    </tr>
+    <tr>
+        ##注文納期
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ORDER_DELIV_DATE')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.orderDeliv.dateOfymdFormat)</td>
+    </tr>
+    <tr>
+        ## 発注企業
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('BUYER_COMPANY')</td>
+        <td class="Box1D FontMiniAnk" colspan="7">
+            <span>#out($!orderDetail.orderBaseInfo.custInfo.custCompany.code)</span>
+            &nbsp;
+            <span class="FontSmallBold">#out($!orderDetail.orderBaseInfo.custInfo.custCompany.name)</span></td>
+    </tr>
+    <tr>
+        ## 発注担当者
+        <td class="Box1H FontBoxHeader" ROWSPAN="2" nowrap>#customSpringMessage('ORDER_USER')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.custInfo.custUser.sectionPlaceName)&nbsp;
+            #out($!orderDetail.orderBaseInfo.custInfo.custUser.sectionName)</td>
+        ## 連絡先
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CONNTACT')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.custInfo.custUser.contact.telNo.telNo)</td>
+    </tr>
+    <tr>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.custInfo.custUser.userName)</td>
+        ##メールアドレス
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('MAIL_ADDR')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">
+            <a href='mailto:$!orderDetail.orderBaseInfo.custInfo.custUser.userName<$!orderDetail.orderBaseInfo.custInfo.custUser.contact.mailAddr.mail>'>
+                #out($!orderDetail.orderBaseInfo.custInfo.custUser.contact.mailAddr.mail)</a>
+        </td>
+    </tr>
+    <tr>
+        ## 発注担当者コメント
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('PUR_USER_COMMENT')</td>
+        <td class="Box1D FontSmallAnk"  colspan="7" >#out($!orderDetail.orderBaseInfo.custInfo.comment.comment)</td>
+    </tr>
+    #if($!orderDetail.orderBaseInfo.isRequesterDisplay())
+    <tr>
+        ##依頼者
+        <td class="Box1H FontBoxHeader" ROWSPAN="2" nowrap>#customSpringMessage('CLIENT')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">
+            #out($!orderDetail.orderBaseInfo.requestUser.sectionPlaceName)&nbsp;
+            #out($!orderDetail.orderBaseInfo.requestUser.sectionName)
+        </td>
+        ##連絡先
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CONNTACT')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.requestUser.telNo.telNo)</td>
+    </tr>
+    <tr>
+        <td class="Box1D FontSmallAnk" colspan="3">#out($!orderDetail.orderBaseInfo.requestUser.userName)</td>
+        ##メールアドレス
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('MAIL_ADDR')</td>
+        <td class="Box1D FontSmallAnk" colspan="3">
+            <a href='mailto:$!orderDetail.orderBaseInfo.requestUser.userName<$!orderDetail.orderBaseInfo.requestUser.mailAddr.mail>'>
+                #out($!orderDetail.orderBaseInfo.requestUser.mailAddr.mail)</a>
+        </td>
+    </tr>
+    #end
+    <tr>
+        ## 品名
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ITEM_NAME')</td>
+        <td class="Box1D FontSmallAnk DarkBlue"  colspan="7">#out($!orderDetail.orderBaseInfo.itemName)</td>
+    </tr>
+    <tr>
+        ## 品名コード
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ITEM_CD')</td>
+        <td class="Box1D FontMiniAnk"  colspan="3">#out($!orderDetail.orderBaseInfo.itemCd)</td>
+        ## 型式
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('KATASHIKI')</td>
+        <td class="Box1D FontMiniAnk"  colspan="3" >#out($!orderDetail.orderBaseInfo.katashiki)</td>
+    </tr>
+    <tr>
+        ## メーカー
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('MANUFACT')</td>
+        <td class="Box1D FontSmallAnk"  colspan="7">#out($!orderDetail.orderBaseInfo.manufact.manufactCd) &nbsp; #out($!orderDetail.orderBaseInfo.manufact.manufactName)</td>
+    </tr>
+    <tr>
+        #if($orderDetail.orderBaseInfo.stopped)
+        ## 注文単価
+        <td class="Box1H FontBoxHeader" nowrap rowspan="3">#customSpringMessage('ORDER_UNIT_PRICE')</td>
+        <td class="Box1D FontCurrSmall" rowspan="3">
+        #else
+        ## 注文単価
+        <td class="Box1H FontBoxHeader" nowrap rowspan="2">#customSpringMessage('ORDER_UNIT_PRICE')</td>
+        <td class="Box1D FontCurrSmall" rowspan="2">
+        #end
+
+        #out($!orderDetail.orderBaseInfo.orderInfo.orderPrice.amountMarkDispForSP)
+        #if($orderDetail.orderBaseInfo.undecidedPrice)
+            ## 仮単価
+            <BR><font class="FontMini" color=red>【#customSpringMessage('PROV_PRICE')】</font>
+        #end
+        </td>
+
+        ## 注文数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ORDER_VOL')</td>
+        <td class="Box1D FontSmallAnk">
+            #out($!orderDetail.orderBaseInfo.originVol.volFormat)
+        </td>
+        ## 注文金額
+        <td class="Box1H FontBoxHeader" nowrap rowspan="2">#customSpringMessage('ORDER_AMOUNT')</td>
+        <td class="Box1D FontCurrSmall" colspan="3" rowspan="2">
+            #out($!orderDetail.orderBaseInfo.originAmount.amountMarkDispForSP)
+        </td>
+    </tr>
+    <tr>
+        ## 未出荷数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('NOT_SHIPMENT_AMOUNT')</td>
+        <td class="Box1D FontSmallAnk">
+            <span id="orderVol_velocity"></span>
+            #out($!orderDetail.orderBaseInfo.orderInfo.remainingVol.volFormat)
+        </td>
+    </tr>
+    #if($orderDetail.orderBaseInfo.stopped)
+    <tr>
+        ## 打切取消数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ORDER_CANCEL_VOL')</td>
+        <td class="Box1D FontSmallAnk">
+            #out($!orderDetail.orderBaseInfo.orderCancelVol.volFormat)
+        </td>
+        ## 打切取消金額
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ORDER_CANCEL_AMOUNT')</td>
+        <td class="Box1D FontCurrSmall" colspan="3">
+                #out($!orderDetail.orderBaseInfo.orderCancelAmount.amountMarkDispForSP)
+        </td>
+    </tr>
+    #end
+    <tr>
+        ## 通貨コード
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CURRENCY_CD')</td>
+        <td class="Box1D FontMiniAnk">$!orderDetail.orderBaseInfo.currencyCd</td>
+        ## 単位
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('UNIT')</td>
+        <td class="Box1D FontMiniAnk">#out($!orderDetail.orderBaseInfo.orderInfo.unitName)</td>
+        ## 課税区分
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('TAX_IND')</td>
+        <td class="Box1D FontMiniAnk" colspan="3">#out($!orderDetail.orderBaseInfo.orderInfo.taxInd_PageValue)</td>
+    </tr>
+    #if($orderDetail.orderBaseInfo.undecidedPrice)
+    <tr>
+            ##未定理由
+            <td nowrap class="Box1H FontBoxHeader">#customSpringMessage('UNFIXED_REASON')</td>
+            <td class="Box1D FontSmallAnk" colspan="3" >
+                #out($!orderDetail.orderBaseInfo.priceUndecidedReason)
+            </td>
+            ##価格決定予定日
+            <td nowrap class="Box1H FontBoxHeader">#customSpringMessage('PRICE_DATE')</td>
+            <td class="Box1D FontSmallAnk" colspan="3">
+                #out($!orderDetail.orderBaseInfo.priceDecideDate.dateOfymdFormat)
+            </td>
+        </tr>
+    #end
+    <tr>
+        ## 支払条件名
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('PAY_CONDITION_NAME')</td>
+        <td class="Box1D FontSmallAnk"  colspan="7" >
+            #out($!orderDetail.orderBaseInfo.payConditionItem.payConditionName)
+        </td>
+    </tr>
+    <tr>
+        ## 納入先
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('DELIVERY_PLACE')</td>
+        <td class="Box1D FontSmallAnk" colspan="7">
+            #out($!orderDetail.orderBaseInfo.delivPlace.delivPlaceName)<BR>
+            #out($!orderDetail.orderBaseInfo.delivPlace.contact.zipCd.zipCd)&nbsp;
+            #out($!orderDetail.orderBaseInfo.delivPlace.contact.address1.address)&nbsp;
+            #out($!orderDetail.orderBaseInfo.delivPlace.contact.address2.address)<BR>
+            #out($!orderDetail.orderBaseInfo.delivPlace.delivPlaceNameInb)
+            #if($!orderDetail.orderBaseInfo.delivPlace.contact.telNo.telNo != '')
+                <br><table><tr><td valign="top"><img src="../../image/mrkTel.gif"></td><td class="FontSmallAnk" nowrap>
+                    #out($!orderDetail.orderBaseInfo.delivPlace.contact.telNo.telNo)
+                </td></tr></table>
+            #end
+        </td>
+    </tr>
+    <tr>
+        ## 添付ファイル
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ATTACH_FILE')</td>
+        <td class="Box1D FontSmallAnk"  colspan="7" >
+            #if($!orderDetail.orderBaseInfo.attachFileSeq1 != '')
+                <a id="ATTACHEFILE_0" href="#" onclick="downloadFile('#jsEscapeInHTML($!orderDetail.orderBaseInfo.attachFileSeq1)');">#out($!orderDetail.orderBaseInfo.attachFileName1)</a>
+                &nbsp;&nbsp;&nbsp;
+            #end
+
+            #if($!orderDetail.orderBaseInfo.attachFileSeq2 != '')
+                <a id="ATTACHEFILE_1" href="#" onclick="downloadFile('#jsEscapeInHTML($!orderDetail.orderBaseInfo.attachFileSeq2)');">#out($!orderDetail.orderBaseInfo.attachFileName2)</a>
+                &nbsp;&nbsp;&nbsp;
+            #end
+
+            #if($!orderDetail.orderBaseInfo.attachFileSeq3 != '')
+                <a id="ATTACHEFILE_2" href="#" onclick="downloadFile('#jsEscapeInHTML($!orderDetail.orderBaseInfo.attachFileSeq3)');">#out($!orderDetail.orderBaseInfo.attachFileName3)</a>
+            #end
+        </td>
+    </tr>
+            #if ($!SPVIW012Cooperation.isCooperation())
+                #foreach($!cooperationConfig in $SPVIW012Cooperation.Configs)
+    <tr>
+        <td class="$!SPVIW012Cooperation.getCooperationHeaderClass($!cooperationConfig)" nowrap>
+                    #customSpringMessage($!cooperationConfig.displayItemId)
+        </td>
+        <td class="$!SPVIW012Cooperation.getCooperationClass($!cooperationConfig)" colspan="7">
+                    #if ($!cooperationConfig.itemType != "8")
+                        #out($!SPVIW012Cooperation.getCooperationItem($!orderDetail.orderBaseInfo, $!cooperationConfig))
+                    #else
+                        $!SPVIW012Cooperation.getCooperationItem($!orderDetail.orderBaseInfo, $!cooperationConfig)
+                    #end
+        </td>
+    </tr>
+                #end
+            #end
+</tbody>
+</table>
+<br>
+## 納期回答情報
+<table class="Box1G" width="760px">
+    <tr>
+        <td nowrap class="Box1H FontBoxHeader" colspan="5">#customSpringMessage('DELIV_DATE_RESP_INFO')</td>
+    </tr>
+    <tr>
+        ## 確認納期
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CHECK_DELIV_DATE')</td>
+        ## 確認数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CHECK_AMOUNT')</td>
+        ## 回答納期
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_RESP_DELIV_DATE')</td>
+        ## 回答数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_RESP_VOL')</td>
+        ## 単位
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('UNIT')</td>
+    </tr>
+
+    #foreach($!delivRespInfo in $!orderDetail.delivRespInfoList)
+    <tr>
+        <td class="Box1D FontMiniAnk">#out($!delivRespInfo.checkDelivDate.dateOfymdFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!delivRespInfo.checkAmount.volFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!delivRespInfo.respDlvEst.dateOfymdFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!delivRespInfo.respVol.volFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!delivRespInfo.unit)</td>
+    </tr>
+    #end
+</table>
+<br>
+## 出荷情報
+<table class="Box1G" width="760px">
+    <tr>
+        <td nowrap class="Box1H FontBoxHeader" colspan="6">#customSpringMessage('SHIP_INFO')</td>
+    </tr>
+    <tr>
+        ## 訂正区分
+        <td class="Box1H FontBoxHeader" nowrap rowspan="2">#customSpringMessage('CORRECT_NAME')</td>
+        ## 納品キー番号
+        <td class="Box1H FontBoxHeader" nowrap rowspan="2">#customSpringMessage('DELIV_KEY_NO')</td>
+        ## 出荷日
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('SHIPMENT_DATE')</td>
+        ## 着荷予定日
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ARVEXP_DATE')</td>
+        ## 出荷数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('SHIPMENT_VOL')</td>
+        ## 単位
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('UNIT')</td>
+    </tr>
+    <tr>
+        ## 備考
+        <td nowrap class="Box1H FontBoxHeader" colspan="4">#customSpringMessage('NOTES')</td>
+    </tr>
+    #foreach($!shipmentInfo in $!orderDetail.shipmentInfoList)
+    <tr>
+        #if ($!shipmentInfo.division == '3')
+             <td class="Box1D FontSmallAnk Red" rowspan="2">#out($!shipmentInfo.division_PageValue)</td>
+        #elseif ($!shipmentInfo.division == '2')
+             <td class="Box1D FontSmallAnk Green" rowspan="2">#out($!shipmentInfo.division_PageValue)</td>
+        #else
+             <td class="Box1D FontSmallAnk Black" rowspan="2">#out($!shipmentInfo.division_PageValue)</td>
+        #end
+        <td class="Box1D FontSlipNo" rowspan="2">#out($!shipmentInfo.delivKeyNo)</td>
+        <td class="Box1D FontMiniAnk">#out($!shipmentInfo.shipmentDate.dateOfymdFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!shipmentInfo.arvexpDate.dateOfymdFormat)</td>
+        <td class="Box1D FontSmallAnk">#out($!shipmentInfo.shipmentVol.shipmentVol.volFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!shipmentInfo.unit)</td>
+    </tr>
+    <tr>
+        <td class="Box1D FontMiniAnk" colspan="4">
+            #if($!shipmentInfo.notes != "")
+                #out($!shipmentInfo.notes)
+            #else
+                &nbsp;
+            #end
+        </td>
+    </tr>
+    #end
+</table>
+<br>
+## 検収情報
+<table class="Box1G" width="760px">
+    <tr>
+        <td nowrap class="Box1H FontBoxHeader" colspan="9">#customSpringMessage('INSPECTION_INFORMATION')</td>
+    </tr>
+    <tr>
+        ## 訂正区分
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CORRECT_NAME')</td>
+        ## 納品キー番号
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('DELIV_KEY_NO')</td>
+        ## 履歴番号
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('REVISION_NUMBER')</td>
+        ## 検収日
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ACCEPT_DATE')</td>
+        ## 検収数量
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ACCEPT_VOL')</td>
+        ## 単位
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('UNIT')</td>
+        ## 通貨コード
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CURRENCY_CD')</td>
+        ## 検収金額
+        <td class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ACCEPT_AMOUNT')</td>
+    </tr>
+    #foreach($!acceptanceInfo in $!orderDetail.acceptanceInfoList)
+    <tr>
+        #if ($!acceptanceInfo.division == '3')
+             <td class="Box1D FontSmallAnk Red">#out($!acceptanceInfo.division_PageValue)</td>
+        #elseif ($!acceptanceInfo.division == '2')
+             <td class="Box1D FontSmallAnk Green">#out($!acceptanceInfo.division_PageValue)</td>
+        #else
+             <td class="Box1D FontSmallAnk Black">#out($!acceptanceInfo.division_PageValue)</td>
+        #end
+        <td class="Box1D FontSlipNo">#out($!acceptanceInfo.delivKeyNo)</td>
+        <td class="Box1D FontMiniAnk">#out($!acceptanceInfo.delivVersion)</td>
+        <td class="Box1D FontMiniAnk">#out($!acceptanceInfo.acceptDate.dateOfymdFormat)</td>
+        <td class="Box1D FontSmallAnk">#out($!acceptanceInfo.acceptVol.volFormat)</td>
+        <td class="Box1D FontMiniAnk">#out($!acceptanceInfo.unit)</td>
+        <td class="Box1D FontMiniAnk">#out($!acceptanceInfo.currencyCd)</td>
+        <td class="Box1D FontCurrSmall">
+                #out($!acceptanceInfo.acceptAmount.amountMarkDispForSP)
+        </td>
+    </tr>
+    #end
+</table>
+
+<table class="NoBorder" style="width:100%;">
+    <tr>
+        <td align="left">
+            #customSpringMessage('SPVIW012_FOOTER_COMMENT')
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="identify" class="fw.domain.sp.dlv.dlvresp.DelivRespListItemIdentify" />
+
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+
+    <action-state id="searchByCondition">
+        <evaluate expression="SPANS020Service.init(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPANS020" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPANS020Service.page(searchCondition)" result="flowScope.itemList" />
+        <transition to="SPANS020" />
+    </action-state>
+
+    <view-state id="SPANS020" view="ans/delivery/SPANS020" model="identify">
+        <transition on="order" validate="false">
+            <evaluate expression="SPANS020Service.order(searchCondition)" result="flowScope.itemList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPANS020Service.page(searchCondition)" result="flowScope.itemList" />
+        </transition>
+        <transition on="answerInputEachValidate" validate="true">
+            <set name="flashScope.isShowInputEach" value="true" />
+        </transition>
+        <transition on="answerInputEach" to="SPRES030" validate="false" />
+        <transition on="answerDetailValidate" validate="false">
+            <set name="flashScope.isShowAnswerDetail" value="true" />
+        </transition>
+        <transition on="answerDetail" to="SPANS042" validate="false" />
+        <transition on="detailValidate" validate="false" >
+            <set name="flashScope.isShowDetail" value="true"/>
+        </transition>
+        <transition on="detail" to="SPNEW042" validate="false" />
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+
+    <subflow-state id="SPRES030" subflow="ans/delivery/SPANS030" >
+        <input name="orderSeq" value="identify.orderIdentify.orderSeq"/>
+        <input name="dlvEstSeq" value="identify.delivMngIdentify.delivMngSeq"/>
+        <input name="SessionKey" value="SessionKey" />
+    </subflow-state>
+
+    <subflow-state id="SPANS042" subflow="ans/delivery/SPANS042">
+        <input name="delivMngIdentify" value="identify.delivMngIdentify" />
+    </subflow-state>
+
+    <subflow-state id="SPNEW042" subflow="newconfirm/delivery/SPNEW042">
+        <input name="orderSeq" value="identify.orderIdentify.orderSeq"/>
+        <input name="delivMngIdentify" value="identify.delivMngIdentify" />
+    </subflow-state>
+
+</flow>

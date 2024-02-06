@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.NewPriceRevReqExclusiveCheckMapper">
+
+    <select id="searchExclusive" resultType="String">
+        SELECT S_NEW_PRICE_REQ.PRICE_REV_SEQ
+		  FROM S_NEW_PRICE_REQ
+		 WHERE S_NEW_PRICE_REQ.PRICE_REV_SEQ = #{priceRevSeq}
+		   AND S_NEW_PRICE_REQ.LAST_UPD_DATE = #{lastUpdDate}
+		   FOR UPDATE NOWAIT
+    </select>
+
+</mapper>

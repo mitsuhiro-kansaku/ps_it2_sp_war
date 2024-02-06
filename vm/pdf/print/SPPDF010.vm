@@ -1,0 +1,197 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('PRINT_LIST')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" CONTENT="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#set($commonTitle = "#customSpringMessage('PRINT_LIST')")
+#set($searchViewStateID='SPPDF010')
+#set($listViewStateID='SPPDF020')
+
+var pinName="SPPDF020_Pin";
+#parse("./common/common_js.vm")
+
+function onLoad(){
+	setFocusForInput();
+    top.document.title = document.title;
+    if( getCookie("SPPDF020_Pin")=="1" ) {
+        setDisplay("PIN0",false);
+        setDisplay("PIN1",true);
+    } else {
+        setDisplay("PIN0",true);
+        setDisplay("PIN1",false);
+    }
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        alert(alertMessage);
+        if(alertMessage.indexOf("#customSpringMessage('E035')")!=-1){
+            parent.iframeChange("${flowExecutionUrl}&_eventId=page");
+        }
+    }
+     var errorMsg = "$!errorMessage";
+
+    if (errorMsg != "") {
+        getObj("TR_ERROR").style.display = "";
+        setErrorMessage("ERRORDIV", errorMsg, "DATAAREA");
+        return;
+    }
+    var isShowList = "#jsEscape($isShowList)";
+    if (isShowList == 'true'){
+        iframeChange("${flowExecutionUrl}&_eventId=search", "pageid", "SPPRT010");
+    }
+}
+
+function pin(prm) {
+    setCookie("SPPDF020_Pin",prm);
+    if( prm=="1" ) {
+        setDisplay("PIN0",false);
+        setDisplay("PIN1",true);
+    } else {
+        setDisplay("PIN0",true);
+        setDisplay("PIN1",false);
+    }
+}
+
+function issue(){
+    var dataArea = document.getElementById('DATAAREA').contentWindow;
+    if(dataArea != null && typeof(eval(dataArea.issue))!="undefined"){
+        dataArea.issue();
+    }
+}
+
+## +++++  ＩＴ２-01362-000 2013/03/23 ADD SBO_SOKOU START +++++
+function printPdf(checkStatus,fileName,url){
+    $.ajax({
+        type: "POST",
+        url: "../../pdf/print/SPPDF010PRINTCHECK",
+        sync : "true",
+        data: "checkStatus=" + checkStatus + "&time=" + new Date(),
+        success : function(data) {
+            poppage('../../pdf/print/SPPDF010PRINT/'+fileName+'?checkStatus='+checkStatus,'PDF表示','800','600');
+            iframeChange(url + "&_eventId=page");
+        }
+    });
+}
+## +++++  ＩＴ２-01362-000 2013/03/23 ADD SBO_SOKOU START +++++
+## +++++ 強化-00041-000 2013/04/07 ADD SBO_KANGJW START +++++
+function execSearch(){
+    buttonDisable();
+    getObj('BodyForm').action = "${flowExecutionUrl}&_eventId=validate";
+    getObj('BodyForm').submit();
+}
+## +++++ 強化-00041-000 2013/04/07 ADD SBO_KANGJW END +++++
+//-->
+</script>
+</head>
+<body  class="BodyArea" onload="onLoad();">
+<form id="BodyForm" name="Body" action="${flowExecutionUrl}&_eventId=validate" method="post">
+#customFormHiddenInput("reportName.hidden" "$!defaultSearchCondition.reportName")
+#customFormHiddenInput("downLoadFlg.hidden" "$!defaultSearchCondition.downLoadFlg")
+<iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0"scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+<!--検索部テーブル開始-->
+    <table  class="NoBorder" width="100%" height="100%">
+        <tr>
+            <td id="SEARCH_AREA" class="SearchArea"><!-- onLoadで変更 -->
+                #parse("./common/common_title_nonew.vm")
+                <table width="100%">
+                    <tr id="SEARCH_AREA2">
+                        <td id="Adjust" align="right" valign="top">
+                            <!-- 検索条件入力部 -->
+                            <table class="NoBorder"  width="100%">
+                                <tr>
+                                    <td align="left" colspan="4" nowrap>
+                                        #customSpringMessage('SPPDF010_HEADER_COMMENT')
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td nowrap class="FontSmallBold" align="right">#customSpringMessage('REPORT_NAME')</td><!--帳票名-->
+                                    <td nowrap class="FontSmallBold" align="left">
+                                        #customFormSingleSelect("searchCondition.reportName" $reportNameList "")
+                                    </td>
+                                    <td nowrap class="FontSmallBold" align="right">#customSpringMessage('CREATE_REQ_DATE')<!-- 作成依頼日 --></td>
+                                    <td nowrap class="FontSmallBold" align="left">
+                                       #springFormInput("searchCondition.createReqDateFrom.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                     <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('createReqDateFrom.dateOfymdFormat'));">
+                                      &nbsp;～&nbsp;
+                                       #springFormInput("searchCondition.createReqDateTo.dateOfymdFormat" "maxLength=8 size=12 class='Small noIME' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                                     <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1,getObj('createReqDateTo.dateOfymdFormat'));">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td nowrap class="FontSmallBold" align="right">#customSpringMessage('CREATE_REQ_FILE_NAME')
+                                       <span class="FontComment">％</span><!-- 作成依頼ファイル名-->
+                                    </td>
+                                    <td nowrap class="FontSmallBold" align="left">
+                                        #springFormInput("searchCondition.createReqFileName" "class='Small onIME' maxLength=255 size=71")
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="FontSmallBold" align="right"></td>
+                                    <td nowrap class="FontSmallBold" align="left" COLSPAN="3">
+                                        #customFormRadioButtons("searchCondition.downLoadFlg" $redioList "" "")
+                                    </td>
+                                    <td class="FontSmallBold" align="right"></td>
+                                </tr>
+                                <tr>
+                                    <td align="left" colspan="4" nowrap class="FontComment">
+                                        #customSpringMessage("SPPDF010_FOOTER_COMMENT") ## ＊:前方一致 / ％:中間一致 / なし:完全一致
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td nowrap class="FontSmallBold" align="right" valign="top">
+                            <br>
+                            <!-- ＊＊＊＊＊　検索実行　＊＊＊＊＊ -->
+                            <input type="button" onclick="javascript:execSearch();" class="LargeButton" value="#customSpringMessage('ACTION_SEARCH')"><!--検索-->
+                            <br>
+                            <br><a href="javascript:clear();" id="clearSearch">#customSpringMessage("ACTION_CLEAR_SEARCH_CRITERIA")<!--検索条件をクリアする--></a>&nbsp;
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="SHOWPDFAREA" style="display:none">
+            <td class="UploadArea">
+                <table class="NoBorder" width="100%" style="margin:auto;">
+                    <tr>
+                        <td nowrap align="left">
+                            <input class="SmallButton" type="button" value="#customSpringMessage('PDF')" onclick="javascript:issue()">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="TR_ERROR" style="display: none;">
+            <td class="error" style="height:0px;">
+                <div id="ERRORDIV">$!errorMessage</div>
+            </td>
+        </tr>
+        <tr style="vertical-align:top;height:100%;">
+            <td class="NoBorder" style="height:100%;">
+                <iframe id="DATAAREA" name="DATAAREA" class="DataArea" framespacing="0" frameborder="0" src="../../layout/default.vm" scrolling="yes" frameborder="no"></iframe>
+            </td>
+        </tr>
+
+    </table>
+<iframe id="HIDDENAREA" name="HIDDENAREA" framespacing="0" frameborder="0" src="" scrolling="no" frameborder="no" style="display:none"></iframe>
+
+</form>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.NewAcceptanceMapper">
+
+    <select id="searchExclusive" resultType="fw.domain.sp.reportissue.ReportIssueIdentify">
+        SELECT
+               S_NEW_RCV.ACC_CD AS "utlUserCd"
+          FROM S_NEW_RCV
+         WHERE
+               S_NEW_RCV.ACC_CD = #{utlUserCd}
+           AND S_NEW_RCV.CUST_CD = #{buyerUserCd}
+		   AND S_NEW_RCV.ORDER_NO = #{orderNo}
+		   AND S_NEW_RCV.DELIV_KEY_NO = #{delivKeyNo}
+		   AND S_NEW_RCV.DELIV_VERSION = #{delivKeyNoVersion}
+		   AND S_NEW_RCV.LAST_UPD_DATE = #{lastUpdDate}
+    </select>
+
+</mapper>

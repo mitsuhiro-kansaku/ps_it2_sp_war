@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <!-- 見積回答検索-->
+    <!-- 見積回答検索条件 -->
+    <var name="defaultSearchCondition" class="fw.domain.sp.quot.quotresp.QuotRespSearchCondition" />
+    <on-start>
+        <evaluate expression="SPRES010Service.init()"
+            result="flowScope.searchCondition" />
+        <set name="flowScope.isCurrentPageSearch" value="false" />
+    </on-start>
+
+    <!-- 見積回答検索 の場合-->
+    <view-state id="SPRES010" model="searchCondition"  view="res/quotresp/SPRES010">
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+            <evaluate expression="SPRES010Service.search(searchCondition)"/>
+        </transition>
+        <transition on="search" to="list" validate="false">
+        </transition>
+        <!-- 見積回答　ダウンロード の場合-->
+        <transition on="downloadValidate" validate="true">
+            <evaluate expression="SPRES010Service.downloadValidate(searchCondition)" result="flashScope.isDownLoadValidate"/>
+        </transition>
+        <transition on="download" validate="false">
+            <evaluate expression="SPRES010Service.download(searchCondition)"/>
+        </transition>
+        <transition on="upload" validate="true">
+            <evaluate
+                expression="SPRES010Service.upload()" />
+        </transition>
+        <transition on="showUploadResult" to="uploadResult" validate="true"/>
+        <transition on="back" to="home" validate="false"/>
+    </view-state>
+
+    <!-- 見積回答一覧 の場合-->
+    <subflow-state id="list" subflow="res/quotresp/SPRES020" >
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <transition on="back" to="SPRES010" >
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+    
+    <!-- 見積回答　アップロード の場合-->
+    <view-state id="uploadResult" view="common/upload_result">
+        <transition on="back" to="SPRES010" />
+    </view-state>
+</flow>

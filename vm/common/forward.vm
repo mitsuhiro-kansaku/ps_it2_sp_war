@@ -1,0 +1,15 @@
+<table class="NoBorder" width="100%" >
+    <tr>
+        <td>
+            <table >
+                <tr>
+                    <td>
+                        <input class="SmallButton" type="button" value="#customSpringMessage('SHIP_MANAGEMENT')" onclick="update();"><!-- 出荷処理 -->
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td align="center"></td>
+        <td align="right"></td>
+    </tr>
+</table>

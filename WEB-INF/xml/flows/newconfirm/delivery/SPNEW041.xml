@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+	parent="base">
+	<!-- 新着納期確認（一覧） -->
+
+	<!-- 納期管理識別情報 -->
+	<var name="delivMngIdentify" class="fw.domain.sp.dlv.dlvconfirm.DelivMngIdentify" />
+
+	<input name="searchCondition" />
+	<input name="isCurrentPageSearch" />
+
+	<decision-state id="isSearchByKey">
+		<if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+	</decision-state>
+
+	<action-state id="searchByCondition">
+		<evaluate expression="SPNEW041Service.init(searchCondition)"
+			result="flowScope.delivCheckList" />
+		<transition to="SPNEW041" />
+	</action-state>
+
+	<action-state id="searchByKey">
+		<evaluate expression="SPNEW041Service.page(searchCondition)"
+			result="flowScope.delivCheckList" />
+		<transition to="SPNEW041" />
+	</action-state>
+
+	<!-- 新着納期確認（一覧） -->
+	<view-state id="SPNEW041" model="delivCheckList"
+		view="newconfirm/delivery/SPNEW041">
+		<transition on="order" validate="false">
+			<evaluate expression="SPNEW041Service.order(searchCondition)"
+				result="flowScope.delivCheckList" />
+		</transition>
+		<transition on="page" validate="false">
+			<evaluate expression="SPNEW041Service.page(searchCondition)"
+				result="flowScope.delivCheckList" />
+		</transition>
+		<transition on="back" to="home" validate="false" />
+		
+		<!-- 納期新着確認 -->
+		<transition on="newConfirm" validate="true" to="searchByKey">
+			<evaluate expression="SPNEW041Service.newConfirm(delivCheckList)" />
+			<set name="flashScope.isSuccess" value="true"></set>
+		</transition>
+		<!-- 納期新着全件確認 -->
+		<transition on="newConfirmAll" validate="true" to="searchByKey">
+			<evaluate expression="SPNEW041Service.newConfirmAll()" />
+			<set name="flashScope.isSuccess" value="true"></set>
+		</transition>
+		
+		<!-- 詳細 -->
+		<transition on="detail" to="SPNEW042" validate="false">
+			<set name="delivMngIdentify.delivMngSeq" value="requestParameters.delivMngSeq" /><!-- 
+				納期管理シーケンス番号 -->
+			<set name="delivMngIdentify.lastUpdDate" value="requestParameters.lastUpdDate" /><!-- 
+				最終更新日時 -->
+		</transition>
+	</view-state>
+	<!-- 詳細 -->
+	<subflow-state id="SPNEW042" subflow="newconfirm/delivery/SPNEW042">
+		<input name="delivMngIdentify" value="delivMngIdentify" />
+	</subflow-state>
+</flow>

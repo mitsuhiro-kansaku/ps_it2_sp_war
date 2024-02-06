@@ -1,0 +1,24 @@
+
+    <table class="NoBorder" width="100%"  style="margin:auto;">
+        <tr>
+            <td align="left">
+                <table>
+                    <tr>
+                        <td align="left">
+                        ## +++++  強化-01777-000 2013/06/09 ADD SBO_wangzf START +++++
+                        <input class="SmallButton" type="button" value="#customSpringMessage('REQ_REPLY')" onclick="exec();">
+                        ## +++++  強化-01777-000 2013/06/09 ADD SBO_wangzf END +++++
+                        ## -----  強化-01777-000 2013/06/09 DEL SBO_wangzf START -----
+                        ##<input class="SmallButton" type="button" value="回答" onclick="exec();">
+                        ## -----  強化-01777-000 2013/06/09 DEL SBO_wangzf END -----
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td align="center">
+            </td>
+            <td align="right">
+            </td>
+        </tr>
+    </table>
+

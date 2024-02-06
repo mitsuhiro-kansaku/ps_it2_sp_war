@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    <!-- 新着検収（詳細） -->
+
+    <!-- 見積依頼識別情報 -->
+    <var name="quotReqIdentify" class="fw.domain.sp.quot.quotreq.QuotReqIdentify"/>
+
+    <!-- 検収識別情報 -->
+    <input name="acceptanceIdentify" />
+    
+    <on-start>
+        <evaluate expression="SPNEW062Service.detail(acceptanceIdentify)"
+            result="flowScope.detailItem" />
+    </on-start>
+
+    <view-state id="SPNEW062" model="detailItem"
+        view="newconfirm/acceptance/SPNEW062">
+        <!-- 2013.01.09 DEL DAIKO_YAMAGUCHI START --><!-- 
+        <transition on="detail" to="SPNEW012" validate="false">
+            <set name="quotReqIdentify.quotReqSeq" value="requestParameters.quotReqSeq"/>
+        </transition>
+        -->
+        <!-- 2013.01.09 DEL DAIKO_YAMAGUCHI -END- -->
+        
+        <transition on="download" validate="false">
+            <evaluate expression="SPAttachFileService.downloadFromOrderAttachMng(requestParameters.seqNo)"/>
+        </transition>
+    </view-state>
+    <!-- 2013.01.09 DEL DAIKO_YAMAGUCHI START -->
+    <!-- 見積依頼詳細(都度品) -->
+    <!-- 
+    <subflow-state id="SPNEW012" subflow="newconfirm/quotReq/SPNEW012">
+        <input name="identify" value="quotReqIdentify" />
+    </subflow-state>
+    -->
+    <!-- 2013.01.09 DEL DAIKO_YAMAGUCHI -END- -->
+    
+</flow>

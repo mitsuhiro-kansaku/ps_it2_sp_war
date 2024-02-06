@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.mst.library.LibraryMapper">
+
+    <select id="getLanguageInd" resultType="String">
+        SELECT LANGUAGE_IND
+          FROM M_LIBRALY_LANG
+         WHERE M_LIBRALY_LANG.LANGUAGE_IND =
+               (SELECT M_SUPPLIER.BASE_LANGUAGE_IND
+                  FROM M_SUPPLIER
+                 WHERE (M_SUPPLIER.COMPANY_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    OR M_SUPPLIER.COMPANY_CD = '${@fw.common.constant.ApplicationConstant@COMPANY_CD_ALL}')
+                   AND M_SUPPLIER.SUP_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+               )
+    </select>
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+            AND M_LIBRALY_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+            AND M_LIBRALY.LIBRALY_IND IN('0','2')
+            AND M_LIBRALY.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate()}'
+            AND M_LIBRALY.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate()}'
+            AND M_LIBRALY.TERM_FLG = '0'
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(titleName)">
+            AND M_LIBRALY_LANG.TITLE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.library.LibrarySearchCondition","titleName")}
+        </if> 
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(regDateFrom.dateOfymd)">
+            AND M_LIBRALY_LANG.REG_DATE >= #{regDateFrom.dateOfymd}||'00000000000'
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(regDateTo.dateOfymd)">
+            AND M_LIBRALY_LANG.REG_DATE &lt;= #{regDateTo.dateOfymd}||'99999999999'
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(description)">
+            AND M_LIBRALY_LANG.DESCRIPTION ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.library.LibrarySearchCondition","description")}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(fileName)">
+            AND M_LIBRALY.FILE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.library.LibrarySearchCondition","fileName")}
+        </if>
+        <if test="!@org.apache.commons.lang.StringUtils@equals(buyerCompanyCd,'ALL')">
+            AND M_LIBRALY.COMPANY_CD = #{buyerCompanyCd}
+        </if>
+    </sql>
+
+    <select id="listKeyIdentity"
+            parameterType="fw.domain.sp.library.LibrarySearchCondition" 
+            resultType="fw.domain.sp.library.LibraryIdentify">
+        SELECT M_LIBRALY.HELP_NO as "helpNo",
+               M_LIBRALY.COMPANY_CD as "companyCd"
+          FROM M_LIBRALY
+          LEFT JOIN M_LIBRALY_LANG
+                 ON M_LIBRALY.COMPANY_CD = M_LIBRALY_LANG.COMPANY_CD
+                AND M_LIBRALY.HELP_NO = M_LIBRALY_LANG.HELP_NO
+                AND M_LIBRALY_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+          LEFT JOIN M_COMPANY_LANG
+                 ON M_COMPANY_LANG.COMPANY_CD = M_LIBRALY.COMPANY_CD
+                AND M_COMPANY_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+         ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="listPageItem"
+            resultType="fw.domain.sp.library.LibraryItem">
+        SELECT M_LIBRALY.HELP_NO as "libraryIdentify.helpNo",
+               M_LIBRALY.COMPANY_CD as "libraryIdentify.companyCd",
+               M_LIBRALY_LANG.TITLE_NAME as "titleName",
+               M_LIBRALY_LANG.REG_DATE as "regDate.dateOfymd",
+               M_LIBRALY_LANG.DESCRIPTION as "description",
+               M_LIBRALY.FILE_NAME as "fileName", 
+               M_LIBRALY.LAST_UPD_DATE as "libraryIdentify.lastUpdDate",
+               M_COMPANY_LANG.COMPANY_NAME as "buyerCompany"
+          FROM M_LIBRALY
+          LEFT JOIN M_LIBRALY_LANG
+                 ON M_LIBRALY.COMPANY_CD = M_LIBRALY_LANG.COMPANY_CD
+                AND M_LIBRALY.HELP_NO = M_LIBRALY_LANG.HELP_NO
+                AND M_LIBRALY_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+          LEFT JOIN M_COMPANY_LANG
+                 ON M_COMPANY_LANG.COMPANY_CD = M_LIBRALY.COMPANY_CD
+                AND M_COMPANY_LANG.LANGUAGE_IND = '${@fw.common.util.AppUtil@getSysLanguageByEscapeSql()}'
+        <where>
+                (M_LIBRALY_LANG.COMPANY_CD,M_LIBRALY_LANG.HELP_NO) in
+            <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList" open="(" separator="," close=")">
+                (#{keyList.companyCd},#{keyList.helpNo})
+            </foreach>
+            <include refid="listKeyIdentityWhereCondition"/>
+                AND M_LIBRALY.LIBRALY_IND IN('0','2')
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="search" parameterType="fw.domain.sp.library.LibraryIdentify" resultType="fw.domain.sp.library.LibraryFile">
+        SELECT FILE_NAME as "fileName",
+               FILE_DATA as "fileData"
+          FROM M_LIBRALY
+         WHERE (M_LIBRALY.COMPANY_CD = #{companyCd}
+            OR M_LIBRALY.COMPANY_CD = '${@fw.common.constant.ApplicationConstant@COMPANY_CD_ALL}')
+           AND M_LIBRALY.HELP_NO = #{helpNo}
+    </select>
+</mapper>

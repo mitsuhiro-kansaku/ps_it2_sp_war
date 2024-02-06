@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.newconfirm.arrival.ArrivalMapper">
+<!-- 2012-08-20 20:02 「ダウンロード」ボタンクリック時、検索条件で一覧情報を取得する
+ -->
+    <select id="download" parameterType="fw.domain.sp.arrival.ArrivalInfoSearchCondition"
+        resultType="fw.domain.sp.arrival.ArrivalDownloadItem">
+        <include refid="pageHeader"/>
+         SELECT
+             S_NEW_ARV.CORRECT_CD AS "indCd",
+             S_NEW_ARV.DELIV_VERSION AS "revisionNumber",
+             S_NEW_ARV.DPO_FLG AS "statusCd",
+             S_ORDER.REQ_TYPE_IND AS "reqIndCd",
+             S_NEW_ARV.DELIV_KEY_NO AS "delivKeyNo",
+             S_ORDER.BUYER_COMPANY_CD AS "buyerCompanyCd",
+             S_ORDER.BUYER_COMPANY_NAME AS "buyerCompanyName",
+             S_ORDER.BUYER_SECTION_PLACE_CD AS "buyerSectionPlaceCd",
+             S_ORDER.BUYER_SECTION_PLACE_NAME AS "buyerSectionPlaceName",
+             S_ORDER.BUYER_SECTION_CD AS "buyerSectionCd",
+             S_ORDER.BUYER_SECTION_NAME AS "buyerSectionName",
+             S_ORDER.BUYER_USER_ID AS "buyerCustUserCd",
+             S_ORDER.BUYER_USER_NAME AS "buyerCustUserName",
+             S_ORDER.BUYER_USER_TEL_NO AS "contact",
+             S_ORDER.ITEM_NAME  AS "itemName",
+             S_ORDER.CUST_ITEM_CD AS "itemCd",
+             S_ORDER.KATASHIKI AS "katashiki",
+             S_ORDER.MANUFACT_CD AS "manufactCd",
+             S_ORDER.MANUFACT_NAME AS "manufactName",
+             S_NEW_ARV.ARRIVAL_DATE AS "arrivExpDate.dateOfymd",
+             S_NEW_ARV.ARRIVAL_VOL AS "delivVol.vol",
+             S_DELIVERY.SHIPMENT_VOL AS "shipmentVol.vol",
+             S_NEW_ARV.UNIT_CD AS "unitCd",
+             S_NEW_ARV.UNIT_NAME AS "unitName",
+             S_ORDER.ORDER_VOL AS "orderVol.vol",
+             S_ORDER.CURRENCY_CD AS "currencyCd",
+             S_ORDER.ORDER_AMOUNT AS "orderAmount.amount",
+             S_ORDER.ORDER_FIRST_DATE AS "orderDate.dateOfymd",
+             S_ORDER.DELIVERY_DATE AS "orderDeliv.dateOfymd",
+             S_ORDER.ORDER_NO AS "orderNo",
+             S_ORDER.ORDER_VERSION AS "orderHistoryNo",
+             S_ORDER.TITLE_NAME AS "titleName",
+             S_ORDER.UNIT_PRICE_IND AS "unitPriceIndCd",
+             S_ORDER.FOR_SUPPLIER_COMMENT AS "custUserComment",
+             S_ORDER.UNIT_PRICE AS "orderUnitPrice.amount.amount",
+             S_ORDER.ORDER_CANCEL_VOL AS "orderCancelVol.vol",
+             S_ORDER.ORDER_CANCEL_AMOUNT AS "orderCancelAmount.amount",
+             S_ORDER.TAX_IND AS "taxIndCd",
+             S_ORDER.DELIV_PLACE_ZIP_CD AS "delivPlaceZipCd",
+             S_ORDER.DELIV_PLACE_NAME AS "delivPlaceName",
+             S_ORDER.DELIV_PLACE_ADDRESS1 AS "delivPlaceAddress1",
+             S_ORDER.DELIV_PLACE_ADDRESS2 AS "delivPlaceAddress2",
+             S_ORDER.DELIV_PLACE_TEL_NO AS "delivPlaceTel",
+             S_ORDER.DEST_AREA AS "delivPlaceLocation",
+             S_ORDER_ATTACH_A.ATTACH_FILE_NAME AS "attachFileName1",
+             S_ORDER_ATTACH_B.ATTACH_FILE_NAME AS "attachFileName2",
+             S_ORDER_ATTACH_C.ATTACH_FILE_NAME AS "attachFileName3",
+             S_NEW_ARV.UN_ARRIVAL_VOL AS "unDelivVol.vol",
+             S_NEW_ARV.TOTAL_ARRIVAL_VOL AS "totalDelivVol.vol",
+             S_NEW_ARV.PART_DELIV_NO AS "partDelivNo",
+             S_NEW_ARV.PART_DELIV_IND AS "partDelivIndCd"
+        FROM S_NEW_ARV
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON S_NEW_ARV.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_ARV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                AND S_NEW_ARV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+
+        INNER JOIN  (
+               S_ORDER INNER　JOIN (
+                     SELECT
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO,
+                         MAX(S_ORDER_B.ORDER_VERSION) MAX_ORDER_VERSION
+                     FROM
+                         S_ORDER S_ORDER_B
+                     WHERE
+                         S_ORDER_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO
+
+               )S_ORDER_V
+               ON   S_ORDER.ACC_CD = S_ORDER_V.ACC_CD
+               AND  S_ORDER.CUST_CD = S_ORDER_V.CUST_CD
+               AND  S_ORDER.ORDER_NO = S_ORDER_V.ORDER_NO
+               AND  S_ORDER.ORDER_VERSION=S_ORDER_V.MAX_ORDER_VERSION
+        )
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_A
+            ON   S_ORDER.ATTACH_FILE_SEQ1 = S_ORDER_ATTACH_A.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_A.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_B
+            ON   S_ORDER.ATTACH_FILE_SEQ2 = S_ORDER_ATTACH_B.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_B.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_C
+            ON   S_ORDER.ATTACH_FILE_SEQ3 = S_ORDER_ATTACH_C.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_C.DELETE_FLG = '0'
+        ON   S_NEW_ARV.ACC_CD = S_ORDER.ACC_CD
+        AND  S_NEW_ARV.CUST_CD = S_ORDER.CUST_CD
+        AND  S_NEW_ARV.ORDER_NO = S_ORDER.ORDER_NO
+        LEFT JOIN (
+            S_DELIVERY INNER JOIN(
+                SELECT
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO,
+                    MAX(S_DELIVERY_B.UPD_CNT) MAX_UPD_CNT
+                FROM S_DELIVERY S_DELIVERY_B
+                WHERE S_DELIVERY_B.DELETE_FLG = '0'
+                GROUP BY
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO
+                )S_DELIVERY_V
+                ON S_DELIVERY.ACC_CD = S_DELIVERY_V.ACC_CD
+                AND S_DELIVERY.CUST_CD = S_DELIVERY_V.CUST_CD
+                AND S_DELIVERY.ORDER_NO = S_DELIVERY_V.ORDER_NO
+                AND S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_V.DELIV_KEY_NO
+                AND S_DELIVERY.UPD_CNT = S_DELIVERY_V.MAX_UPD_CNT
+            )
+            ON   S_NEW_ARV.ACC_CD = S_DELIVERY.ACC_CD
+            AND  S_NEW_ARV.CUST_CD = S_DELIVERY.CUST_CD
+            AND  S_NEW_ARV.ORDER_NO = S_DELIVERY.ORDER_NO
+            AND  S_NEW_ARV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        <where>
+             S_NEW_ARV.DELETE_FLG = '0'
+             <if test="searchObject.searchObject!=9">
+                 AND S_NEW_ARV.DPO_FLG = #{searchObject.searchObject}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivKeyNo)">
+                 AND S_NEW_ARV.DELIV_KEY_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.arrival.ArrivalInfoSearchCondition","delivKeyNo")}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateFrom.dateOfymd)">
+                 AND S_NEW_ARV.ARRIVAL_DATE >= #{arrivExpDateFrom.dateOfymd}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateTo.dateOfymd)">
+                 AND S_NEW_ARV.ARRIVAL_DATE &lt;= #{arrivExpDateTo.dateOfymd}
+             </if>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.defaultOrder}
+        <include refid="pageRoot"/>
+    </select>
+    <select id="downloadCount" parameterType="fw.domain.sp.arrival.ArrivalInfoSearchCondition"
+        resultType="java.lang.Long">
+         SELECT
+             COUNT(*)
+        FROM S_NEW_ARV
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON S_NEW_ARV.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_ARV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                AND S_NEW_ARV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+
+        INNER JOIN  (
+               S_ORDER INNER　JOIN (
+                     SELECT
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO,
+                         MAX(S_ORDER_B.ORDER_VERSION) MAX_ORDER_VERSION
+                     FROM
+                         S_ORDER S_ORDER_B
+                     WHERE
+                         S_ORDER_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO
+
+               )S_ORDER_V
+               ON   S_ORDER.ACC_CD = S_ORDER_V.ACC_CD
+               AND  S_ORDER.CUST_CD = S_ORDER_V.CUST_CD
+               AND  S_ORDER.ORDER_NO = S_ORDER_V.ORDER_NO
+               AND  S_ORDER.ORDER_VERSION=S_ORDER_V.MAX_ORDER_VERSION
+        )
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_A
+            ON   S_ORDER.ATTACH_FILE_SEQ1 = S_ORDER_ATTACH_A.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_A.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_B
+            ON   S_ORDER.ATTACH_FILE_SEQ2 = S_ORDER_ATTACH_B.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_B.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_C
+            ON   S_ORDER.ATTACH_FILE_SEQ3 = S_ORDER_ATTACH_C.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_C.DELETE_FLG = '0'
+        ON   S_NEW_ARV.ACC_CD = S_ORDER.ACC_CD
+        AND  S_NEW_ARV.CUST_CD = S_ORDER.CUST_CD
+        AND  S_NEW_ARV.ORDER_NO = S_ORDER.ORDER_NO
+        LEFT JOIN (
+            S_DELIVERY INNER JOIN(
+                SELECT
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO,
+                    MAX(S_DELIVERY_B.UPD_CNT) MAX_UPD_CNT
+                FROM S_DELIVERY S_DELIVERY_B
+                WHERE S_DELIVERY_B.DELETE_FLG = '0'
+                GROUP BY
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO
+                )S_DELIVERY_V
+                ON S_DELIVERY.ACC_CD = S_DELIVERY_V.ACC_CD
+                AND S_DELIVERY.CUST_CD = S_DELIVERY_V.CUST_CD
+                AND S_DELIVERY.ORDER_NO = S_DELIVERY_V.ORDER_NO
+                AND S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_V.DELIV_KEY_NO
+                AND S_DELIVERY.UPD_CNT = S_DELIVERY_V.MAX_UPD_CNT
+            )
+            ON   S_NEW_ARV.ACC_CD = S_DELIVERY.ACC_CD
+            AND  S_NEW_ARV.CUST_CD = S_DELIVERY.CUST_CD
+            AND  S_NEW_ARV.ORDER_NO = S_DELIVERY.ORDER_NO
+            AND  S_NEW_ARV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        <where>
+             S_NEW_ARV.DELETE_FLG = '0'
+             <if test="searchObject.searchObject!=9">
+                 AND S_NEW_ARV.DPO_FLG = #{searchObject.searchObject}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivKeyNo)">
+                 AND S_NEW_ARV.DELIV_KEY_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.arrival.ArrivalInfoSearchCondition","delivKeyNo")}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateFrom.dateOfymd)">
+                 AND S_NEW_ARV.ARRIVAL_DATE >= #{arrivExpDateFrom.dateOfymd}
+
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateTo.dateOfymd)">
+                 AND S_NEW_ARV.ARRIVAL_DATE &lt;= #{arrivExpDateTo.dateOfymd}
+             </if>
+        </where>
+    </select>
+
+    <sql id="listKeyIdentityWhereCondition">
+        AND S_NEW_ARV.DELETE_FLG = '0'
+        <if test="searchObject.searchObject!=9">
+            AND S_NEW_ARV.DPO_FLG = #{searchObject.searchObject}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(delivKeyNo)">
+            AND S_NEW_ARV.DELIV_KEY_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.arrival.ArrivalInfoSearchCondition","delivKeyNo")}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateFrom.dateOfymd)">
+            AND S_NEW_ARV.ARRIVAL_DATE >= #{arrivExpDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(arrivExpDateTo.dateOfymd)">
+            AND S_NEW_ARV.ARRIVAL_DATE &lt;= #{arrivExpDateTo.dateOfymd}
+        </if>
+    </sql>
+
+    <!-- 2012-08-20 13:16 検索」ボタンクリック時、検索条件で一覧キーリストを取得する-->
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.arrival.ArrivalInfoSearchCondition"
+        resultType="fw.domain.sp.arrival.ArrivalIdentify">
+        SELECT
+            S_NEW_ARV.ARV_SEQ AS "arrivalSeq"
+        FROM
+            S_NEW_ARV
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON S_NEW_ARV.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_ARV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                AND S_NEW_ARV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+         INNER JOIN  (
+               S_ORDER INNER　JOIN (
+                     SELECT
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO,
+                         MAX(S_ORDER_B.ORDER_VERSION) MAX_ORDER_VERSION
+                     FROM
+                         S_ORDER S_ORDER_B
+                     WHERE
+                         S_ORDER_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO
+
+               )S_ORDER_V
+               ON   S_ORDER.ACC_CD = S_ORDER_V.ACC_CD
+                    AND  S_ORDER.CUST_CD = S_ORDER_V.CUST_CD
+                    AND  S_ORDER.ORDER_NO = S_ORDER_V.ORDER_NO
+                    AND  S_ORDER.ORDER_VERSION=S_ORDER_V.MAX_ORDER_VERSION
+
+        )
+        ON  S_ORDER.ACC_CD = S_NEW_ARV.ACC_CD
+            AND  S_ORDER.CUST_CD = S_NEW_ARV.CUST_CD
+            AND  S_ORDER.ORDER_NO = S_NEW_ARV.ORDER_NO
+        LEFT JOIN (
+                S_DELIVERY INNER　JOIN (
+                     SELECT
+                         S_DELIVERY_B.ACC_CD,
+                         S_DELIVERY_B.CUST_CD,
+                         S_DELIVERY_B.ORDER_NO,
+                         S_DELIVERY_B.DELIV_KEY_NO,
+                         MAX(S_DELIVERY_B.UPD_CNT) MAX_UPD_CNT
+                     FROM
+                         S_DELIVERY S_DELIVERY_B
+                     WHERE
+                         S_DELIVERY_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_DELIVERY_B.ACC_CD,
+                         S_DELIVERY_B.CUST_CD,
+                         S_DELIVERY_B.ORDER_NO,
+                         S_DELIVERY_B.DELIV_KEY_NO
+
+               )S_DELIVERY_V
+               ON   S_DELIVERY.ACC_CD = S_DELIVERY_V.ACC_CD
+                    AND  S_DELIVERY.CUST_CD = S_DELIVERY_V.CUST_CD
+                    AND  S_DELIVERY.ORDER_NO = S_DELIVERY_V.ORDER_NO
+                    AND  S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_V.DELIV_KEY_NO
+                    AND  S_DELIVERY.UPD_CNT = S_DELIVERY_V.MAX_UPD_CNT
+        )
+        ON   S_NEW_ARV.ACC_CD = S_DELIVERY.ACC_CD
+                    AND  S_NEW_ARV.CUST_CD = S_DELIVERY.CUST_CD
+                    AND  S_NEW_ARV.ORDER_NO = S_DELIVERY.ORDER_NO
+                    AND  S_NEW_ARV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    <!-- 2012-08-20 13:30 ②　入荷キーリストで、該当ページの入荷情報一覧を取得
+    -->
+    <select id="listPageItem"
+        resultType="fw.domain.sp.arrival.ArrivalInfoItem">
+        SELECT
+            S_NEW_ARV.ARV_SEQ AS "arrivalIdentify.arrivalSeq",
+            S_NEW_ARV.ACC_CD AS "arrivalIdentify.accCd",
+            S_NEW_ARV.CUST_CD AS "arrivalIdentify.custCd",
+            S_NEW_ARV.ORDER_NO AS "arrivalIdentify.orderNo",
+            S_NEW_ARV.CORRECT_CD AS "division",
+            S_NEW_ARV.DELIV_VERSION AS "revisionNumber",
+            S_NEW_ARV.DPO_FLG AS "status",
+            S_ORDER.REQ_TYPE_IND AS "reqTypeInd",
+            S_NEW_ARV.DELIV_KEY_NO AS "delivKeyNo",
+            S_ORDER.BUYER_COMPANY_NAME AS "buyerCompany",
+            S_ORDER.ITEM_NAME AS "itemName",
+            S_ORDER.CUST_ITEM_CD AS "itemCd",
+            S_ORDER.KATASHIKI AS "katashiki",
+            S_NEW_ARV.ARRIVAL_DATE AS "arrivExpDate.dateOfymd",
+            S_NEW_ARV.ARRIVAL_VOL AS "delivVol.vol",
+            S_DELIVERY.SHIPMENT_VOL AS "shipmentVol.vol",
+            S_NEW_ARV.UNIT_NAME AS "unit",
+            S_NEW_ARV.LAST_UPD_DATE AS "arrivalIdentify.lastUpdDate"
+
+        FROM
+            S_NEW_ARV
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON S_NEW_ARV.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_ARV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                AND S_NEW_ARV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          INNER JOIN  (
+               S_ORDER INNER　JOIN (
+                     SELECT
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO,
+                         MAX(S_ORDER_B.ORDER_VERSION) MAX_ORDER_VERSION
+                     FROM
+                         S_ORDER S_ORDER_B
+                     WHERE
+                         S_ORDER_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO
+
+               )S_ORDER_V
+               ON   S_ORDER.ACC_CD = S_ORDER_V.ACC_CD
+                    AND  S_ORDER.CUST_CD = S_ORDER_V.CUST_CD
+                    AND  S_ORDER.ORDER_NO = S_ORDER_V.ORDER_NO
+                    AND  S_ORDER.ORDER_VERSION=S_ORDER_V.MAX_ORDER_VERSION
+
+        )
+        ON  S_ORDER.ACC_CD = S_NEW_ARV.ACC_CD
+            AND  S_ORDER.CUST_CD = S_NEW_ARV.CUST_CD
+            AND  S_ORDER.ORDER_NO = S_NEW_ARV.ORDER_NO
+        LEFT JOIN (
+                S_DELIVERY INNER　JOIN (
+                     SELECT
+                         S_DELIVERY_B.ACC_CD,
+                         S_DELIVERY_B.CUST_CD,
+                         S_DELIVERY_B.ORDER_NO,
+                         S_DELIVERY_B.DELIV_KEY_NO,
+                         MAX(S_DELIVERY_B.UPD_CNT) MAX_UPD_CNT
+                     FROM
+                         S_DELIVERY S_DELIVERY_B
+                     WHERE
+                         S_DELIVERY_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_DELIVERY_B.ACC_CD,
+                         S_DELIVERY_B.CUST_CD,
+                         S_DELIVERY_B.ORDER_NO,
+                         S_DELIVERY_B.DELIV_KEY_NO
+
+               )S_DELIVERY_V
+               ON   S_DELIVERY.ACC_CD = S_DELIVERY_V.ACC_CD
+                    AND  S_DELIVERY.CUST_CD = S_DELIVERY_V.CUST_CD
+                    AND  S_DELIVERY.ORDER_NO = S_DELIVERY_V.ORDER_NO
+                    AND  S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_V.DELIV_KEY_NO
+                    AND  S_DELIVERY.UPD_CNT = S_DELIVERY_V.MAX_UPD_CNT
+        )
+        ON   S_NEW_ARV.ACC_CD = S_DELIVERY.ACC_CD
+                    AND  S_NEW_ARV.CUST_CD = S_DELIVERY.CUST_CD
+                    AND  S_NEW_ARV.ORDER_NO = S_DELIVERY.ORDER_NO
+                    AND  S_NEW_ARV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        <where>
+            S_NEW_ARV.ARV_SEQ IN
+            <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList"
+                open="(" separator="," close=")">
+                #{keyList.arrivalSeq}
+            </foreach>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <!-- 2012-08-20 14:12 「新着確認」ボタンクリック時、SQL仕様
+    ①新着入荷を更新
+    -->
+    <update id="update" parameterType="fw.domain.sp.arrival.ArrivalInfoNewDop">
+        UPDATE S_NEW_ARV
+        SET
+          DPO_FLG='1',
+          LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+          LAST_UPD_USER_ID='${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        WHERE
+            ARV_SEQ IN
+            <foreach collection="arrivalSeqList" item="arrivalIdentify"
+                open="(" separator="," close=")">
+                #{arrivalIdentify.arrivalSeq}
+            </foreach>
+    </update>
+
+    <!-- 2012-08-20 14:17
+    （３）「新着全件確認」ボタンクリック時、SQL仕様
+        ①　新着入荷を更新
+    -->
+    <update id="updateNewArrivalAll" >
+        UPDATE S_NEW_ARV
+        SET
+            DPO_FLG = '1',
+            LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            LAST_UPD_USER_ID = '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        WHERE S_NEW_ARV.ARV_SEQ IN
+        <foreach collection="arvSeqList" item="arvSeq" open="(" separator="," close=")">
+            #{arvSeq}
+        </foreach>
+
+    </update>
+    <!--2012-08-20 17:35 （１）「詳細」ボタンクリック時、新着詳細情報を取得する
+    ①　選択された入荷シーケンス番号で、新着入荷詳細情報を取得
+    =　出荷.納品キー版数 no this
+    -->
+<resultMap id="searchDetail_Map" type="fw.domain.sp.arrival.ArrivalInfoDetail">
+    <id column="S_ORDER$ORDER_VERSION" property="orderBaseInfo.historyNo.historyNo"/>
+    <id column="S_ORDER$INFO_CD" property="orderBaseInfo.infoCd"/>
+    <id column="S_ORDER$TITLE_NAME" property="orderBaseInfo.titleName.titleName"/>
+    <id column="S_ORDER$ORDER_DATE" property="orderBaseInfo.orderInfo.orderDate.dateOfymd"/>
+    <id column="S_ORDER$BUYER_COMPANY_CD" property="orderBaseInfo.custInfo.custCompany.code"/>
+    <id column="S_ORDER$BUYER_COMPANY_NAME" property="orderBaseInfo.custInfo.custCompany.name"/>
+    <id column="S_ORDER$BUYER_SECTION_NAME" property="orderBaseInfo.custInfo.custUser.sectionName"/>
+    <id column="S_ORDER$BUYER_USER_NAME" property="orderBaseInfo.custInfo.custUser.userName"/>
+    <id column="S_ORDER$FOR_SUPPLIER_COMMENT" property="orderBaseInfo.custInfo.comment.comment"/>
+    <id column="REQ_SECTION_PLACE_NAME" property="orderBaseInfo.requestUser.sectionPlaceName"/>
+    <id column="REQ_SECTION_NAME" property="orderBaseInfo.requestUser.sectionName"/>
+    <id column="REQ_USER_NAME" property="orderBaseInfo.requestUser.userName" />
+    <id column="REQ_TEL_NO" property="orderBaseInfo.requestUser.telNo.telNo"/>
+    <id column="REQ_USER_MAIL_ADDR" property="orderBaseInfo.requestUser.mailAddr.mail"/>
+    <id column="S_ORDER$MANUFACT_CD" property="orderBaseInfo.manufact.manufactCd"/>
+    <id column="S_ORDER$MANUFACT_NAME" property="orderBaseInfo.manufact.manufactName"/>
+    <id column="S_ORDER$UNIT_PRICE" property="orderBaseInfo.orderInfo.orderPrice.amount"/>
+    <id column="S_ORDER$ORDER_VOL" property="orderBaseInfo.orderInfo.orderVol.vol"/>
+    <id column="S_ORDER$ORDER_CANCEL_VOL" property="orderBaseInfo.orderCancelVol.vol"/>
+    <id column="S_ORDER$ORDER_AMOUNT" property="orderBaseInfo.orderInfo.orderAmount.amount"/>
+    <id column="S_ORDER$ORDER_CANCEL_AMOUNT" property="orderBaseInfo.orderCancelAmount.amount"/>
+    <id column="S_ORDER$UNIT_NAME" property="orderBaseInfo.orderInfo.unitName"/>
+    <id column="S_ORDER$DELIV_PLACE_NAME" property="orderBaseInfo.delivPlace.delivPlaceName"/>
+    <id column="S_ORDER$DEST_AREA" property="orderBaseInfo.delivPlace.delivPlaceNameInb"/>
+    <id column="S_NEW_ARV$CORRECT_CD" property="arrivalInfo.correctInd.correctInd"/>
+    <id column="S_NEW_ARV$DELIV_VERSION" property="arrivalInfo.historyNo.historyNo"/>
+    <id column="BUYER_SECTION_PLACE_NAME" property="orderBaseInfo.custInfo.custUser.sectionPlaceName"/>
+    <id column="BUYER_USER_TEL_NO" property="orderBaseInfo.custInfo.custUser.contact.telNo.telNo"/>
+    <id column="BUYER_USER_MAIL_ADDR" property="orderBaseInfo.custInfo.custUser.contact.mailAddr.mail"/>
+    <id column="DELIV_PLACE_ZIP" property="orderBaseInfo.delivPlace.contact.zipCd.zipCd"/>
+    <id column="DELIV_PLACE_ADDRESS1" property="orderBaseInfo.delivPlace.contact.address1.address"/>
+    <id column="DELIV_PLACE_ADDRESS2" property="orderBaseInfo.delivPlace.contact.address2.address"/>
+    <id column="DELIV_PLACE_TEL_NO" property="orderBaseInfo.delivPlace.contact.telNo.telNo"/>
+    <id column="DELIVERY_DATE" property="orderBaseInfo.orderDeliv.dateOfymd"/>
+    <id column="ARRIVAL_DATE" property="arrivalInfo.arrivExpDate.dateOfymd"/>
+    <id column="ARRIVAL_VOL" property="arrivalInfo.delivVol.vol"/>
+    <id column="SHIPMENT_VOL" property="arrivalInfo.shipmentVol1.vol"/>
+    <id column="UN_ARRIVAL_VOL" property="arrivalInfo.unDelivVol.vol"/>
+    <id column="TOTAL_ARRIVAL_VOL" property="arrivalInfo.totalDelivVol.vol"/>
+    <id column="SUP_ABBR_NAME" property="orderBaseInfo.accAbbrName"/>
+    <id column="PRICE_UNDEC_REASON" property="orderBaseInfo.priceUndecidedReason"/>
+    <id column="PRICE_DEC_DATE" property="orderBaseInfo.priceDecideDate.dateOfymd"/>
+    <id column="S_ORDER$REMAINING_VOL" property="orderBaseInfo.orderInfo.remainingVol.vol"/>
+</resultMap>
+<select id="searchDetail" parameterType="fw.domain.sp.arrival.ArrivalIdentify"
+        resultMap="searchDetail_Map">
+         SELECT
+             S_NEW_ARV.ACC_CD AS "orderBaseInfo.accCd",
+             S_NEW_ARV.CUST_CD AS "orderBaseInfo.custCd",
+             S_ORDER.ORDER_NO AS "orderBaseInfo.orderNo.orderNo",
+             S_ORDER.ORDER_VERSION AS "S_ORDER$ORDER_VERSION",
+             S_ORDER.INFO_CD AS "S_ORDER$INFO_CD",
+             S_ORDER.REQ_TYPE_IND AS "orderBaseInfo.reqInd.reqInd",
+             S_ORDER.TITLE_NAME AS "S_ORDER$TITLE_NAME",
+             S_ORDER.UNIT_PRICE_IND AS "orderBaseInfo.unitPriceInd",
+             M_SUPPLIER_LANG.SUP_ABBR_NAME,
+             S_ORDER.PRICE_UNDEC_REASON,
+             S_ORDER.PRICE_DEC_DATE,
+             S_ORDER.ORDER_FIRST_DATE AS "S_ORDER$ORDER_DATE",
+             S_ORDER.DELIVERY_DATE AS "DELIVERY_DATE",
+             S_ORDER.BUYER_COMPANY_CD AS "S_ORDER$BUYER_COMPANY_CD",
+             S_ORDER.BUYER_COMPANY_NAME AS "S_ORDER$BUYER_COMPANY_NAME",
+             S_ORDER.BUYER_SECTION_PLACE_NAME AS "BUYER_SECTION_PLACE_NAME",
+             S_ORDER.BUYER_SECTION_NAME AS "S_ORDER$BUYER_SECTION_NAME",
+             S_ORDER.BUYER_USER_NAME AS "S_ORDER$BUYER_USER_NAME",
+             S_ORDER.BUYER_USER_TEL_NO AS "BUYER_USER_TEL_NO",
+             S_ORDER.BUYER_USER_MAIL_ADDR,
+             S_ORDER.FOR_SUPPLIER_COMMENT AS "S_ORDER$FOR_SUPPLIER_COMMENT",
+             S_ORDER.REQ_SECTION_PLACE_NAME,
+             S_ORDER.REQ_SECTION_NAME,
+             S_ORDER.REQ_USER_NAME,
+             S_ORDER.REQ_TEL_NO,
+             S_ORDER.REQ_USER_MAIL_ADDR,
+             S_ORDER.ITEM_NAME  AS "orderBaseInfo.itemName",
+             S_ORDER.CUST_ITEM_CD AS "orderBaseInfo.itemCd",
+             S_ORDER.KATASHIKI AS "orderBaseInfo.katashiki",
+             S_ORDER.MANUFACT_CD AS "S_ORDER$MANUFACT_CD",
+             S_ORDER.MANUFACT_NAME AS "S_ORDER$MANUFACT_NAME",
+             S_ORDER.CURRENCY_CD AS "orderBaseInfo.currencyCd",
+             S_ORDER.UNIT_PRICE AS "S_ORDER$UNIT_PRICE",
+             S_ORDER.ORDER_VOL AS "S_ORDER$ORDER_VOL",
+             S_ORDER.ORDER_CANCEL_VOL AS "S_ORDER$ORDER_CANCEL_VOL",
+             S_ORDER.ORDER_AMOUNT AS "S_ORDER$ORDER_AMOUNT",
+             S_ORDER.ORDER_CANCEL_AMOUNT AS "S_ORDER$ORDER_CANCEL_AMOUNT",
+             S_ORDER.TAX_IND AS "orderBaseInfo.orderInfo.taxInd",
+             S_ORDER.REMAINING_VOL AS "S_ORDER$REMAINING_VOL",
+             S_ORDER.UNIT_NAME AS "S_ORDER$UNIT_NAME",
+             S_ORDER.DELIV_PLACE_ZIP_CD AS "DELIV_PLACE_ZIP",
+             S_ORDER.DELIV_PLACE_NAME AS "S_ORDER$DELIV_PLACE_NAME",
+             S_ORDER.DELIV_PLACE_ADDRESS1 AS "DELIV_PLACE_ADDRESS1",
+             S_ORDER.DELIV_PLACE_ADDRESS2 AS "DELIV_PLACE_ADDRESS2",
+             S_ORDER.DELIV_PLACE_TEL_NO AS "DELIV_PLACE_TEL_NO",
+             S_ORDER.DEST_AREA AS "S_ORDER$DEST_AREA",
+             S_ORDER.ATTACH_FILE_SEQ1 AS "orderBaseInfo.attachFileSeq1",
+             S_ORDER.ATTACH_FILE_SEQ2 AS "orderBaseInfo.attachFileSeq2",
+             S_ORDER.ATTACH_FILE_SEQ3 AS "orderBaseInfo.attachFileSeq3",
+             S_ORDER_ATTACH_A.ATTACH_FILE_NAME AS "orderBaseInfo.attachFileName1",
+             S_ORDER_ATTACH_B.ATTACH_FILE_NAME AS "orderBaseInfo.attachFileName2",
+             S_ORDER_ATTACH_C.ATTACH_FILE_NAME AS "orderBaseInfo.attachFileName3",
+             S_NEW_ARV.DELIV_KEY_NO AS "arrivalInfo.delivKeyNo",
+             S_NEW_ARV.CORRECT_CD AS "S_NEW_ARV$CORRECT_CD",
+             S_NEW_ARV.DELIV_VERSION AS "S_NEW_ARV$DELIV_VERSION",
+             S_NEW_ARV.ARRIVAL_DATE AS "ARRIVAL_DATE",
+             S_NEW_ARV.ARRIVAL_VOL AS "ARRIVAL_VOL",
+             S_DELIVERY.SHIPMENT_VOL AS "SHIPMENT_VOL",
+             S_NEW_ARV.UN_ARRIVAL_VOL AS "UN_ARRIVAL_VOL",
+             S_NEW_ARV.TOTAL_ARRIVAL_VOL AS "TOTAL_ARRIVAL_VOL",
+             S_NEW_ARV.UNIT_NAME AS "arrivalInfo.unit",
+             S_NEW_ARV.PART_DELIV_NO AS "arrivalInfo.partDelivNo",
+             S_NEW_ARV.PART_DELIV_IND AS "arrivalInfo.partDelivInd"
+        FROM S_NEW_ARV
+        LEFT JOIN  (
+               S_ORDER INNER　JOIN (
+                     SELECT
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO,
+                         MAX(S_ORDER_B.ORDER_VERSION) MAX_ORDER_VERSION
+                     FROM
+                         S_ORDER S_ORDER_B
+                     WHERE
+                         S_ORDER_B.DELETE_FLG = '0'
+                     GROUP BY
+                         S_ORDER_B.ACC_CD,
+                         S_ORDER_B.CUST_CD,
+                         S_ORDER_B.ORDER_NO
+
+               )S_ORDER_V
+               ON   S_ORDER.ACC_CD = S_ORDER_V.ACC_CD
+               AND  S_ORDER.CUST_CD = S_ORDER_V.CUST_CD
+               AND  S_ORDER.ORDER_NO = S_ORDER_V.ORDER_NO
+               AND  S_ORDER.ORDER_VERSION=S_ORDER_V.MAX_ORDER_VERSION
+               AND  S_ORDER.DELETE_FLG = '0'
+
+        )
+        ON   S_NEW_ARV.ACC_CD = S_ORDER.ACC_CD
+        AND  S_NEW_ARV.CUST_CD = S_ORDER.CUST_CD
+        AND  S_NEW_ARV.ORDER_NO = S_ORDER.ORDER_NO
+        INNER JOIN M_SUPPLIER
+        ON
+                (M_SUPPLIER.COMPANY_CD = S_ORDER.CUST_CD OR M_SUPPLIER.COMPANY_CD = 'ALL')
+            AND M_SUPPLIER.SUP_CD = S_ORDER.ACC_CD
+        INNER JOIN M_SUPPLIER_LANG
+        ON
+                M_SUPPLIER_LANG.COMPANY_CD = M_SUPPLIER.COMPANY_CD
+            AND M_SUPPLIER_LANG.SUP_CD = M_SUPPLIER.SUP_CD
+            AND M_SUPPLIER_LANG.LANGUAGE_IND = M_SUPPLIER.BASE_LANGUAGE_IND
+        LEFT JOIN (
+            S_DELIVERY INNER JOIN(
+                SELECT
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO,
+                    MAX(S_DELIVERY_B.UPD_CNT) MAX_UPD_CNT
+                FROM S_DELIVERY S_DELIVERY_B
+                    WHERE S_DELIVERY_B.DELETE_FLG = '0'
+                GROUP BY
+                    S_DELIVERY_B.ACC_CD,
+                    S_DELIVERY_B.CUST_CD,
+                    S_DELIVERY_B.ORDER_NO,
+                    S_DELIVERY_B.DELIV_KEY_NO
+                )S_DELIVERY_V
+                ON S_DELIVERY.ACC_CD = S_DELIVERY_V.ACC_CD
+                AND S_DELIVERY.CUST_CD = S_DELIVERY_V.CUST_CD
+                AND S_DELIVERY.ORDER_NO = S_DELIVERY_V.ORDER_NO
+                AND S_DELIVERY.DELIV_KEY_NO = S_DELIVERY_V.DELIV_KEY_NO
+                AND S_DELIVERY.UPD_CNT = S_DELIVERY_V.MAX_UPD_CNT
+            )
+            ON   S_NEW_ARV.ACC_CD = S_DELIVERY.ACC_CD
+            AND  S_NEW_ARV.CUST_CD = S_DELIVERY.CUST_CD
+            AND  S_NEW_ARV.ORDER_NO = S_DELIVERY.ORDER_NO
+            AND  S_NEW_ARV.DELIV_KEY_NO = S_DELIVERY.DELIV_KEY_NO
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_A
+            ON   S_ORDER.ATTACH_FILE_SEQ1 = S_ORDER_ATTACH_A.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_A.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_B
+            ON   S_ORDER.ATTACH_FILE_SEQ2 = S_ORDER_ATTACH_B.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_B.DELETE_FLG = '0'
+        LEFT JOIN S_ORDER_ATTACH S_ORDER_ATTACH_C
+            ON   S_ORDER.ATTACH_FILE_SEQ3 = S_ORDER_ATTACH_C.ATTACH_FILE_SEQ
+                 AND S_ORDER_ATTACH_C.DELETE_FLG = '0'
+        WHERE
+            S_NEW_ARV.ARV_SEQ = #{arrivalSeq}
+    </select>
+    <select id="getNewConfirmSeq" parameterType = "fw.domain.sp.arrival.ArrivalInfoAllDop" resultType="java.lang.String">
+        SELECT S_NEW_ARV.ARV_SEQ
+        FROM S_NEW_ARV
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON S_NEW_ARV.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_ARV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                AND S_NEW_ARV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+        WHERE S_NEW_ARV.DELETE_FLG = '0'
+            AND S_NEW_ARV.DPO_FLG = '0'
+            AND EXISTS (
+                SELECT
+                    S_ORDER.ACC_CD,
+                    S_ORDER.CUST_CD,
+                    S_ORDER.ORDER_NO
+                FROM
+                    S_ORDER S_ORDER
+                WHERE
+                    S_ORDER.DELETE_FLG = '0'
+                    AND S_NEW_ARV.ACC_CD = S_ORDER.ACC_CD
+                    AND S_NEW_ARV.CUST_CD = S_ORDER.CUST_CD
+                    AND S_NEW_ARV.ORDER_NO = S_ORDER.ORDER_NO
+                GROUP BY
+                    S_ORDER.ACC_CD,
+                    S_ORDER.CUST_CD,
+                    S_ORDER.ORDER_NO
+            )
+        ORDER BY    S_NEW_ARV.ACC_CD, 
+                    S_NEW_ARV.CUST_CD, 
+                    S_NEW_ARV.ORDER_NO, 
+                    S_NEW_ARV.DELIV_KEY_NO, 
+                    S_NEW_ARV.DELIV_VERSION, 
+                    S_NEW_ARV.CORRECT_CD
+        FOR UPDATE OF S_NEW_ARV.ARV_SEQ
+    </select>
+    <sql id="pageHeader">
+       SELECT * FROM (
+    </sql>
+    <sql id="pageRoot">
+        ) WHERE  ROWNUM &lt;=${@fw.common.util.PropertiesUtil@getLong("DOWNLOAD_MAXCNT")}
+    </sql>
+</mapper>

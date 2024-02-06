@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="defaultSearchCondition" class="fw.domain.sp.shipment.ShipmentSearchCondition" />
+    
+    <!-- クイックリンクかどうか判定 -->
+    <decision-state id="isQuickLinkSearch">
+       <if test="requestParameters.quickLink" then="searchByQuickLinkSearch" else="searchBySearchCondition"/>
+    </decision-state>
+
+    <!-- クイックリンクを押下する場合 -->
+    <action-state id="searchByQuickLinkSearch">
+        <evaluate expression="SPSHP010Service.quickLinkSearch()" result="flowScope.searchCondition" />
+        <transition on="success" to="SPSHP010">
+            <set name="flowScope.isQuickLinkSearch" value="true"></set>
+        </transition>
+    </action-state>
+    
+    <!-- 検索ボタンを押下する場合 -->
+    <action-state id="searchBySearchCondition">
+        <evaluate expression="SPSHP010Service.init()" result="flowScope.searchCondition" />
+        <transition on="success" to="SPSHP010" />
+    </action-state>
+    
+    <view-state id="SPSHP010" model="searchCondition" view="shp/shipping/SPSHP010">
+        <!-- チェック -->
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+            <evaluate expression="SPSHP010Service.search(searchCondition)" />
+        </transition>
+        
+        <!-- 検索 -->
+        <transition on="search" to="SPSHP020" validate="false">
+            <set name="flowScope.isQuickLinkSearch" value="false"></set>
+        </transition>
+        
+        <!-- クイックリンク -->
+        <transition on="quickLinkSearch" to="SPSHP020" validate="false">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+            <set name="flowScope.isQuickLinkSearch" value="false"></set>
+        </transition>
+        
+        <!-- ダウンロード -->
+        <transition on="downloadValidate" validate="true">
+            <evaluate expression="SPSHP010Service.downloadValidate(searchCondition)" 
+            result="flashScope.isDownLoadValidate"/>
+        </transition>
+        
+        <transition on="download" validate="false">
+            <evaluate expression="SPSHP010Service.download(searchCondition)" />
+        </transition>
+        
+        <!-- アップロード -->
+        <transition on="upload" validate="true">
+            <evaluate expression="SPSHP010Service.upload()"></evaluate>
+        </transition>
+        
+        <!-- アップロード結果 -->
+        <transition on="showUploadResult" to="uploadResult" validate="true"/>
+        
+        <!-- back -->
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+    
+    <subflow-state id="SPSHP020" subflow="shp/shipping/SPSHP020">
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <input name="isQuickLinkSearch" value="isQuickLinkSearch" />
+        <transition on="back" to="SPSHP010">
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+    
+    <!-- 出荷アップロード 結果-->
+    <view-state id="uploadResult" view="common/upload_result">
+        <transition on="back" to="SPSHP010" />
+    </view-state>
+    
+</flow>

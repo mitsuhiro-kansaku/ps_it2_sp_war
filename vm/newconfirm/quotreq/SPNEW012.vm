@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('QUOT_DTL')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+//-->
+</script>
+</head>
+<body class="DetailBody" onload="getObj('printButton').focus();">
+<table class="NoBorder" width="95%"  nowrap>
+    <tr align="left">
+        <br>
+        <u><span id="StepTitle" class="FontEDItitle">
+            <script type="text/javascript">document.write(document.title);</script>
+        </span></u>
+    </tr>
+</table>
+<form name="BodyForm" method="post">
+    <table class="NoBorder" style="width:96%;">
+        <tr><td align="left">#customSpringMessage('SPNEW012_HEADER_COMMENT')</td></tr>
+        <tr>
+            <td class="DTL_MSGBOX" align="right" nowrap>
+                <input type="button" class="MiddleButton" value="#customSpringMessage('PRINT')" onClick="window.print();">
+                <input type="button" class="MiddleButton" value="#customSpringMessage('CLOSE')" onClick="window.close();">
+            </td>
+        </tr>
+        <tr>
+            <td class="NoBorder" height="auto">
+              <table class="Box1G" width="96%">
+    <tbody class="Box1G">
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_REQ_NO')</td>
+            <td nowrap class="Box1D FontSmallAnk" nowrap><span class="FontSlipNo">#out($!detailItem.quotBaseInfo.quotReqNo.quotReqNo)</span></td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('REVISION_NUMBER')</td>
+            <td nowrap class="Box1D FontSmallAnk" nowrap>#out($!detailItem.quotBaseInfo.historyNo.historyNo)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('CORRECT_NAME')</td>
+            #if($!detailItem.quotBaseInfo.correctInd.correctInd == '3')
+                 <td nowrap class="Box1D FontSmallAnkBold Red" nowrap colspan="3">#out($!detailItem.quotBaseInfo.correctInd.correctInd_PageValue)</td>
+            #elseif($!detailItem.quotBaseInfo.correctInd.correctInd == '2')
+                <td nowrap class="Box1D FontSmallAnkBold Green" nowrap colspan="3">#out($!detailItem.quotBaseInfo.correctInd.correctInd_PageValue)</td>
+            #else
+                <td nowrap class="Box1D FontSmallAnkBold" nowrap colspan="3">#out($!detailItem.quotBaseInfo.correctInd.correctInd_PageValue)</td>
+            #end
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_REQ_DATE')</td>
+            <td nowrap class="Box1D FontSmallAnk"  nowrap>#out($!detailItem.quotBaseInfo.quotPeriod.quotReqDate.quotReqDate.dateOfymdFormat)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_ANS_LIMIT')</td>
+            <td nowrap class="Box1D FontSmallAnk" nowrap>#out($!detailItem.quotBaseInfo.quotPeriod.quotRespLimitDate.dateOfymdFormat)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_RESP_DATE')</td>
+            <td nowrap class="Box1D FontSmallAnk" nowrap>#out($!detailItem.quotBaseInfo.quotPeriod.quotRespDate.dateOfymdFormat)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('REFUSE')</td>
+            <td nowrap class="Box1D FontSmallAnkBold" nowrap>#out($!detailItem.quotBaseInfo.dismissInd_PageValue)</td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('TITLE_NAME')</td>
+            <td nowrap class="Box1D FontSmallAnkBold"  colspan="3" nowrap>#out($!detailItem.quotBaseInfo.titleName.titleName)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_ADO_DATE')</td>
+            <td nowrap class="Box1D FontSmallAnk" nowrap>#out($!detailItem.quotBaseInfo.quotPeriod.quotAdoDate.dateOfymdFormat)</td>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('QUOT_ADO_EDI')</td>
+            <td nowrap class="Box1D FontSmallAnkBold" nowrap>#out($!detailItem.quotBaseInfo.ado_PageValue)</td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('BUYER_COMPANY')</td>
+            <td nowrap class="Box1D FontMiniAnk"  colspan="7" nowrap>#out($!detailItem.quotBaseInfo.custInfo.custCompany.code)&nbsp;<span class="FontSmallBold">#out($!detailItem.quotBaseInfo.custInfo.custCompany.name)</span></td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" ROWSPAN="2" nowrap>#customSpringMessage('ORDER_USER')</td>
+            <td nowrap class="Box1D FontSmallAnk" colspan="3" nowrap>#out($!detailItem.quotBaseInfo.custInfo.custUser.sectionPlaceName)&nbsp; #out($!detailItem.quotBaseInfo.custInfo.custUser.sectionName) </td>
+            <td nowrap class="Box1H FontBoxHeader" ROWSPAN="2" nowrap>#customSpringMessage('CONNTACT')</td>
+            <td nowrap class="Box1D FontSmallAnk" colspan="3" ROWSPAN="2" nowrap>#out($!detailItem.quotBaseInfo.custInfo.custUser.contact.telNo.telNo)</td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1D FontSmallAnk" colspan="3" nowrap>#out($!detailItem.quotBaseInfo.custInfo.custUser.userName)</td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('PUR_USER_COMMENT')</td>
+            <td class="Box1D FontSmallAnk"  colspan="7" >#out($!detailItem.quotBaseInfo.comment.comment)</td>
+        </tr>
+        <tr>
+            <td class="Box1D FontSmallAnk"  colspan="7" >
+                #out($!detailItem.quotBaseInfo.delivPlace.delivPlaceName)<BR/>
+                #out($!detailItem.quotBaseInfo.delivPlace.contact.zipCd.zipCd)&nbsp;
+                #out($!detailItem.quotBaseInfo.delivPlace.contact.address1.address)&nbsp;
+                #out($!detailItem.quotBaseInfo.delivPlace.contact.address2.address)<BR/>
+                #out($!detailItem.quotBaseInfo.delivPlace.delivPlaceNameInb)
+            </td>
+        </tr>
+        <tr>
+            <td nowrap class="Box1H FontBoxHeader" nowrap>#customSpringMessage('ATTACH_FILE')</td>
+            <td class="Box1D FontSmallAnk"  colspan="7" ><a href = "#" onclick = "#if("$!detailItem.quotBaseInfo.attachFileSeq1"!="") iframeChange('${flowExecutionUrl}&_eventId=download&&attachFileSeq1='+#jsEscapeInHTML($!detailItem.quotBaseInfo.attachFileSeq1)) #end" >#out($!detailItem.quotBaseInfo.attachFileName1)</a>&nbsp; <a href="#" onclick = "#if("$!detailItem.quotBaseInfo.attachFileSeq2"!="") iframeChange('${flowExecutionUrl}&_eventId=download&&attachFileSeq1='+#jsEscapeInHTML($!detailItem.quotBaseInfo.attachFileSeq2)) #end" >#out($!detailItem.quotBaseInfo.attachFileName2)</a></td>
+        </tr>
+    </tbody>
+</table>
+            </td>
+        </tr>
+        <tr>
+            <td class="NoBorder">
+                &nbsp;
+            </td>
+        </tr>
+        <tr>
+            <td class="NoBorder" height="auto">
+                <table class="ListArea" width="100%" align="center">
+
+                    <tr>
+                        <td>
+                            <thead>
+                                <tr id="Header">
+                                    <td colspan="10" class="BoxHeaderCenter FontSmall">#customSpringMessage('QUOT_REQ_DTLS')
+                                    </td>
+                                </tr>
+                                <tr id="Header">
+                                    <td class="BoxHeaderCenter FontSmall" rowspan="2">#customSpringMessage('ITEM_NAME')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ITEM_CD')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('KATASHIKI')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('MANUFACT')</td>
+                                    <tr>
+                                        <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ATTACH_FILE')</td>
+                                    </tr>
+                                </tr>
+                            </thead>
+                            <tbody id="Tbody">
+                            #foreach($!deItem in $!detailItem.quotDetailItemPriceList)
+                                #if("$!deItem" != "")
+                                <tr>
+                                    <td class="BoxDetailLeft FontSmallBold" rowspan="2">
+                                        #out($!deItem.itemName)
+                                    </td>
+                                    <td class="BoxDetailLeft FontList">
+                                        #out($!deItem.itemCd)
+                                    </td>
+                                    <td class="BoxDetailLeft FontList">
+                                        #out($!deItem.katashiki)
+                                    </td>
+                                    <td class="BoxDetailLeft FontList">
+                                        #out($!deItem.manufactName)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="BoxDetailCenter FontList">
+                                        <a href="#" onclick = "#if("$!deItem.attachFileSeq"!="") iframeChange('${flowExecutionUrl}&_eventId=download&&attachFileSeq1='+#jsEscapeInHTML($!deItem.attachFileSeq)) #end" >#out($!deItem.attachFileName)</a>
+                                    </td>
+                                </tr>
+                                #end
+                                #end
+                            </tbody>
+                        </td>
+                    </tr>
+                </table>
+
+                <br/>
+
+                <table class="ListArea" width="100%" align="center">
+                    <tr>
+                        <td>
+                            <thead>
+                                <tr id="Header">
+                                    <td colspan="14" class="BoxHeaderCenter FontSmall">
+                    #customSpringMessage('ANS_DTLS')
+                                    </td>
+                                </tr>
+                                <tr id="Header">
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('VALID_PERIOD')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ITEM_NAME')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ITEM_CD')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('KATASHIKI')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('MANUFACT')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ATTACH_FILE')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('ORDER_UNIT')
+                                     <br>
+                                        <span class="FontList">#customSpringMessage('MIN_ORDER_VOL')</span>
+                                    </td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('UNIT')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('STD_ORDER_LT')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('CURRENCY_CD')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('CURRENCY_MARK')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('TAX_IND')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('min_count')</td>
+                                    <td class="BoxHeaderCenter FontSmall">#customSpringMessage('UNIT_PRICE')</td>
+                                </tr>
+                            </thead>
+                            <tbody id="Tbody">
+                            #foreach($!derespItem in $!detailItem.quotDetailRespItemPriceList)
+                                #if("$!derespItem" != "")
+                                <tr>
+                                    <td class="BoxDetailLeft FontList" nowrap rowspan="5">
+                                        #out($!derespItem.validityPeriod.period.startDate.dateOfymdFormat)
+                                        <br>#if("$!derespItem.validityPeriod.period.startDate.dateOfymdFormat" != "" || "$!derespItem.validityPeriod.period.endDate.dateOfymdFormat" != "")～ #end
+                                        <br>
+                                        <span class="FontList">#out($!derespItem.validityPeriod.period.endDate.dateOfymdFormat)</span>
+                                    </td>
+                                    <td class="BoxDetailLeft FontSmallBold" nowrap rowspan="5">
+                                        #out($!derespItem.itemName)
+                                    </td>
+                                    <td class="BoxDetailCenter FontMiniAnk" nowrap rowspan="5">
+                                        #out($!derespItem.itemCd)
+                                    </td>
+                                    <td class="BoxDetailCenter FontMiniAnk" rowspan="5">
+                                        #out($!derespItem.katashiki)
+                                    </td>
+                                    <td class="BoxDetailCenter FontMiniAnk" nowrap rowspan="5">
+                                        #out($!derespItem.manufactName)
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" rowspan="5">
+                                        <a href="#" onclick="#if("$!derespItem.attachFileSeqNo"!="") iframeChange('${flowExecutionUrl}&_eventId=fileDownload&&attachFileSeq1='+ #jsEscapeInHTML($!derespItem.attachFileSeqNo)) #end">#out($!derespItem.attachFileName)</a>
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrSmall" nowrap rowspan="5">
+                                        #out($!derespItem.custUnitVol.custUnitVol.volFormat)
+                                        <br>
+                                        <span class="FontList">#out($!derespItem.minCustVol.minCustVol.volFormat)</span>
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" nowrap rowspan="5">
+                                        #out($!derespItem.unitName)
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" nowrap rowspan="5">
+                                        #out($!derespItem.standardDelivDayCount.standardDelivDayCount.dayCount)
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" nowrap rowspan="5">
+                                        #out($!derespItem.currencyCd)
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" nowrap rowspan="5">
+                                        #out($!derespItem.currencyMark)
+                                    </td>
+                                    <td class="BoxDetailCenter FontList" nowrap rowspan="5">
+                                        #out($!derespItem.taxInd.taxInd_PageValue)
+                                    </td>
+                                    <td class="BoxDetailCenter FontMiniAnk Blue" nowrap>
+                                        #out($!derespItem.lotList.lot1.lowerVol.volFormat)
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrMiddle" nowrap>
+										#out($!derespItem.lotList.lot1.unitPrice.amount.amountMarkDispForSP)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="BoxDetailCenter FontMiniAnk Blue" nowrap>
+                                        #out($!derespItem.lotList.lot2.lowerVol.vol)
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrMiddle" nowrap>
+                                        #out($!derespItem.lotList.lot2.unitPrice.amount.amountMarkDispForSP)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="BoxDetailCenter FontMiniAnk Blue" nowrap>
+                                        #out($!derespItem.lotList.lot3.lowerVol.vol)
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrMiddle" nowrap>
+                                        #out($!derespItem.lotList.lot3.unitPrice.amount.amountMarkDispForSP)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="BoxDetailCenter FontMiniAnk Blue" nowrap>
+                                        #out($!derespItem.lotList.lot4.lowerVol.vol)
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrMiddle" nowrap>
+                                        #out($!derespItem.lotList.lot4.unitPrice.amount.amountMarkDispForSP)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="BoxDetailCenter FontMiniAnk Blue" nowrap>
+                                        #out($!derespItem.lotList.lot5.lowerVol.vol)
+                                    </td>
+                                    <td class="BoxDetailCenter FontCurrMiddle" nowrap>
+                                        #out($!derespItem.lotList.lot5.unitPrice.amount.amountMarkDispForSP)
+                                    </td>
+                                </tr>
+                                #end
+                            #end
+                            </tbody>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr><td align="left">#customSpringMessage('SPNEW012_FOOTER_COMMENT')</td></tr>
+    </table>
+
+<br>
+    </FORM>
+</body>
+
+</html>

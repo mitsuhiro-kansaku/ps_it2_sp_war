@@ -1,0 +1,905 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.newconfirm.quotado.QuotAdoMapper">
+
+    <!-- 見積採否を登録 -->
+    <insert id="insert" parameterType="fw.domain.sp.quot.quotado.QuotAdoNewDop">
+        INSERT INTO S_QUOT_ADO
+        (
+            ACC_CD,
+            CUST_CD,
+            APL_NO,
+            APL_VERSION,
+            QUOT_ADO_DATE,
+            QUOT_ADO_IND,
+            DELETE_FLG,
+            AUTO_DELETE_FLG,
+            AUTO_DELETE_DATE,
+            LAST_UPD_DATE,
+            LAST_UPD_USER_ID,
+            REG_DATE,
+            REG_USER_ID
+        )SELECT
+            ACC_CD,
+            CUST_CD,
+            APL_NO,
+            APL_VERSION,
+            QUOT_ADO_DATE,
+            QUOT_ADO_IND,
+            DELETE_FLG,
+            AUTO_DELETE_FLG,
+            AUTO_DELETE_DATE,
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+            FROM S_NEW_QUOT_ADO
+        WHERE
+            (QUOT_ADO_SEQ) IN
+              <foreach collection="quotAdoSeqList" item="quotAdoSeqItem" open="(" separator="," close=")">
+                <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotAdoSeqItem.checkDpoFlg)">
+                    #{quotAdoSeqItem.quotAdoSeq}
+                </if>
+            </foreach>
+            AND DELETE_FLG = '0'
+    </insert>
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+        AND S_NEW_QUOT_ADO.DELETE_FLG = '0'
+        <if test="dpoFlg != 9">
+            AND S_NEW_QUOT_ADO.DPO_FLG = ${dpoFlg}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(adoption)">
+            AND S_NEW_QUOT_ADO.QUOT_ADO_IND = #{adoption}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqNo)">
+            AND S_NEW_QUOT_ADO.APL_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.quot.quotado.QuotAdoSearchCondition","quotReqNo")}
+        </if>
+         <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateFrom.dateOfymd)">
+            AND S_QUOT_REQ.QUOT_REQ_DATE >= #{quotReqDateFrom.dateOfymd}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateTo.dateOfymd)">
+            AND S_QUOT_REQ.QUOT_REQ_DATE &lt;= #{quotReqDateTo.dateOfymd}
+        </if>
+    </sql>
+
+    <!-- 検索 -->
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.quot.quotado.QuotAdoSearchCondition"
+        resultType="fw.domain.sp.quot.quotado.QuotAdoIdentify">
+      SELECT
+             S_NEW_QUOT_ADO.QUOT_ADO_SEQ as quotAdoSeq
+        FROM S_NEW_QUOT_ADO
+        LEFT JOIN S_QUOT_REQ
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ.APL_VERSION
+            AND S_QUOT_REQ.DELETE_FLG = '0'
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_QUOT_ADO.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_QUOT_ADO.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+             AND S_NEW_QUOT_ADO.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="listPageItem"
+        resultType="fw.domain.sp.quot.quotado.QuotAdoItem">
+      SELECT
+             S_NEW_QUOT_ADO.APL_VERSION as revisionNumber,
+             S_NEW_QUOT_ADO.DPO_FLG as status,
+             S_NEW_QUOT_ADO.QUOT_ADO_IND as adoption,
+             S_QUOT_REQ.QUOT_REQ_IND as quotReqInd,
+             S_NEW_QUOT_ADO.APL_NO as quotReqNo,
+             S_NEW_QUOT_ADO.QUOT_ADO_DATE as "adoDate.dateOfymd",
+             S_QUOT_REQ.QUOT_REQ_DATE as "quotReqDate.dateOfymd",
+             S_QUOT_REQ.BUYER_COMPANY_NAME as buyerCompany,
+             S_QUOT_REQ.TITLE_NAME as titleName,
+             S_NEW_QUOT_ADO.QUOT_ADO_SEQ as "quotAdoIdentify.quotAdoSeq",
+             S_NEW_QUOT_ADO.LAST_UPD_DATE as "quotAdoIdentify.lastUpdDate"
+        FROM S_NEW_QUOT_ADO
+        LEFT JOIN S_QUOT_REQ
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ.APL_VERSION
+            AND S_QUOT_REQ.DELETE_FLG = '0'
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_QUOT_ADO.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_QUOT_ADO.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+             AND S_NEW_QUOT_ADO.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+       <where>
+           (S_NEW_QUOT_ADO.QUOT_ADO_SEQ) IN
+                <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList"  open="(" separator="," close=")">
+                    (#{keyList.quotAdoSeq})
+                </foreach>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+    ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <select id="searchChecked" parameterType="fw.domain.sp.quot.quotado.QuotAdoNewDop"
+        resultType="String">
+      SELECT
+             DPO_FLG
+        FROM S_NEW_QUOT_ADO
+       WHERE
+             (QUOT_ADO_SEQ) IN
+              <foreach collection="quotAdoSeqList" item="quotAdoSeqItem" open="(" separator="," close=")">
+                <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotAdoSeqItem.checkDpoFlg)">
+                    #{quotAdoSeqItem.quotAdoSeq}
+                </if>
+            </foreach>
+    </select>
+
+   <!-- 新着見積採否を更新 -->
+    <update id="update" parameterType="fw.domain.sp.quot.quotado.QuotAdoNewDop">
+      UPDATE S_NEW_QUOT_ADO
+         SET
+             DPO_FLG='1',
+             LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+             LAST_UPD_USER_ID='${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        WHERE (QUOT_ADO_SEQ) IN
+            <foreach collection="quotAdoSeqList" item="quotAdoSeqItem" open="(" separator="," close=")">
+              <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotAdoSeqItem.checkDpoFlg)">
+              #{quotAdoSeqItem.quotAdoSeq}
+              </if>
+            </foreach>
+         AND DELETE_FLG = '0'
+    </update>
+
+    <!-- 新着全件確認、更新先の新着見積採否情報キー情報取得 -->
+    <select id="searchAll" parameterType="fw.domain.sp.quot.quotado.QuotAdoNewAllDop"
+        resultType="fw.domain.sp.quot.quotado.QuotAdoIdentify">
+      SELECT
+             QUOT_ADO_SEQ as quotAdoSeq
+        FROM S_NEW_QUOT_ADO
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+             S_NEW_QUOT_ADO.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_QUOT_ADO.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+              AND S_NEW_QUOT_ADO.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+      <where>
+            DPO_FLG = '0'
+            AND DELETE_FLG = '0'
+      </where>
+      ORDER BY  S_NEW_QUOT_ADO.ACC_CD, 
+                S_NEW_QUOT_ADO.CUST_CD, 
+                S_NEW_QUOT_ADO.APL_NO, 
+                S_NEW_QUOT_ADO.APL_VERSION
+      FOR UPDATE OF S_NEW_QUOT_ADO.QUOT_ADO_SEQ
+    </select>
+
+    <!-- 見積採否を登録 -->
+    <insert id="insertAll" parameterType="fw.domain.sp.quot.quotado.QuotAdoIdentify">
+        INSERT INTO S_QUOT_ADO
+        (
+            ACC_CD,
+            CUST_CD,
+            APL_NO,
+            APL_VERSION,
+            QUOT_ADO_DATE,
+            QUOT_ADO_IND,
+            DELETE_FLG,
+            AUTO_DELETE_FLG,
+            AUTO_DELETE_DATE,
+            LAST_UPD_DATE,
+            LAST_UPD_USER_ID,
+            REG_DATE,
+            REG_USER_ID
+        )SELECT
+            ACC_CD,
+            CUST_CD,
+            APL_NO,
+            APL_VERSION,
+            QUOT_ADO_DATE,
+            QUOT_ADO_IND,
+            DELETE_FLG,
+            AUTO_DELETE_FLG,
+            AUTO_DELETE_DATE,
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+            '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+            '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+            FROM S_NEW_QUOT_ADO
+        WHERE
+            (QUOT_ADO_SEQ) IN
+             <foreach collection="listKey" item="keyList" open="(" separator="," close=")">
+                  (#{keyList.quotAdoSeq})
+                 </foreach>
+    </insert>
+
+    <!-- 新着見積採否を更新 -->
+    <update id="updateAll" parameterType="fw.domain.sp.quot.quotado.QuotAdoIdentify">
+      UPDATE S_NEW_QUOT_ADO
+         SET
+             DPO_FLG='1',
+             LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+             LAST_UPD_USER_ID='${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+       WHERE (QUOT_ADO_SEQ) IN
+             <foreach collection="listKey" item="keyList" open="(" separator="," close=")">
+                  #{keyList.quotAdoSeq}
+                 </foreach>
+    </update>
+
+
+    <resultMap type="fw.domain.sp.quot.QuotDetailItem" id="QuotDetailItem_Map">
+        <id column="HOPE_DELIV_DATE" property="hopeDlvEst.hopeDlvEst.dateOfymd"/>
+    </resultMap>
+
+    <select id="listQuotDetailEach" resultMap="QuotDetailItem_Map">
+     SELECT
+            S_QUOT_REQ_DTL.QUOT_REQ_NO as "quotReqNo.quotReqNo",
+            S_QUOT_REQ_DTL.HOPE_DELIV_DATE as "HOPE_DELIV_DATE",
+            S_QUOT_REQ_DTL.ITEM_NAME as "itemName",
+            S_QUOT_REQ_DTL.CUST_ITEM_CD as "itemCd",
+            S_QUOT_REQ_DTL.KATASHIKI AS "katashiki",
+            S_QUOT_REQ_DTL.MANUFACT_NAME as "manufactName",
+            S_QUOT_REQ_DTL.QUOT_REQ_VOL as "quotReqVol",
+            S_QUOT_REQ_DTL.UNIT_NAME as "unitName",
+            S_QUOT_REQ_DTL.ATTACH_FILE_SEQ as "attachFileSeq",
+            S_QUOT_REQ_ATTACH.ATTACH_FILE_NAME as "attachFileName",
+            S_QUOT_REQ_ATTACH.ATTACH_FILE_SEQ as "attachFileSeq"
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_REQ_DTL
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ_DTL.APL_VERSION
+            AND S_QUOT_REQ_DTL.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_REQ_ATTACH
+         ON
+            S_QUOT_REQ_DTL.ATTACH_FILE_SEQ = S_QUOT_REQ_ATTACH.ATTACH_FILE_SEQ
+            AND S_QUOT_REQ_ATTACH.DELETE_FLG = '0'
+      WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+      ORDER BY
+            S_QUOT_REQ_DTL.QUOT_REQ_NO
+    </select>
+
+    <resultMap type="fw.domain.sp.quot.QuotDetailRespItem" id="QuotDetailRespItem_Map">
+        <id column="QUOT_RESP_DELIV_DATE" property="respDlvEst.respDlvEst.dateOfymd"/>
+        <id column="UNIT_PRICE" property="respPrice.respPrice.amount"/>
+        <id column="QUOT_RESP_AMOUNT" property="respAmount.respAmount.amount"/>
+        <id column="VALID_START_DATE" property="validityPeriod.period.startDate.dateOfymd"/>
+        <id column="VALID_END_DATE" property="validityPeriod.period.endDate.dateOfymd"/>
+        <id column="ORDER_UNIT_VOL" property="custUnitVol.custUnitVol.vol"/>
+        <id column="MIN_ORDER_VOL" property="minCustVol.minCustVol.vol"/>
+        <id column="STD_ORDER_LT" property="standardDelivDayCount.standardDelivDayCount.dayCount"/>
+        <id column="LOWER_VOL1" property="lotList.lot1.lowerVol.vol"/>
+        <id column="LOWER_VOL2" property="lotList.lot2.lowerVol.vol"/>
+        <id column="LOWER_VOL3" property="lotList.lot3.lowerVol.vol"/>
+        <id column="LOWER_VOL4" property="lotList.lot4.lowerVol.vol"/>
+        <id column="LOWER_VOL5" property="lotList.lot5.lowerVol.vol"/>
+        <id column="QUOT_RESP_PRICE1" property="lotList.lot1.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE2" property="lotList.lot2.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE3" property="lotList.lot3.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE4" property="lotList.lot4.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE5" property="lotList.lot5.unitPrice.amount.amount"/>
+    </resultMap>
+
+    <select id="listQuotDetailRespEach" resultMap="QuotDetailRespItem_Map">
+     SELECT
+            S_QUOT_RESP_DTL.QUOT_REQ_NO as "quotReqNo.quotReqNo",
+            S_QUOT_RESP_DTL.QUOT_RESP_DELIV_DATE as "QUOT_RESP_DELIV_DATE",
+            S_QUOT_RESP_DTL.ITEM_NAME as "itemName",
+            S_QUOT_RESP_DTL.CUST_ITEM_CD as "itemCd",
+            S_QUOT_RESP_DTL.KATASHIKI as "katashiki",
+            S_QUOT_RESP_DTL.MANUFACT_NAME as "manufactName",
+            S_QUOT_RESP_DTL.CURRENCY_CD as "currencyCd",
+            S_QUOT_RESP_DTL.UNIT_PRICE as "UNIT_PRICE",
+            S_QUOT_RESP_DTL.TAX_IND as "taxInd.taxInd",
+            S_QUOT_RESP_DTL.QUOT_RESP_VOL as "respVol.respVol.vol",
+            S_QUOT_RESP_DTL.UNIT_NAME as "unitName",
+            S_QUOT_RESP_DTL.QUOT_RESP_AMOUNT as "QUOT_RESP_AMOUNT",
+            ATTACH1.ATTACH_FILE_NAME as "attachFileName",
+            ATTACH1.ATTACH_FILE_SEQ as "attachFileSeq",
+            ATTACH2.ATTACH_FILE_NAME as "attachFileName2",
+            ATTACH2.ATTACH_FILE_SEQ as "attachFileSeq2",
+            S_QUOT_RESP_DTL.STD_ORDER_LT as "STD_ORDER_LT"
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_RESP_DTL
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP_DTL.APL_VERSION
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_RESP_ATTACH ATTACH1
+         ON
+            S_QUOT_RESP_DTL.ATTACH_FILE_SEQ = ATTACH1.ATTACH_FILE_SEQ
+            AND ATTACH1.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_RESP_ATTACH ATTACH2
+         ON
+            S_QUOT_RESP_DTL.ATTACH_FILE_SEQ2 = ATTACH2.ATTACH_FILE_SEQ
+            AND ATTACH2.DELETE_FLG = '0'
+      WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+      ORDER BY
+            S_QUOT_RESP_DTL.QUOT_REQ_NO
+    </select>
+
+    <resultMap type="fw.domain.sp.quot.QuotBaseInfo" id="QuotBaseInfo_Map">
+        <id column="QUOT_REQ_DATE" property="quotPeriod.quotReqDate.quotReqDate.dateOfymd"/>
+        <id column="QUOT_RESP_LIMIT_DATE" property="quotPeriod.quotRespLimitDate.dateOfymd"/>
+        <id column="QUOT_RESP_DATE" property="quotPeriod.quotRespDate.dateOfymd"/>
+        <id column="QUOT_ADO_DATE" property="quotPeriod.quotAdoDate.dateOfymd"/>
+        <id column="BUYER_COMPANY_CD" property="custInfo.custCompany.code"/>
+        <id column="BUYER_COMPANY_NAME" property="custInfo.custCompany.name"/>
+        <id column="BUYER_SECTION_PLACE_NAME" property="custInfo.custUser.sectionPlaceName"/>
+        <id column="BUYER_SECTION_NAME" property="custInfo.custUser.sectionName"/>
+        <id column="BUYER_USER_NAME" property="custInfo.custUser.userName"/>
+        <id column="BUYER_USER_TEL_NO" property="custInfo.custUser.contact.telNo.telNo"/>
+        <id column="BUYER_USER_MAIL_ADDR" property="custInfo.custUser.contact.mailAddr.mail"/>
+        <id column="REQ_USER_MAIL_ADDR" property="requestUser.mailAddr.mail"/>
+        <id column="DELIV_PLACE_ZIP_CD" property="delivPlace.contact.zipCd.zipCd"/>
+        <id column="DELIV_PLACE_NAME" property="delivPlace.delivPlaceName"/>
+        <id column="DELIV_PLACE_ADDRESS1" property="delivPlace.contact.address1.address"/>
+        <id column="DELIV_PLACE_ADDRESS2" property="delivPlace.contact.address2.address"/>
+        <id column="DELIV_PLACE_NAME_INB" property="delivPlace.delivPlaceNameInb"/>
+        <id column="QUOT_RESP_END_DATE" property="quotPeriod.quotValidDate.quotValidDate.dateOfymd"/>
+    </resultMap>
+
+    <select id="quotBaseInfoEach" resultMap="QuotBaseInfo_Map">
+      SELECT
+            S_NEW_QUOT_ADO.APL_NO as "quotReqNo.quotReqNo",
+            S_NEW_QUOT_ADO.APL_VERSION as "historyNo.historyNo",
+            S_QUOT_REQ.CORRECT_CD as "correctInd.correctInd",
+            S_QUOT_REQ.QUOT_REQ_IND as "quotInd.quotInd",
+            S_QUOT_REQ.QUOT_REQ_DATE as "QUOT_REQ_DATE",
+            S_QUOT_REQ.QUOT_RESP_LIMIT_DATE as "QUOT_RESP_LIMIT_DATE",
+            S_QUOT_RESP.QUOT_RESP_DATE as "QUOT_RESP_DATE",
+            S_QUOT_RESP.QUOT_WITHDRAW_ID as "dismissInd",
+            S_QUOT_REQ.TITLE_NAME as "titleName.titleName",
+            S_NEW_QUOT_ADO.QUOT_ADO_DATE as "QUOT_ADO_DATE",
+            S_NEW_QUOT_ADO.QUOT_ADO_IND as "ado",
+            S_QUOT_REQ.BUYER_COMPANY_CD as "BUYER_COMPANY_CD",
+            S_QUOT_REQ.BUYER_COMPANY_NAME as "BUYER_COMPANY_NAME",
+            S_QUOT_REQ.BUYER_SECTION_PLACE_NAME as "BUYER_SECTION_PLACE_NAME",
+            S_QUOT_REQ.BUYER_SECTION_NAME as "BUYER_SECTION_NAME",
+            S_QUOT_REQ.BUYER_USER_NAME as "BUYER_USER_NAME",
+            S_QUOT_REQ.BUYER_USER_TEL_NO as "BUYER_USER_TEL_NO",
+            S_QUOT_REQ.BUYER_USER_MAIL_ADDR,
+            S_QUOT_REQ.FOR_SUPPLIER_COMMENT as "comment.comment",
+            S_QUOT_REQ.REQ_SECTION_PLACE_NAME as "requestUser.sectionPlaceName",
+            S_QUOT_REQ.REQ_SECTION_NAME as "requestUser.sectionName",
+            S_QUOT_REQ.REQ_USER_NAME as "requestUser.userName",
+            S_QUOT_REQ.REQ_USER_TEL_NO as "requestUser.telNo.telNo",
+            S_QUOT_REQ.REQ_USER_MAIL_ADDR,
+            S_QUOT_REQ.DELIV_PLACE_ZIP_CD as "DELIV_PLACE_ZIP_CD",
+            S_QUOT_REQ.DELIV_PLACE_NAME as "DELIV_PLACE_NAME",
+            S_QUOT_REQ.DELIV_PLACE_ADDRESS1 as "DELIV_PLACE_ADDRESS1",
+            S_QUOT_REQ.DELIV_PLACE_ADDRESS2 as "DELIV_PLACE_ADDRESS2",
+            S_QUOT_REQ.DELIV_PLACE_NAME_LIB as "DELIV_PLACE_NAME_INB",
+            S_QUOT_RESP.QUOT_RESP_END_DATE as "QUOT_RESP_END_DATE",
+            a.ATTACH_FILE_SEQ as "attachFileSeq1",
+            b.ATTACH_FILE_SEQ as "attachFileSeq2",
+            a.ATTACH_FILE_NAME as "attachFileName1",
+            b.ATTACH_FILE_NAME as "attachFileName2"
+            ,S_QUOT_REQ.ANS_FLG as "status"
+            ,S_QUOT_RESP.QUOT_RESP_COMMENT as "quotRespComment.comment"
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_REQ
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ.APL_VERSION
+            AND S_QUOT_REQ.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_RESP
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP.APL_VERSION
+            AND S_QUOT_RESP.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_ADO
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_ADO.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_ADO.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_ADO.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_ADO.APL_VERSION
+            AND S_QUOT_ADO.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_REQ_ATTACH a
+         ON
+            S_QUOT_REQ.ATTACH_FILE_SEQ1 = a.ATTACH_FILE_SEQ
+            AND a.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_REQ_ATTACH b
+         ON
+            S_QUOT_REQ.ATTACH_FILE_SEQ2 = b.ATTACH_FILE_SEQ
+            AND b.DELETE_FLG = '0'
+       WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+    </select>
+
+    <resultMap type="fw.domain.sp.quot.QuotDetailItemPrice" id="QuotDetailItemPrice_Map">
+        <id column="HOPE_DELIV_DATE" property="hopeDlvEst.hopeDlvEst.dateOfymd"/>
+    </resultMap>
+    <select id="listQuotDetailPrice" resultMap="QuotDetailItemPrice_Map">
+     SELECT
+            S_QUOT_REQ_DTL.ITEM_NAME as "itemName",
+            S_QUOT_REQ_DTL.CUST_ITEM_CD as "itemCd",
+            S_QUOT_REQ_DTL.KATASHIKI as "katashiki",
+            S_QUOT_REQ_DTL.MANUFACT_NAME as "manufactName",
+            S_QUOT_REQ_ATTACH.ATTACH_FILE_NAME as "attachFileName",
+            S_QUOT_REQ_ATTACH.ATTACH_FILE_SEQ as "attachFileSeq"
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_REQ_DTL
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ_DTL.APL_VERSION
+            AND S_QUOT_REQ_DTL.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_REQ_ATTACH
+         ON
+            S_QUOT_REQ_DTL.ATTACH_FILE_SEQ = S_QUOT_REQ_ATTACH.ATTACH_FILE_SEQ
+            AND S_QUOT_REQ_ATTACH.DELETE_FLG = '0'
+      WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+      ORDER BY
+            S_QUOT_REQ_DTL.QUOT_REQ_NO
+    </select>
+
+    <resultMap type="fw.domain.sp.quot.QuotDetailRespItemPrice" id="QuotDetailRespItemPrice_Map">
+        <id column="QUOT_RESP_DELIV_DATE" property="respDlvEst.respDlvEst.dateOfymd"/>
+        <id column="UNIT_PRICE" property="respPrice.respPrice.amount"/>
+        <id column="QUOT_RESP_AMOUNT" property="respAmount.respAmount.amount"/>
+        <id column="VALID_START_DATE" property="validityPeriod.period.startDate.dateOfymd"/>
+        <id column="VALID_END_DATE" property="validityPeriod.period.endDate.dateOfymd"/>
+        <id column="ORDER_UNIT_VOL" property="custUnitVol.custUnitVol.vol"/>
+        <id column="MIN_ORDER_VOL" property="minCustVol.minCustVol.vol"/>
+        <id column="STD_ORDER_LT" property="standardDelivDayCount.standardDelivDayCount.dayCount"/>
+        <id column="LOWER_VOL1" property="lotList.lot1.lowerVol.vol"/>
+        <id column="LOWER_VOL2" property="lotList.lot2.lowerVol.vol"/>
+        <id column="LOWER_VOL3" property="lotList.lot3.lowerVol.vol"/>
+        <id column="LOWER_VOL4" property="lotList.lot4.lowerVol.vol"/>
+        <id column="LOWER_VOL5" property="lotList.lot5.lowerVol.vol"/>
+        <id column="QUOT_RESP_PRICE1" property="lotList.lot1.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE2" property="lotList.lot2.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE3" property="lotList.lot3.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE4" property="lotList.lot4.unitPrice.amount.amount"/>
+        <id column="QUOT_RESP_PRICE5" property="lotList.lot5.unitPrice.amount.amount"/>
+    </resultMap>
+    <select id="listQuotDetailRespPrice" resultMap="QuotDetailRespItemPrice_Map">
+     SELECT
+            S_QUOT_RESP_DTL.VALID_START_DATE as "VALID_START_DATE",
+            S_QUOT_RESP_DTL.VALID_END_DATE as "VALID_END_DATE",
+            S_QUOT_RESP_DTL.ITEM_NAME as "itemName",
+            S_QUOT_RESP_DTL.CUST_ITEM_CD as "itemCd",
+            S_QUOT_RESP_DTL.KATASHIKI as "katashiki",
+            S_QUOT_RESP_DTL.MANUFACT_NAME as "manufactName",
+            S_QUOT_RESP_ATTACH.ATTACH_FILE_NAME as "attachFileName",
+            S_QUOT_RESP_ATTACH.ATTACH_FILE_SEQ as "attachFileSeqNo",
+            S_QUOT_RESP_DTL.ORDER_UNIT_VOL as "ORDER_UNIT_VOL",
+            S_QUOT_RESP_DTL.MIN_ORDER_VOL as "MIN_ORDER_VOL",
+            S_QUOT_RESP_DTL.UNIT_NAME as "unitName",
+            S_QUOT_RESP_DTL.STD_ORDER_LT as "STD_ORDER_LT",
+            S_QUOT_RESP_DTL.CURRENCY_CD as "currencyCd",
+            S_QUOT_RESP_DTL.TAX_IND as "taxInd.taxInd",
+            S_QUOT_RESP_DTL.LOWER_VOL1 as "LOWER_VOL1",
+            S_QUOT_RESP_DTL.LOWER_VOL2 as "LOWER_VOL2",
+            S_QUOT_RESP_DTL.LOWER_VOL3 as "LOWER_VOL3",
+            S_QUOT_RESP_DTL.LOWER_VOL4 as "LOWER_VOL4",
+            S_QUOT_RESP_DTL.LOWER_VOL5 as "LOWER_VOL5",
+            S_QUOT_RESP_DTL.QUOT_RESP_PRICE1 as "QUOT_RESP_PRICE1",
+            S_QUOT_RESP_DTL.QUOT_RESP_PRICE2 as "QUOT_RESP_PRICE2",
+            S_QUOT_RESP_DTL.QUOT_RESP_PRICE3 as "QUOT_RESP_PRICE3",
+            S_QUOT_RESP_DTL.QUOT_RESP_PRICE4 as "QUOT_RESP_PRICE4",
+            S_QUOT_RESP_DTL.QUOT_RESP_PRICE5 as "QUOT_RESP_PRICE5"
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_RESP_DTL
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP_DTL.APL_VERSION
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+       LEFT JOIN S_QUOT_RESP_ATTACH
+         ON
+            S_QUOT_RESP_DTL.ATTACH_FILE_SEQ = S_QUOT_RESP_ATTACH.ATTACH_FILE_SEQ
+      WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+      ORDER BY
+            S_QUOT_RESP_DTL.QUOT_REQ_NO
+    </select>
+
+    <select id="getTotalAmount" resultType="String">
+     SELECT
+            SUM(S_QUOT_RESP_DTL.QUOT_RESP_AMOUNT)
+       FROM S_NEW_QUOT_ADO
+       LEFT JOIN S_QUOT_RESP_DTL
+         ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP_DTL.APL_VERSION
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+      WHERE
+            S_NEW_QUOT_ADO.QUOT_ADO_SEQ = #{quotAdoSeq}
+    </select>
+
+    <select id="sumAmount" resultType="String">
+     SELECT
+            SUM(S_QUOT_RESP_DTL.QUOT_RESP_AMOUNT)
+       FROM S_QUOT_RESP_DTL
+       WHERE
+            S_QUOT_RESP_DTL.ACC_CD = #{accCd}
+            AND S_QUOT_RESP_DTL.CUST_CD = #{custCd}
+            AND S_QUOT_RESP_DTL.APL_NO = #{quotReqNo}
+            AND S_QUOT_RESP_DTL.APL_VERSION = #{historyNo}
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+    </select>
+
+    <select id="download" parameterType="fw.domain.sp.quot.quotado.QuotAdoSearchCondition"
+         resultType="fw.domain.sp.quot.quotado.QuotAdoDownloadItem">
+         <include refid="pageHeader"/>
+        SELECT
+             S_NEW_QUOT_ADO.ACC_CD AS "accCd",
+             S_NEW_QUOT_ADO.CUST_CD AS "custCd",
+             S_NEW_QUOT_ADO.APL_NO AS "quotReqNo",
+             S_NEW_QUOT_ADO.QUOT_ADO_IND AS "adoCd",
+             S_NEW_QUOT_ADO.APL_VERSION AS "historyNo",
+             S_NEW_QUOT_ADO.DPO_FLG AS "statusCd",
+             S_NEW_QUOT_ADO.QUOT_ADO_DATE AS "adoDate.dateOfymd",
+             S_QUOT_REQ.QUOT_REQ_DATE AS "quotReqDate.dateOfymd",
+             S_QUOT_REQ.BUYER_COMPANY_CD AS "buyerCompanyCd",
+             S_QUOT_REQ.BUYER_COMPANY_NAME AS "buyerCompanyName",
+             S_QUOT_REQ.BUYER_SECTION_PLACE_CD AS "buyerSectionPlaceCd",
+             S_QUOT_REQ.BUYER_SECTION_PLACE_NAME AS "buyerSectionPlaceName",
+             S_QUOT_REQ.BUYER_SECTION_CD AS "buyerSectionCd",
+             S_QUOT_REQ.BUYER_SECTION_NAME AS "buyerSectionName",
+             S_QUOT_REQ.BUYER_USER_ID AS "buyerUserId",
+             S_QUOT_REQ.BUYER_USER_NAME AS "buyerUserName",
+             S_QUOT_REQ.BUYER_USER_TEL_NO AS "telNo",
+             S_QUOT_REQ.TITLE_NAME AS "titleName",
+             S_QUOT_REQ.FOR_SUPPLIER_COMMENT AS "comment",
+             S_QUOT_REQ.DELIV_PLACE_NAME AS "delivPlaceName",
+             S_QUOT_REQ.DELIV_PLACE_ZIP_CD AS "zipCd",
+             S_QUOT_REQ.DELIV_PLACE_ADDRESS1 AS "address1",
+             S_QUOT_REQ.DELIV_PLACE_ADDRESS2 AS "address2",
+             S_QUOT_REQ.DELIV_PLACE_NAME_LIB AS "delivPlaceNameInb",
+             S_QUOT_RESP.QUOT_RESP_DATE AS "quotRespDate.dateOfymd",
+             S_QUOT_RESP.QUOT_WITHDRAW_ID AS "dismissInd",
+             S_QUOT_RESP.QUOT_RESP_END_DATE AS "quotValidDate.dateOfymd",
+             S_QUOT_REQ_ATTACH_A.ATTACH_FILE_NAME AS "attachFileName1",
+             S_QUOT_REQ_ATTACH_B.ATTACH_FILE_NAME AS "attachFileName2",
+             S_QUOT_REQ_ATTACH_C.ATTACH_FILE_NAME AS "attachFileName3",
+             S_QUOT_RESP_ATTACH.ATTACH_FILE_NAME AS "attachFileName4",
+             S_QUOT_REQ_DTL.HOPE_DELIV_DATE AS "hopeDlvEst.dateOfymd",
+             S_QUOT_REQ_DTL.ITEM_NAME AS "itemName",
+             S_QUOT_REQ_DTL.CUST_ITEM_CD AS "itemCd",
+             S_QUOT_REQ_DTL.KATASHIKI AS "katashiki",
+             S_QUOT_REQ_DTL.MANUFACT_CD AS "manufactCd",
+             S_QUOT_REQ_DTL.MANUFACT_NAME AS "manufactName",
+             S_QUOT_REQ_DTL.QUOT_REQ_VOL AS "quotReqVol.vol",
+             S_QUOT_REQ_DTL.UNIT_CD AS "unitCd",
+             S_QUOT_REQ_DTL.UNIT_NAME AS "unitName",
+             S_QUOT_REQ_DTL.CURRENCY_CD AS "currencyCd",
+             S_QUOT_RESP_DTL.QUOT_RESP_DELIV_DATE AS "respDlvEst.dateOfymd",
+             S_QUOT_RESP_DTL.UNIT_PRICE AS "unitPrice.amount",
+             S_QUOT_RESP_DTL.TAX_IND AS "taxIndCd",
+             S_QUOT_RESP_DTL.QUOT_RESP_VOL AS "respVol.vol",
+             S_QUOT_RESP_DTL.QUOT_RESP_AMOUNT AS "amount.amount",
+             S_QUOT_RESP_DTL.VALID_START_DATE AS "startvalidityPeriod.dateOfymd",
+             S_QUOT_RESP_DTL.VALID_END_DATE AS "endvalidityPeriod.dateOfymd",
+             S_QUOT_RESP_DTL.ORDER_UNIT_VOL AS "custUnitVol.vol",
+             S_QUOT_RESP_DTL.MIN_ORDER_VOL AS "minCustVol.vol",
+             S_QUOT_RESP_DTL.STD_ORDER_LT AS "standardDelivDayCount",
+             S_QUOT_RESP_DTL.LOWER_VOL1 AS "lowerVol1.vol",
+             S_QUOT_RESP_DTL.LOWER_VOL2 AS "lowerVol2.vol",
+             S_QUOT_RESP_DTL.LOWER_VOL3 AS "lowerVol3.vol",
+             S_QUOT_RESP_DTL.LOWER_VOL4 AS "lowerVol4.vol",
+             S_QUOT_RESP_DTL.LOWER_VOL5 AS "lowerVol5.vol",
+             S_QUOT_RESP_DTL.QUOT_RESP_PRICE1 AS "quotRespPrice1.amount",
+             S_QUOT_RESP_DTL.QUOT_RESP_PRICE2 AS "quotRespPrice2.amount",
+             S_QUOT_RESP_DTL.QUOT_RESP_PRICE3 AS "quotRespPrice3.amount",
+             S_QUOT_RESP_DTL.QUOT_RESP_PRICE4 AS "quotRespPrice4.amount",
+             S_QUOT_RESP_DTL.QUOT_RESP_PRICE5 AS "quotRespPrice5.amount"
+        FROM S_NEW_QUOT_ADO
+        LEFT JOIN S_QUOT_REQ
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ.APL_VERSION
+            AND S_NEW_QUOT_ADO.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_DTL
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ_DTL.APL_VERSION
+            AND S_NEW_QUOT_ADO.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP.APL_VERSION
+            AND S_QUOT_RESP.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP_DTL
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP_DTL.APL_VERSION
+            AND S_QUOT_REQ_DTL.QUOT_REQ_NO = S_QUOT_RESP_DTL.QUOT_REQ_NO
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_A
+            ON   S_QUOT_REQ.ATTACH_FILE_SEQ1 = S_QUOT_REQ_ATTACH_A.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_A.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_B
+            ON   S_QUOT_REQ.ATTACH_FILE_SEQ2 = S_QUOT_REQ_ATTACH_B.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_B.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_C
+            ON   S_QUOT_REQ_DTL.ATTACH_FILE_SEQ = S_QUOT_REQ_ATTACH_C.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_C.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP_ATTACH
+            ON   S_QUOT_RESP_DTL.ATTACH_FILE_SEQ = S_QUOT_RESP_ATTACH.ATTACH_FILE_SEQ
+            AND  S_QUOT_RESP_ATTACH.DELETE_FLG = '0'
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_QUOT_ADO.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_QUOT_ADO.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_QUOT_ADO.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+    <where>
+             S_NEW_QUOT_ADO.DELETE_FLG = '0'
+             <if test="dpoFlg != 9">
+                    AND S_NEW_QUOT_ADO.DPO_FLG = ${dpoFlg}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(adoption)">
+                    AND S_NEW_QUOT_ADO.QUOT_ADO_IND = #{adoption}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqNo)">
+                    AND S_NEW_QUOT_ADO.APL_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.quot.quotado.QuotAdoSearchCondition","quotReqNo")}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateFrom.dateOfymd)">
+                    AND S_QUOT_REQ.QUOT_REQ_DATE >= #{quotReqDateFrom.dateOfymd}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateTo.dateOfymd)">
+                    AND S_QUOT_REQ.QUOT_REQ_DATE &lt;= #{quotReqDateTo.dateOfymd}
+             </if>
+
+
+      </where>
+        ORDER BY ${searchCondition.columnOrder.defaultOrder}
+        <include refid="pageRoot"/>
+    </select>
+    <select id="downloadCount" parameterType="fw.domain.sp.quot.quotado.QuotAdoSearchCondition"
+         resultType="java.lang.Long">
+
+        SELECT
+             COUNT(*)
+        FROM S_NEW_QUOT_ADO
+        LEFT JOIN S_QUOT_REQ
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ.APL_VERSION
+            AND S_NEW_QUOT_ADO.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_DTL
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_REQ_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_REQ_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_REQ_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_REQ_DTL.APL_VERSION
+            AND S_NEW_QUOT_ADO.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP.APL_VERSION
+            AND S_QUOT_RESP.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP_DTL
+            ON
+            S_NEW_QUOT_ADO.ACC_CD = S_QUOT_RESP_DTL.ACC_CD
+            AND S_NEW_QUOT_ADO.CUST_CD = S_QUOT_RESP_DTL.CUST_CD
+            AND S_NEW_QUOT_ADO.APL_NO = S_QUOT_RESP_DTL.APL_NO
+            AND S_NEW_QUOT_ADO.APL_VERSION = S_QUOT_RESP_DTL.APL_VERSION
+            AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = '1'
+            AND S_QUOT_RESP_DTL.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_A
+            ON   S_QUOT_REQ.ATTACH_FILE_SEQ1 = S_QUOT_REQ_ATTACH_A.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_A.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_B
+            ON   S_QUOT_REQ.ATTACH_FILE_SEQ2 = S_QUOT_REQ_ATTACH_B.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_B.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_REQ_ATTACH S_QUOT_REQ_ATTACH_C
+            ON   S_QUOT_REQ_DTL.ATTACH_FILE_SEQ = S_QUOT_REQ_ATTACH_C.ATTACH_FILE_SEQ
+            AND  S_QUOT_REQ_ATTACH_C.DELETE_FLG = '0'
+        LEFT JOIN S_QUOT_RESP_ATTACH
+            ON   S_QUOT_RESP_DTL.ATTACH_FILE_SEQ = S_QUOT_RESP_ATTACH.ATTACH_FILE_SEQ
+            AND  S_QUOT_RESP_ATTACH.DELETE_FLG = '0'
+        INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_QUOT_ADO.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_QUOT_ADO.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_QUOT_ADO.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+    <where>
+             S_NEW_QUOT_ADO.DELETE_FLG = '0'
+             <if test="dpoFlg != 9">
+                    AND S_NEW_QUOT_ADO.DPO_FLG = ${dpoFlg}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(adoption)">
+                    AND S_NEW_QUOT_ADO.QUOT_ADO_IND = #{adoption}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqNo)">
+                    AND S_NEW_QUOT_ADO.APL_NO ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.quot.quotado.QuotAdoSearchCondition","quotReqNo")}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateFrom.dateOfymd)">
+                    AND S_QUOT_REQ.QUOT_REQ_DATE >= #{quotReqDateFrom.dateOfymd}
+             </if>
+             <if test="@org.apache.commons.lang.StringUtils@isNotBlank(quotReqDateTo.dateOfymd)">
+                    AND S_QUOT_REQ.QUOT_REQ_DATE &lt;= #{quotReqDateTo.dateOfymd}
+             </if>
+      </where>
+    </select>
+
+    <sql id="pageHeader">
+       SELECT * FROM (
+    </sql>
+    <sql id="pageRoot">
+        ) WHERE  ROWNUM &lt;=${@fw.common.util.PropertiesUtil@getLong("DOWNLOAD_MAXCNT")}
+    </sql>
+</mapper>

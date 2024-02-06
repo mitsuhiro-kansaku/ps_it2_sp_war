@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.OrderVersionRepeatMapper">
+
+    <select id="getNewOrdersConfirmation" resultType="Integer">
+        SELECT 
+              CASE WHEN COUNT(1) IS NULL
+              THEN 0
+              ELSE COUNT(1)
+              END
+        FROM S_NEW_ORDER
+        <where>
+               S_NEW_ORDER.ACC_CD = #{utlUserCd}
+           AND S_NEW_ORDER.CUST_CD = #{buyerCompanyCd}
+           AND S_NEW_ORDER.ORDER_NO = #{orderNo}
+           AND S_NEW_ORDER.ORDER_VERSION &lt; #{orderVersion}
+           AND S_NEW_ORDER.DPO_FLG = '0'
+        </where>   
+    </select>    
+
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.UploadUnconfirmNewOrderMapper">
+
+    <select id="getExistCount" resultType="int">
+        SELECT 
+            COUNT(T.ACC_CD)
+        FROM 
+            S_NEW_ORDER T
+        WHERE 
+            ACC_CD = #{accCd}
+        AND CUST_CD = #{custCd}
+        AND ORDER_NO = #{orderNo}
+        AND DPO_FLG = '0'
+        AND DELETE_FLG = '0'
+    </select> 
+
+</mapper>

@@ -1,0 +1,22 @@
+<table class="NoBorder" width="100%" style="margin:auto;">
+    <tr>
+        <td>
+            <table>
+                <tr>
+                    <td class="FontMini DarkBlue">
+                        #customSpringMessage('UPLOAD_FILE')：&nbsp;<input class="Small" id="file" name="file" type="file" size="80">
+                        
+                    </td>
+                    <td align="left">
+                        <input class="SmallButton" type="button" value="#customSpringMessage('ACTION_UPLOAD')" onclick="javascript:doUpload()">
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td align="center">
+        </td>
+        <td align="right">
+            <input class="SmallButton" type="button" value="#customSpringMessage('ACTION_DOWNLOAD')" onclick="javascript:doDownload()">
+        </td>
+    </tr>
+</table>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exist.UserExistCheckMapper">
+
+     <select id="searchUser" parameterType="fw.domain.sp.usermaster.UserMasterManagement" resultType="int">
+        SELECT COUNT(1)
+          FROM M_S_USER
+         WHERE M_S_USER.S_USER_ID = #{userMasterIdentify.supplierUserId}
+    </select>
+</mapper>

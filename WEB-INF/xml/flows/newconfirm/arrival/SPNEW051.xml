@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+	parent="base">
+	<!-- 新着入荷（一覧）-->
+
+	<!-- 入荷情報新着確認 -->
+	<!--<var name="arrivalInfoList" class="fw.domain.sp.arrival.ArrivalInfoList" />-->
+	
+	<!-- 識別情報 -->
+	<var name="identify" class="fw.domain.sp.arrival.ArrivalIdentify" />
+
+	<input name="searchCondition" />
+	<input name="isCurrentPageSearch" />
+
+	<decision-state id="isSearchByKey">
+		<if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+	</decision-state>
+
+	<action-state id="searchByCondition">
+		<evaluate expression="SPNEW051Service.init(searchCondition)"
+			result="flowScope.arrivalInfoList" />
+		<transition to="SPNEW051" />
+	</action-state>
+
+	<action-state id="searchByKey">
+		<evaluate expression="SPNEW051Service.page(searchCondition)"
+			result="flowScope.arrivalInfoList" />
+		<transition to="SPNEW051" />
+	</action-state>
+
+	<!-- 新着入荷（一覧） -->
+	<view-state id="SPNEW051" model="arrivalInfoList"
+		view="newconfirm/arrival/SPNEW051">
+		<transition on="order" validate="false">
+			<evaluate expression="SPNEW051Service.order(searchCondition)"
+				result="flowScope.arrivalInfoList" />
+		</transition>
+		<transition on="page" validate="false">
+			<evaluate expression="SPNEW051Service.page(searchCondition)"
+				result="flowScope.arrivalInfoList" />
+		</transition>
+		<transition on="back" to="home" validate="false" />
+		
+		<!-- 新着確認 -->
+		<transition on="newConfirm" validate="true" to="searchByKey">
+			<evaluate expression="SPNEW051Service.newConfirm(arrivalInfoList)" />
+			<set name="flashScope.isSuccess" value="true"></set>
+		</transition>
+		
+		<!-- 新着全件確認 -->
+		<transition on="newConfirmAll" validate="true" to="searchByKey">
+			<evaluate expression="SPNEW051Service.newConfirmAll()" />
+			<set name="flashScope.isSuccess" value="true"></set>
+		</transition>
+		<!-- 詳細 -->
+		<transition on="detail" to="SPNEW052" validate="false" >
+		  <set name="identify.arrivalSeq" value="requestParameters.arrivalSeq"/><!-- 見積依頼シーケンス番号 -->
+		  <set name="identify.lastUpdDate" value="requestParameters.lastUpdDate"/><!-- 最終更新日時 -->
+		</transition>
+	</view-state>
+	<!-- 詳細 -->
+	<subflow-state id="SPNEW052" subflow="newconfirm/arrival/SPNEW052">
+		<input name="arrivalIdentify" value="identify" />
+	</subflow-state>
+</flow>

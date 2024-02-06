@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="defaultSearchCondition" class="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition" />
+
+    <on-start>
+        <evaluate expression="SPACP010Service.init()" result="flowScope.searchCondition" />
+    </on-start>
+
+    <view-state id="SPACP010" model="searchCondition"
+        view="acp/acceptancedtl/SPACP010">
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+        </transition>
+        <transition on="search" to="SPACP011" validate="false">
+            <evaluate expression="SPACP010Service.search(searchCondition)"></evaluate>
+        </transition>
+        <transition on="downloadValidate" validate="true">
+            <evaluate expression="SPACP010Service.downloadValidate(searchCondition)" 
+            result="flashScope.isDownLoadValidate"/>
+        </transition>
+        <transition on="download" validate="false">
+            <evaluate expression="SPACP010Service.download(searchCondition)"/>
+        </transition>
+        <transition on="sumDownloadValidate" validate="true">
+            <evaluate expression="SPACP010Service.sumDownloadValidate(searchCondition)" 
+            result="flashScope.isSumDownLoadValidate"/>
+        </transition>
+        <transition on="sumDownload" validate="false">
+            <evaluate expression="SPACP010Service.sumDownload(searchCondition)"/>
+        </transition>
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+
+    <subflow-state id="SPACP011" subflow="acp/acceptancedtl/SPACP011">
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <transition on="back" to="SPACP010">
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+
+</flow>

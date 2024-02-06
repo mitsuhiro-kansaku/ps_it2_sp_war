@@ -1,0 +1,881 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sp.dataaccess.acp.acceptancedtl.AcceptanceDtlMapper">
+
+    <select id="accdtlSumDownload" parameterType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition"
+        resultMap="AcceptanceItemInfoItem_Map">
+        <include refid="pageHeader"/>
+        SELECT 
+          ACCDETAIL.FISCAL_MONTH
+          , ACCDETAIL.BUYER_COMPANY_CD
+          , S_ORDER.BUYER_COMPANY_NAME as "buyerCompany"
+          , ACCDETAIL.BUYER_SECTION_CD
+          , S_ORDER.BUYER_SECTION_NAME as "buyerSectionName"
+          , ACCDETAIL.ACC_CD
+          , M_SUPPLIER_LANG.SUP_NAME AS "accName"
+          , M_SUPPLIER_LANG.SUP_ABBR_NAME AS "accAbbrName"
+          , ACCDETAIL.CURRENCY_CD as "currencyCd"
+          , ACCDETAIL.CURRENCY_CD
+          , ACCDETAIL.TAX_IND as "taxInd.taxInd"
+          , ACCDETAIL.TAX_RATE as "taxRate.taxRate"
+          , ACCDETAIL.AMOUNT as "amount.amount"
+        FROM
+        (
+      SELECT 
+             S_NEW_RCV.FISCAL_MONTH as "FISCAL_MONTH",
+             S_ORDER.BUYER_COMPANY_CD as "BUYER_COMPANY_CD",
+             S_ORDER.BUYER_SECTION_CD,
+             S_NEW_RCV.ACC_CD as "ACC_CD",
+             MAX(S_ORDER.ORDER_SEQ) AS ORDER_SEQ,
+             S_NEW_RCV.CURRENCY_CD,
+             S_NEW_RCV.TAX_IND,
+             S_NEW_RCV.TAX_RATE,
+             SUM(S_NEW_RCV.ACCEPT_AMOUNT)
+             AS AMOUNT
+        FROM S_NEW_RCV
+                INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        INNER JOIN ( SELECT S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD ,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO
+                       FROM S_NEW_RCV S_NEW_RCV_B
+                      WHERE S_NEW_RCV_B.DELETE_FLG = '0'
+                   GROUP BY S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO ) S_NEW_RCV_MAXVER
+               ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAXVER.ACC_CD
+              AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAXVER.CUST_CD
+              AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAXVER.ORDER_NO
+              AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAXVER.DELIV_KEY_NO
+       LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        GROUP BY    S_NEW_RCV.FISCAL_MONTH
+        ,           S_ORDER.BUYER_COMPANY_CD
+        ,           S_ORDER.BUYER_SECTION_CD
+        ,           S_NEW_RCV.ACC_CD
+        ,           S_NEW_RCV.CURRENCY_CD
+        ,           S_NEW_RCV.TAX_IND
+        ,           S_NEW_RCV.TAX_RATE
+        ) ACCDETAIL
+        INNER JOIN S_ORDER ON S_ORDER.ORDER_SEQ = ACCDETAIL.ORDER_SEQ
+        INNER JOIN (SELECT CODE_VALUE, DSP_ORDER
+                      FROM M_CODE_NAME
+                     WHERE CODE_KEY = 'TAX_CD'
+                   ) M_CODE_NAME_V
+              ON M_CODE_NAME_V.CODE_VALUE = ACCDETAIL.TAX_IND
+        INNER JOIN  M_SUPPLIER
+        ON          (M_SUPPLIER.COMPANY_CD = ACCDETAIL.BUYER_COMPANY_CD OR M_SUPPLIER.COMPANY_CD = 'ALL')
+        AND         M_SUPPLIER.SUP_CD = ACCDETAIL.ACC_CD
+        INNER JOIN  M_SUPPLIER_LANG
+        ON          M_SUPPLIER_LANG.COMPANY_CD = M_SUPPLIER.COMPANY_CD
+        AND         M_SUPPLIER_LANG.SUP_CD = M_SUPPLIER.SUP_CD
+        AND         M_SUPPLIER_LANG.LANGUAGE_IND = M_SUPPLIER.BASE_LANGUAGE_IND
+        ORDER BY    ACCDETAIL.FISCAL_MONTH DESC
+        ,           S_ORDER.BUYER_COMPANY_CD ASC
+        ,           S_ORDER.BUYER_SECTION_CD ASC
+        ,           ACCDETAIL.ACC_CD ASC
+        ,           ACCDETAIL.CURRENCY_CD ASC
+        ,           M_CODE_NAME_V.DSP_ORDER ASC
+        ,           ACCDETAIL.TAX_RATE DESC
+        <include refid="pageRoot"/>
+    </select>
+
+    <select id="accdtlSumDownloadCount" parameterType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition"
+        resultType="java.lang.Long">
+        SELECT 
+             COUNT(*)
+        FROM
+        (
+      SELECT 
+             S_NEW_RCV.FISCAL_MONTH as "FISCAL_MONTH",
+             S_ORDER.BUYER_COMPANY_CD as "BUYER_COMPANY_CD",
+             S_ORDER.BUYER_SECTION_CD,
+             MAX(S_ORDER.ORDER_SEQ) AS ORDER_SEQ,
+             S_NEW_RCV.CURRENCY_CD,
+             S_NEW_RCV.TAX_IND,
+             S_NEW_RCV.TAX_RATE,
+             SUM(S_NEW_RCV.ACCEPT_AMOUNT)
+             AS AMOUNT
+        FROM S_NEW_RCV
+                INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        INNER JOIN ( SELECT S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD ,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO
+                       FROM S_NEW_RCV S_NEW_RCV_B
+                      WHERE S_NEW_RCV_B.DELETE_FLG = '0'
+                   GROUP BY S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO ) S_NEW_RCV_MAXVER
+               ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAXVER.ACC_CD
+              AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAXVER.CUST_CD
+              AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAXVER.ORDER_NO
+              AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAXVER.DELIV_KEY_NO
+       LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        GROUP BY S_NEW_RCV.FISCAL_MONTH,S_ORDER.BUYER_COMPANY_CD,
+        S_ORDER.BUYER_SECTION_CD,
+        S_NEW_RCV.CURRENCY_CD,
+        S_NEW_RCV.TAX_IND,
+        S_NEW_RCV.TAX_RATE
+        ) ACCDETAIL
+        INNER JOIN S_ORDER ON S_ORDER.ORDER_SEQ = ACCDETAIL.ORDER_SEQ
+        INNER JOIN (SELECT CODE_VALUE, DSP_ORDER
+                      FROM M_CODE_NAME
+                     WHERE CODE_KEY = 'TAX_CD'
+                   ) M_CODE_NAME_V
+              ON M_CODE_NAME_V.CODE_VALUE = ACCDETAIL.TAX_IND
+    </select>
+
+    <select id="download" parameterType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition"
+         resultType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoDownLoadItem">
+         <include refid="pageHeader"/>
+        SELECT 
+             S_NEW_RCV.ACC_CD,
+             S_NEW_RCV.CUST_CD,
+             S_NEW_RCV.FISCAL_MONTH AS "fiscalYearMonth.dateOfym",
+             S_ORDER.BUYER_COMPANY_CD AS "buyerCompanyCd",
+             S_ORDER.BUYER_COMPANY_NAME AS "buyerCompanyName",
+             S_ORDER.CURRENCY_CD AS "currencyCd",
+             S_NEW_RCV_DTL.AMOUNT AS "amount.amount",
+             S_NEW_RCV.ORDER_NO AS "orderNo",
+             S_NEW_RCV.DELIV_KEY_NO AS "delivKeyNo",
+             S_NEW_RCV.DELIV_VERSION AS "delivKeyRevisionNo",
+             S_NEW_RCV.CORRECT_CD AS "divisionCd",
+             S_ORDER.REQ_TYPE_IND AS "reqTypeIndCd",
+             S_NEW_RCV.ARRIV_EXP_DATE AS "arrivExpDate.dateOfymd",
+             S_NEW_RCV.ACCEPT_DATE AS "acceptDate.dateOfymd",
+             S_ORDER.ITEM_NAME AS "itemName",
+             S_ORDER.CUST_ITEM_CD AS "itemCd",
+             S_ORDER.KATASHIKI AS "katashiki",
+             S_NEW_RCV.ACCEPT_VOL AS "acceptVol.vol",
+             S_NEW_RCV.UNIT_CD AS "unitCd",
+             S_NEW_RCV.UNIT_NAME AS "unitName",
+             S_NEW_RCV.UNIT_PRICE AS "acceptUnitPrice.amount",
+             S_NEW_RCV.ACCEPT_AMOUNT AS "acceptAmount.amount",
+             S_NEW_RCV.CONSUMPT_AMOUNT AS "consumptAmount.amount",
+             S_NEW_RCV.TOTAL_AMOUNT AS "totalAmount.amount",
+             S_NEW_RCV.TAX_IND AS "taxIndCd",
+             S_ORDER.BUYER_SECTION_CD AS "orderSectionCd",
+             S_ORDER.BUYER_SECTION_NAME AS "orderSectionName",
+             S_ORDER.BUYER_USER_ID AS "orderUserId",
+             S_ORDER.BUYER_USER_NAME AS "orderUserName",
+             S_ORDER.BUYER_USER_TEL_NO AS "conntact",
+             S_ORDER.PAY_CONDITION_CD AS "payConditionCd",
+             S_ORDER.PAY_CONDITION_NAME AS "payConditionName"
+        FROM ( SELECT
+                       S_NEW_RCV.FISCAL_MONTH AS "FISCAL_MONTH",
+                       S_ORDER.BUYER_COMPANY_NAME AS "BUYER_COMPANY_NAME",
+                       S_NEW_RCV.CURRENCY_CD,
+                       SUM(S_NEW_RCV.ACCEPT_AMOUNT) AS "AMOUNT"
+               FROM S_NEW_RCV
+              LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+                ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+                AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+                AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+              INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+            WHERE 
+                 S_NEW_RCV.DELETE_FLG = '0'
+                 AND S_NEW_RCV.DPO_FLG = '1'
+                <if test="@org.apache.commons.lang.StringUtils@isNotBlank(fiscalYearMonth.dateOfym)">
+                    AND S_NEW_RCV.FISCAL_MONTH = #{fiscalYearMonth.dateOfym}
+                 </if>
+                 GROUP BY S_NEW_RCV.FISCAL_MONTH,S_ORDER.BUYER_COMPANY_NAME,S_NEW_RCV.CURRENCY_CD
+           ) S_NEW_RCV_DTL
+        INNER JOIN (S_NEW_RCV
+                LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO)
+         ON S_NEW_RCV.FISCAL_MONTH = S_NEW_RCV_DTL.FISCAL_MONTH
+         AND S_ORDER.BUYER_COMPANY_NAME = S_NEW_RCV_DTL.BUYER_COMPANY_NAME
+         AND S_NEW_RCV.CURRENCY_CD = S_NEW_RCV_DTL.CURRENCY_CD
+       INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        WHERE
+            S_NEW_RCV.DELETE_FLG = '0'
+            AND S_NEW_RCV.DPO_FLG = '1'
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+      <include refid="pageRoot"/>
+    </select>
+
+    <select id="downloadCount" parameterType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition"
+         resultType="java.lang.Long">
+        SELECT 
+             COUNT(*)
+        FROM ( SELECT
+                       S_NEW_RCV.FISCAL_MONTH AS "FISCAL_MONTH",
+                       S_ORDER.BUYER_COMPANY_NAME AS "BUYER_COMPANY_NAME",
+                       S_NEW_RCV.CURRENCY_CD,
+                       SUM(S_NEW_RCV.ACCEPT_AMOUNT) AS "AMOUNT"
+               FROM S_NEW_RCV
+              LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+                ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+                AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+                AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+              INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+            WHERE 
+                 S_NEW_RCV.DELETE_FLG = '0'
+                 AND S_NEW_RCV.DPO_FLG = '1'
+                <if test="@org.apache.commons.lang.StringUtils@isNotBlank(fiscalYearMonth.dateOfym)">
+                    AND S_NEW_RCV.FISCAL_MONTH = #{fiscalYearMonth.dateOfym}
+                 </if>
+                 GROUP BY S_NEW_RCV.FISCAL_MONTH,S_ORDER.BUYER_COMPANY_NAME,S_NEW_RCV.CURRENCY_CD
+           ) S_NEW_RCV_DTL
+        INNER JOIN (S_NEW_RCV
+                LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO)
+         ON S_NEW_RCV.FISCAL_MONTH = S_NEW_RCV_DTL.FISCAL_MONTH
+         AND S_ORDER.BUYER_COMPANY_NAME = S_NEW_RCV_DTL.BUYER_COMPANY_NAME
+         AND S_NEW_RCV.CURRENCY_CD = S_NEW_RCV_DTL.CURRENCY_CD
+       INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        WHERE
+            S_NEW_RCV.DELETE_FLG = '0'
+            AND S_NEW_RCV.DPO_FLG = '1'
+    </select>
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+        AND S_NEW_RCV.DELETE_FLG = '0'
+        AND S_NEW_RCV.DPO_FLG = '1'
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(fiscalYearMonth.dateOfym)">
+            AND S_NEW_RCV.FISCAL_MONTH = #{fiscalYearMonth.dateOfym}
+        </if>
+    </sql>
+
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoSearchCondition"
+        resultType="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemIdentify">
+        SELECT 
+          ACCDETAIL.FISCAL_MONTH as "fiscalYearMonth.dateOfym"
+          , ACCDETAIL.ACC_CD as "accCd"
+          , ACCDETAIL.BUYER_COMPANY_CD as "buyerCompany"
+          , S_ORDER.BUYER_COMPANY_NAME
+          , ACCDETAIL.BUYER_SECTION_CD as "buyerSectionCd"
+          , ACCDETAIL.CURRENCY_CD as "currencyCd"
+          , S_ORDER.BUYER_SECTION_NAME
+        FROM
+        (
+      SELECT 
+             S_NEW_RCV.FISCAL_MONTH,
+             S_NEW_RCV.ACC_CD,
+             S_ORDER.BUYER_COMPANY_CD,
+             S_ORDER.BUYER_SECTION_CD,
+             MAX(S_ORDER.ORDER_SEQ) AS ORDER_SEQ,
+             S_NEW_RCV.CURRENCY_CD
+        FROM S_NEW_RCV
+        INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        INNER JOIN ( SELECT S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD ,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO
+                       FROM S_NEW_RCV S_NEW_RCV_B
+                      WHERE S_NEW_RCV_B.DELETE_FLG = '0'
+                   GROUP BY S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO ) S_NEW_RCV_MAXVER
+               ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAXVER.ACC_CD
+              AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAXVER.CUST_CD
+              AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAXVER.ORDER_NO
+              AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAXVER.DELIV_KEY_NO
+       LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        GROUP BY    S_NEW_RCV.FISCAL_MONTH
+        ,           S_NEW_RCV.ACC_CD
+        ,           S_ORDER.BUYER_COMPANY_CD
+        ,           S_ORDER.BUYER_SECTION_CD
+        ,           S_NEW_RCV.CURRENCY_CD
+        ) ACCDETAIL
+        INNER JOIN  S_ORDER ON S_ORDER.ORDER_SEQ = ACCDETAIL.ORDER_SEQ
+        INNER JOIN  M_SUPPLIER
+        ON          (M_SUPPLIER.COMPANY_CD = ACCDETAIL.BUYER_COMPANY_CD OR M_SUPPLIER.COMPANY_CD = 'ALL')
+        AND         M_SUPPLIER.SUP_CD = ACCDETAIL.ACC_CD
+        INNER JOIN  M_SUPPLIER_LANG
+        ON          M_SUPPLIER_LANG.COMPANY_CD = M_SUPPLIER.COMPANY_CD
+        AND         M_SUPPLIER_LANG.SUP_CD = M_SUPPLIER.SUP_CD
+        AND         M_SUPPLIER_LANG.LANGUAGE_IND = M_SUPPLIER.BASE_LANGUAGE_IND
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+
+    <resultMap type="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoItem" id="AcceptanceItemInfoItem_Map">
+      <id column="FISCAL_MONTH" property="acceptanceItemIdentify.fiscalYearMonth.dateOfym"/>
+      <id column="BUYER_COMPANY_CD" property="acceptanceItemIdentify.buyerCompany"/>
+      <id column="ACC_CD" property="acceptanceItemIdentify.accCd"/>
+      <id column="BUYER_SECTION_CD" property="acceptanceItemIdentify.buyerSectionCd"/>
+      <id column="CURRENCY_CD" property="acceptanceItemIdentify.currencyCd"/>
+    </resultMap>
+
+    <select id="listPageItem"
+        resultMap="AcceptanceItemInfoItem_Map">
+        SELECT 
+          ACCDETAIL.FISCAL_MONTH
+          , ACCDETAIL.BUYER_COMPANY_CD
+          , S_ORDER.BUYER_COMPANY_NAME as "buyerCompany"
+          , ACCDETAIL.BUYER_SECTION_CD
+          , S_ORDER.BUYER_SECTION_NAME as "buyerSectionName"
+          , ACCDETAIL.ACC_CD
+          , M_SUPPLIER_LANG.SUP_NAME AS "accName"
+          , M_SUPPLIER_LANG.SUP_ABBR_NAME AS "accAbbrName"
+          , ACCDETAIL.CURRENCY_CD as "currencyCd"
+          , ACCDETAIL.CURRENCY_CD
+          , ACCDETAIL.TAX_IND as "taxInd.taxInd"
+          , ACCDETAIL.TAX_RATE as "taxRate.taxRate"
+          , ACCDETAIL.AMOUNT as "amount.amount"
+        FROM
+        (
+      SELECT 
+             S_NEW_RCV.FISCAL_MONTH as "FISCAL_MONTH",
+             S_NEW_RCV.ACC_CD as "ACC_CD",
+             S_ORDER.BUYER_COMPANY_CD as "BUYER_COMPANY_CD",
+             S_ORDER.BUYER_SECTION_CD,
+             MAX(S_ORDER.ORDER_SEQ) AS ORDER_SEQ,
+             S_NEW_RCV.CURRENCY_CD,
+             S_NEW_RCV.TAX_IND,
+             S_NEW_RCV.TAX_RATE,
+             SUM(S_NEW_RCV.ACCEPT_AMOUNT)
+             AS AMOUNT
+        FROM S_NEW_RCV
+                INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        INNER JOIN ( SELECT S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD ,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO
+                       FROM S_NEW_RCV S_NEW_RCV_B
+                      WHERE S_NEW_RCV_B.DELETE_FLG = '0'
+                   GROUP BY S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO ) S_NEW_RCV_MAXVER
+               ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAXVER.ACC_CD
+              AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAXVER.CUST_CD
+              AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAXVER.ORDER_NO
+              AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAXVER.DELIV_KEY_NO
+       LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+        <where>
+            (S_NEW_RCV.FISCAL_MONTH, S_NEW_RCV.ACC_CD
+            , S_ORDER.BUYER_COMPANY_CD, S_ORDER.BUYER_SECTION_CD
+            ) IN
+                <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList" open="(" separator="," close=")">
+                    (#{keyList.fiscalYearMonth.dateOfym}, #{keyList.accCd}
+                    , #{keyList.buyerCompany}, #{keyList.buyerSectionCd}
+                    )
+                </foreach>
+                <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        GROUP BY    S_NEW_RCV.FISCAL_MONTH
+        ,           S_ORDER.BUYER_COMPANY_CD
+        ,           S_ORDER.BUYER_SECTION_CD
+        ,           S_NEW_RCV.ACC_CD
+        ,           S_NEW_RCV.CURRENCY_CD
+        ,           S_NEW_RCV.TAX_IND
+        ,           S_NEW_RCV.TAX_RATE
+        ) ACCDETAIL
+        INNER JOIN S_ORDER ON S_ORDER.ORDER_SEQ = ACCDETAIL.ORDER_SEQ
+        INNER JOIN (SELECT CODE_VALUE, DSP_ORDER
+                      FROM M_CODE_NAME
+                     WHERE CODE_KEY = 'TAX_CD'
+                   ) M_CODE_NAME_V
+              ON M_CODE_NAME_V.CODE_VALUE = ACCDETAIL.TAX_IND
+        INNER JOIN  M_SUPPLIER
+        ON          (M_SUPPLIER.COMPANY_CD = ACCDETAIL.BUYER_COMPANY_CD OR M_SUPPLIER.COMPANY_CD = 'ALL')
+        AND         M_SUPPLIER.SUP_CD = ACCDETAIL.ACC_CD
+        INNER JOIN  M_SUPPLIER_LANG
+        ON          M_SUPPLIER_LANG.COMPANY_CD = M_SUPPLIER.COMPANY_CD
+        AND         M_SUPPLIER_LANG.SUP_CD = M_SUPPLIER.SUP_CD
+        AND         M_SUPPLIER_LANG.LANGUAGE_IND = M_SUPPLIER.BASE_LANGUAGE_IND
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+        ,           M_CODE_NAME_V.DSP_ORDER ASC
+        ,           ACCDETAIL.TAX_RATE DESC
+    </select>
+    
+    <resultMap type="fw.domain.sp.acceptance.acceptanceiteminfo.AcceptanceItemInfoDetailItem" id="AcceptanceItemInfoDetailItem_Map">
+        <id column="COMPANY_CD" property="custInfo.custCompany.code"/>
+        <id column="PLACENAME" property="custInfo.custUser.sectionPlaceName"/>
+        <id column="SECTIONNAME" property="custInfo.custUser.sectionName"/>
+        <id column="USERNAME" property="custInfo.custUser.userName"/>
+        <id column="CONTRACT" property="custInfo.custUser.contact.telNo.telNo"/>
+        <id column="MAIL_ADDR" property="custInfo.custUser.contact.mailAddr.mail"/>
+        <id column="PAY_CONDITION_NAME" property="payConditionItem.payConditionName"/>
+    </resultMap>
+    <select id="acceptItemDetail" resultMap="AcceptanceItemInfoDetailItem_Map">
+      SELECT S_NEW_RCV.ACC_CD,
+             S_NEW_RCV.ORDER_NO AS "orderNo.orderNo",
+             S_NEW_RCV.DELIV_KEY_NO "delivKeyNo",
+             S_NEW_RCV.DELIV_VERSION AS "historyNo.historyNo",
+             S_NEW_RCV.CORRECT_CD AS "correctInd.correctInd",
+             S_ORDER.BUYER_COMPANY_CD AS "COMPANY_CD",
+             S_ORDER.REQ_TYPE_IND AS "reqInd.reqInd",
+             S_NEW_RCV.ACCEPT_DATE AS "acceptDate.dateOfymd",
+             S_ORDER.ITEM_NAME AS "item.itemName",
+             S_ORDER.CUST_ITEM_CD AS "item.itemCd",
+             S_ORDER.KATASHIKI AS "item.katashiki",
+             S_NEW_RCV.ACCEPT_VOL AS "acceptVol.vol",
+             S_NEW_RCV.UNIT_NAME AS "unit",
+             S_NEW_RCV.CURRENCY_CD AS "currencyCd",
+             S_NEW_RCV.ACCEPT_AMOUNT AS "acceptAmount.amount",
+             S_NEW_RCV.TAX_IND AS "taxInd",
+             S_NEW_RCV.TAX_RATE AS "taxRate",
+             S_ORDER.BUYER_SECTION_PLACE_NAME AS "PLACENAME",
+             S_ORDER.BUYER_SECTION_NAME AS "SECTIONNAME",
+             S_ORDER.BUYER_USER_NAME AS "USERNAME",
+             S_ORDER.BUYER_USER_TEL_NO AS "CONTRACT",
+             S_ORDER.BUYER_USER_MAIL_ADDR AS MAIL_ADDR,
+             S_NEW_RCV.CONSUMPT_AMOUNT AS "consumptAmount.amount",
+             S_NEW_RCV.TOTAL_AMOUNT AS "totalAmount.amount",
+             S_ORDER.PAY_CONDITION_NAME
+        FROM S_NEW_RCV
+        INNER JOIN (SELECT M_SUPPLIER.COMPANY_CD,
+                           M_SUPPLIER.SUP_CD
+                      FROM M_SUPPLIER
+                     WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                    <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                    </if>
+                    <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                        <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN
+                            <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                                #{custCdList}
+                            </foreach>
+                        </if>
+                        <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                              AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                        </if>
+                    </if>
+                       AND M_SUPPLIER.TERM_FLG = '0'
+                       AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                       AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                   ) M_SUPPLIER_V
+                ON S_NEW_RCV.ACC_CD = M_SUPPLIER_V.SUP_CD
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND S_NEW_RCV.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+                </if>
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                       AND S_NEW_RCV.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+                    </if>
+                </if>
+        INNER JOIN ( SELECT S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD ,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO
+                       FROM S_NEW_RCV S_NEW_RCV_B
+                      WHERE S_NEW_RCV_B.DELETE_FLG = '0'
+                   GROUP BY S_NEW_RCV_B.ACC_CD,
+                            S_NEW_RCV_B.CUST_CD,
+                            S_NEW_RCV_B.ORDER_NO,
+                            S_NEW_RCV_B.DELIV_KEY_NO ) S_NEW_RCV_MAXVER
+               ON S_NEW_RCV.ACC_CD = S_NEW_RCV_MAXVER.ACC_CD
+              AND S_NEW_RCV.CUST_CD = S_NEW_RCV_MAXVER.CUST_CD
+              AND S_NEW_RCV.ORDER_NO = S_NEW_RCV_MAXVER.ORDER_NO
+              AND S_NEW_RCV.DELIV_KEY_NO = S_NEW_RCV_MAXVER.DELIV_KEY_NO
+       LEFT JOIN (S_ORDER
+                   INNER JOIN (SELECT S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO,
+                                      MAX(S_ORDER_B.ORDER_VERSION) as "MAX_ORDER_VERSION"
+                                 FROM S_ORDER S_ORDER_B
+                                WHERE S_ORDER_B.DELETE_FLG = '0'
+                             GROUP BY S_ORDER_B.ACC_CD,
+                                      S_ORDER_B.CUST_CD,
+                                      S_ORDER_B.ORDER_NO ) S_ORDER_V1
+                           ON S_ORDER.ACC_CD = S_ORDER_V1.ACC_CD
+                          AND S_ORDER.CUST_CD = S_ORDER_V1.CUST_CD
+                          AND S_ORDER.ORDER_NO = S_ORDER_V1.ORDER_NO
+                          AND S_ORDER.ORDER_VERSION = S_ORDER_V1.MAX_ORDER_VERSION
+                    )
+              ON S_NEW_RCV.ACC_CD = S_ORDER.ACC_CD
+             AND S_NEW_RCV.CUST_CD = S_ORDER.CUST_CD
+             AND S_NEW_RCV.ORDER_NO = S_ORDER.ORDER_NO
+        WHERE
+            S_NEW_RCV.DELETE_FLG = '0'
+            AND S_NEW_RCV.DPO_FLG = '1'
+            AND S_NEW_RCV.FISCAL_MONTH = #{fiscalYearMonth.dateOfym}
+            AND S_ORDER.BUYER_COMPANY_CD = #{buyerCompany}
+            AND S_ORDER.BUYER_SECTION_CD = #{buyerSectionCd}
+            AND S_NEW_RCV.CURRENCY_CD = #{currencyCd}
+            AND S_NEW_RCV.ACC_CD = #{accCd}
+        ORDER BY S_NEW_RCV.DELIV_KEY_NO,S_NEW_RCV.DELIV_VERSION,S_NEW_RCV.CORRECT_CD
+    </select>
+    
+    <sql id="pageHeader">
+       SELECT * FROM (
+    </sql>
+    <sql id="pageRoot">
+        ) WHERE  ROWNUM &lt;=${@fw.common.util.PropertiesUtil@getLong("DOWNLOAD_MAXCNT")}
+    </sql>
+</mapper>

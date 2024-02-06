@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+
+    <var name="acceptanceIdentify" class="fw.domain.sp.acceptance.acceptanceinfo.AcceptanceIdentify" />
+    
+    <input name="searchCondition" />
+    <input name="isCurrentPageSearch" />
+
+    <decision-state id="isSearchByKey">
+       <if test="flowScope.isCurrentPageSearch" then="searchByKey" else="searchByCondition" />
+    </decision-state>
+    
+    <action-state id="searchByCondition">
+        <evaluate expression="SPNEW061Service.init(searchCondition)"
+            result="flowScope.acceptanceInfoList" />
+        <transition to="SPNEW061" />
+    </action-state>
+
+    <action-state id="searchByKey">
+        <evaluate expression="SPNEW061Service.page(searchCondition)"
+            result="flowScope.acceptanceInfoList" />
+        <transition to="SPNEW061" />
+    </action-state>
+
+    <view-state id="SPNEW061" model="acceptanceInfoList"
+        view="newconfirm/acceptance/SPNEW061">
+        <transition on="order" validate="false">
+            <evaluate expression="SPNEW061Service.order(searchCondition)"
+                result="flowScope.acceptanceInfoList" />
+        </transition>
+        <transition on="page" validate="false">
+            <evaluate expression="SPNEW061Service.page(searchCondition)"
+                result="flowScope.acceptanceInfoList" />
+        </transition>
+        <transition on="back" to="home" validate="false" />
+        <transition on="newConfirm" validate="true" to="searchByKey">
+            <evaluate expression="SPNEW061Service.newConfirm(acceptanceInfoList)" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+        <transition on="newConfirmAll" validate="true" to="searchByKey">
+            <evaluate expression="SPNEW061Service.newConfirmAll()" />
+            <set name="flashScope.isSuccess" value="true"></set>
+        </transition>
+
+        <transition on="detail" to="SPNEW062"  validate="false">
+            <set name="acceptanceIdentify.acceptSeq" value="requestParameters.acceptSeq"/>
+        </transition>
+ 
+    </view-state>
+    <subflow-state id="SPNEW062" subflow="newconfirm/acceptance/SPNEW062">
+        <input name="acceptanceIdentify" value="acceptanceIdentify" />
+    </subflow-state>
+
+</flow>

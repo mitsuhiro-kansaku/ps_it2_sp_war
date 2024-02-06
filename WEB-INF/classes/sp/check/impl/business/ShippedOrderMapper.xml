@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.ShippedOrderMapper">
+
+    <select id="getAlreadyNumberShipments" resultType="int">
+        SELECT COUNT(1)
+		  FROM S_DELIVERY
+		 WHERE S_DELIVERY.ACC_CD = #{utlUserCd}
+		   AND S_DELIVERY.CUST_CD = #{buyerCompanyCd}
+		   AND S_DELIVERY.ORDER_NO = #{orderNo}
+		   AND S_DELIVERY.DELETE_FLG = '0'
+		   AND S_DELIVERY.DELIVERY_STATUS = '2'
+    </select>
+
+</mapper>

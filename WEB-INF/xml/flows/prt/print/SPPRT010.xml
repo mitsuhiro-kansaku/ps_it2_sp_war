@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    
+    <var name="defaultSearchCondition" class="fw.domain.sp.reportissue.ReportIssueSearchCondition" /> 
+    <on-start>
+        <evaluate expression="SPPRT010Service.init(requestParameters.reportName)" result="flowScope.searchCondition" />
+        <set name="flowScope.isCurrentPageSearch" value="false" />
+    </on-start>
+    
+    <view-state id="SPPRT010" view="prt/print/SPPRT010" model="searchCondition">
+        <!-- チェック -->
+        <transition on="validate" validate="true">
+            <set name="flowScope.isCurrentPageSearch" value="false" />
+            <set name="flowScope.isShowList" value="true"></set>
+            <evaluate expression="SPPRT010Service.search(searchCondition)" />
+        </transition>
+        <!-- 検索 -->
+        <transition on="search" to="list" validate="false">
+            <set name="flowScope.reportName" value="searchCondition.reportName" />
+        </transition>
+        <transition on="back" to="home" validate="false"/>
+    </view-state>
+    <subflow-state id="list" subflow="prt/print/SPPRT020" >
+        <input name="searchCondition" value="searchCondition" />
+        <input name="isCurrentPageSearch" value="isCurrentPageSearch" />
+        <input name="reportName" value="reportName" />
+        <transition on="back" to="SPPRT010" >
+            <set name="flowScope.isCurrentPageSearch" value="true" />
+        </transition>
+    </subflow-state>
+</flow>

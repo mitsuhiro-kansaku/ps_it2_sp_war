@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.exclusive.DlvConfirmExclusiveCheckMapper">
+    <select id="searchExclusive" resultType="int">
+        SELECT
+               COUNT(S_NEW_DLV_EST.DLV_EST_SEQ) 
+          FROM S_NEW_DLV_EST
+          WHERE S_NEW_DLV_EST.DLV_EST_SEQ = #{delivMngSeq}
+          AND S_NEW_DLV_EST.LAST_UPD_DATE = #{lastUpdDate}
+    </select>
+</mapper>

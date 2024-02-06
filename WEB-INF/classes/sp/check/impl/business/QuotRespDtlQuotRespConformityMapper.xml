@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.QuotRespDtlQuotRespConformityMapper">
+
+    <select id="getEstimateAnswersDescription" resultType="fw.domain.mst.material.item.Item">
+        SELECT S_QUOT_RESP_DTL.CUST_ITEM_CD  AS "itemCd",
+		       S_QUOT_RESP_DTL.ITEM_NAME     AS "itemName",
+		       S_QUOT_RESP_DTL.KATASHIKI     AS "katashiki",
+		       S_QUOT_RESP_DTL.MANUFACT_CD   AS "manufact.manufactCd",
+		       S_QUOT_RESP_DTL.MANUFACT_NAME AS "manufact.manufactName",
+		       S_QUOT_RESP_DTL.UNIT_NAME     AS "unit.unitName"
+		  FROM S_QUOT_RESP_DTL
+        <where>
+           S_QUOT_RESP_DTL.ACC_CD =#{accCd}
+           AND S_QUOT_RESP_DTL.CUST_CD =#{custCd}
+			   AND S_QUOT_RESP_DTL.APL_NO = #{aplNo}
+			   AND S_QUOT_RESP_DTL.APL_VERSION = #{aplVersion}
+			   AND S_QUOT_RESP_DTL.QUOT_REQ_NO = #{quotReqNo}
+			   AND S_QUOT_RESP_DTL.QUOT_RESP_VERSION = 
+			   (
+			   SELECT MAX(QUOT_RESP_VERSION) 
+			     FROM S_QUOT_RESP_DTL 
+			     WHERE 
+			       ACC_CD =#{accCd}
+			       AND CUST_CD =#{custCd}
+                   AND APL_NO = #{aplNo}
+                   AND APL_VERSION = #{aplVersion}
+                   AND QUOT_REQ_NO = #{quotReqNo}
+               )
+        </where>
+    </select>
+</mapper>

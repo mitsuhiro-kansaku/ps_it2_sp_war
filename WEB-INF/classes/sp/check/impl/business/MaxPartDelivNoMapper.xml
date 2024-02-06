@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.check.impl.business.MaxPartDelivNoMapper">
+
+    <select id="getMaxPartDelivNo" resultType="String">
+        SELECT MAX(PART_DELIV_NO)
+          FROM S_DELIVERY 
+         WHERE ACC_CD = (SELECT ACC_CD FROM S_DELIVERY WHERE DELIVERY_SEQ =#{shipmentSeq})
+           AND CUST_CD = (SELECT CUST_CD FROM S_DELIVERY WHERE DELIVERY_SEQ =#{shipmentSeq})
+           AND ORDER_NO = (SELECT ORDER_NO FROM S_DELIVERY WHERE DELIVERY_SEQ =#{shipmentSeq})
+           AND CORRECT_CD &lt;> '3'
+           AND DELETE_FLG = '0'
+    </select>
+</mapper>

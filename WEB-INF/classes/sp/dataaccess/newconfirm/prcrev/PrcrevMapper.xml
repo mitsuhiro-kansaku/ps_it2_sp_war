@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sp.dataaccess.newconfirm.prcrev.PrcrevMapper">
+
+    <!-- SRC-00115-00 include化共通-->
+    <sql id="listKeyIdentityWhereCondition">
+        AND S_NEW_PRICE_REQ.DELETE_FLG = '0'
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(titleName)">
+            AND S_NEW_PRICE_REQ.TITLE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition","titleName")}  
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(searchObject.searchObject)">
+            <if test="searchObject.searchObject != &quot;9&quot;">
+                AND S_NEW_PRICE_REQ.DPO_FLG = #{searchObject.searchObject}
+            </if>
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateFrom.dateOfymd)">
+            AND S_NEW_PRICE_REQ.PRICE_REQ_DATE >= #{revisionReqDateFrom.dateOfymd, jdbcType=VARCHAR}
+        </if>
+        <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateTo.dateOfymd)">
+            AND S_NEW_PRICE_REQ.PRICE_REQ_DATE &lt;= #{revisionReqDateTo.dateOfymd, jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <!-- 検索 -->
+    <select id="listKeyIdentity" parameterType="fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition"
+        resultType="fw.domain.sp.pricerevision.PriceRevisionIdentify">
+      SELECT 
+            PRICE_REV_SEQ as "priceRevSeq"
+      FROM S_NEW_PRICE_REQ
+          INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          LEFT JOIN
+          S_PRICE_REQ_ATTACH
+          ON
+              S_NEW_PRICE_REQ.PRICE_REQ_FILE_SEQ = S_PRICE_REQ_ATTACH.ATTACH_FILE_SEQ
+              AND S_PRICE_REQ_ATTACH.DELETE_FLG = '0' 
+        <where>
+            <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    
+    <resultMap id="PriceRevReqInfoItem_Map" type="fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoItem">
+        <id column="PRICE_REV_SEQ" property="priceRevisionIdentify.priceRevSeq"/>
+        <id column="ACC_CD" property="priceRevisionIdentify.utlUserCd"/>
+        <id column="CUST_CD" property="priceRevisionIdentify.buyerUserCd"/>
+        <id column="LAST_UPD_DATE" property="priceRevisionIdentify.lastUpdDate"/>
+    </resultMap>   
+    <select id="listPageItem"
+     resultMap="PriceRevReqInfoItem_Map">
+      SELECT
+             S_NEW_PRICE_REQ.PRICE_REV_SEQ AS "PRICE_REV_SEQ",
+             S_NEW_PRICE_REQ.ACC_CD AS "ACC_CD",
+             S_NEW_PRICE_REQ.CUST_CD AS "CUST_CD",
+             S_NEW_PRICE_REQ.DPO_FLG AS "status",
+             S_NEW_PRICE_REQ.PRICE_REQ_DATE AS "revisionReqDate.dateOfymd",
+             S_NEW_PRICE_REQ.TITLE_NAME AS "titleName",
+             S_NEW_PRICE_REQ.BUYER_COMPANY_NAME AS "buyerCompany",
+             S_NEW_PRICE_REQ.BUYER_SECTION_NAME AS "buyerSection",
+             S_NEW_PRICE_REQ.BUYER_USER_NAME AS "orderUser",
+             S_NEW_PRICE_REQ.PRICE_REQ_FILE_SEQ AS "priceListFileSeq",
+             S_PRICE_REQ_ATTACH.ATTACH_FILE_NAME AS "attachFileName",
+             S_NEW_PRICE_REQ.LAST_UPD_DATE AS "LAST_UPD_DATE"
+     FROM   S_NEW_PRICE_REQ
+          INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          LEFT JOIN
+          S_PRICE_REQ_ATTACH
+          ON
+              S_NEW_PRICE_REQ.PRICE_REQ_FILE_SEQ = S_PRICE_REQ_ATTACH.ATTACH_FILE_SEQ
+              AND S_PRICE_REQ_ATTACH.DELETE_FLG = '0' 
+        <where>
+             (PRICE_REV_SEQ) IN 
+                 <foreach collection="searchCondition.page.keyDomainEntityList" item="keyList"  open="(" separator="," close=")">  
+                     (#{keyList.priceRevSeq})
+                 </foreach>
+             <include refid="listKeyIdentityWhereCondition"/>
+        </where>
+     ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    
+    <!-- 新着価格改定情報更新 --> 
+    <update id="update">
+      UPDATE S_NEW_PRICE_REQ 
+         SET
+             DPO_FLG='1',
+             LAST_UPD_DATE='${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+             LAST_UPD_USER_ID='${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+        WHERE PRICE_REV_SEQ IN
+                 <foreach collection="priceRevisionIdentifyList" item="priceRevisionIdentify" open="(" separator="," close=")">
+                   #{priceRevisionIdentify.priceRevSeq}
+                 </foreach> 
+         AND DELETE_FLG = '0'
+    </update> 
+    <!-- 価格改定情報登録 --> 
+    <insert id="insert"> 
+        INSERT INTO S_PRICE_REQ
+        (ACC_CD,
+         CUST_CD,
+         PRICE_REV_SEQ,
+         PRICE_REQ_DATE,
+         TITLE_NAME, 
+         BUYER_COMPANY_CD,
+         BUYER_COMPANY_NAME,
+         BUYER_SECTION_PLACE_CD, 
+         BUYER_SECTION_PLACE_NAME,
+         BUYER_SECTION_CD,
+         BUYER_SECTION_NAME,
+         BUYER_USER_ID,
+         BUYER_USER_NAME,
+         PRICE_REQ_FILE_SEQ,
+         ANS_FLG, 
+         DELETE_FLG,
+         AUTO_DELETE_FLG,
+         AUTO_DELETE_DATE,
+         LAST_UPD_DATE, 
+         LAST_UPD_USER_ID,
+         REG_DATE,
+         REG_USER_ID
+         ) 
+         SELECT
+         ACC_CD,
+         CUST_CD,
+         PRICE_REV_SEQ,
+         PRICE_REQ_DATE,
+         TITLE_NAME, 
+         BUYER_COMPANY_CD,
+         BUYER_COMPANY_NAME,
+         BUYER_SECTION_PLACE_CD, 
+         BUYER_SECTION_PLACE_NAME,
+         BUYER_SECTION_CD,
+         BUYER_SECTION_NAME, 
+         BUYER_USER_ID,
+         BUYER_USER_NAME,
+         PRICE_REQ_FILE_SEQ,
+         '0', 
+         '0',
+         AUTO_DELETE_FLG,
+         AUTO_DELETE_DATE,
+         '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}', 
+         '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}',
+         '${@fw.common.util.AppUtil@getSysDateYyyyMMddHHmmssSSS()}',
+         '${@sp.common.util.SecurityUtil@getUserIdByEscapeSql()}'
+           FROM
+                 S_NEW_PRICE_REQ
+           WHERE PRICE_REV_SEQ IN
+                     <foreach collection="priceRevisionIdentifyList" item="priceRevisionIdentify" open="(" separator="," close=")">
+                       #{priceRevisionIdentify.priceRevSeq}
+                     </foreach> 
+    </insert> 
+    
+    <select id="searchAllItem" parameterType="fw.domain.sp.pricerevision.pricerevisioninfo.NewAllDop"
+        resultType="fw.domain.sp.pricerevision.PriceRevisionIdentify">
+        SELECT          
+           S_NEW_PRICE_REQ.PRICE_REV_SEQ as "priceRevSeq"
+        FROM            
+           S_NEW_PRICE_REQ
+           INNER JOIN(
+                       SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+        <where>   
+           S_NEW_PRICE_REQ.DPO_FLG = '0' 
+           AND S_NEW_PRICE_REQ.DELETE_FLG = '0'
+        </where>
+        FOR UPDATE OF S_NEW_PRICE_REQ.PRICE_REV_SEQ
+    </select>  
+
+    <!-- ダウンロード --> 
+    <select id="download" parameterType="fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition"
+        resultType="fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqDownloadItem">
+      <include refid="pageHeader"/>
+      SELECT 
+             S_NEW_PRICE_REQ.DPO_FLG AS "statusCd",
+             S_NEW_PRICE_REQ.PRICE_REQ_DATE AS "revisionReqdate.dateOfymd",
+             S_NEW_PRICE_REQ.TITLE_NAME AS "titleName",
+             S_NEW_PRICE_REQ.BUYER_COMPANY_CD AS "buyerCompanyCd",
+             S_NEW_PRICE_REQ.BUYER_COMPANY_NAME AS "buyerCompanyName",
+             S_NEW_PRICE_REQ.BUYER_SECTION_CD AS "buyerSectionCd",
+             S_NEW_PRICE_REQ.BUYER_SECTION_NAME AS "buyerSectionName",
+             S_NEW_PRICE_REQ.BUYER_USER_ID AS "buyerUserID",
+             S_NEW_PRICE_REQ.BUYER_USER_NAME AS "buyerUserName",
+             S_PRICE_REQ_ATTACH.ATTACH_FILE_NAME AS "priceSheetFileName"
+      FROM 
+          S_NEW_PRICE_REQ
+          INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          LEFT JOIN
+          S_PRICE_REQ_ATTACH
+          ON
+              S_NEW_PRICE_REQ.PRICE_REQ_FILE_SEQ = S_PRICE_REQ_ATTACH.ATTACH_FILE_SEQ
+              AND S_PRICE_REQ_ATTACH.DELETE_FLG = '0' 
+      <where>
+            S_NEW_PRICE_REQ.DELETE_FLG = '0' 
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(titleName)">
+             AND S_NEW_PRICE_REQ.TITLE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition","titleName")}  
+            </if>
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(searchObject.searchObject)">
+                 <if test="searchObject.searchObject != &quot;9&quot;">
+                      AND S_NEW_PRICE_REQ.DPO_FLG = #{searchObject.searchObject}
+                 </if>  
+            </if>           
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateFrom.dateOfymd)">
+              AND S_NEW_PRICE_REQ.PRICE_REQ_DATE >= #{revisionReqDateFrom.dateOfymd, jdbcType=VARCHAR}
+            </if>
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateTo.dateOfymd)">
+              AND S_NEW_PRICE_REQ.PRICE_REQ_DATE &lt;= #{revisionReqDateTo.dateOfymd, jdbcType=VARCHAR}
+            </if>
+      </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+        <include refid="pageRoot"/>
+    </select>
+    <select id="downloadCount" parameterType="fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition"
+        resultType="java.lang.Long">
+      SELECT 
+            COUNT(*)
+      FROM 
+          S_NEW_PRICE_REQ
+          INNER JOIN(
+            SELECT M_SUPPLIER.COMPANY_CD,
+                   M_SUPPLIER.SUP_CD
+            FROM M_SUPPLIER
+            WHERE M_SUPPLIER.VENDOR_CD = '${@sp.common.util.SecurityUtil@getVendorCdByEscapeSql()}'
+                <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    AND M_SUPPLIER.COMPANY_CD = 'ALL'
+                </if>
+                <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+                    <if test="@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN
+                        <foreach collection="@sp.common.util.SecurityUtil@getBuyerCompanyCdList()" item="custCdList" open="(" separator="," close=")">
+                            #{custCdList}
+                        </foreach>
+                    </if>
+                    <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+                          AND M_SUPPLIER.COMPANY_CD IN ('${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}')
+                    </if>
+                </if>
+                AND M_SUPPLIER.TERM_FLG = '0'
+                AND M_SUPPLIER.VALID_START_DATE &lt;= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+                AND M_SUPPLIER.VALID_END_DATE >= '${@fw.common.util.AppUtil@getSysDate(@fw.common.util.AppUtil@DATE_SHORT)}'
+            ) M_SUPPLIER_V
+        ON
+            S_NEW_PRICE_REQ.ACC_CD = M_SUPPLIER_V.SUP_CD
+        <if test="!@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            AND S_NEW_PRICE_REQ.CUST_CD = M_SUPPLIER_V.COMPANY_CD
+        </if>
+        <if test="@fw.common.util.AppUtil@isUseAll(@fw.common.constant.ApplicationConstant@M_SUPPLIER_ALL_IND)">
+            <if test="!@sp.common.util.SecurityUtil@isAllCust()">
+               AND S_NEW_PRICE_REQ.CUST_CD = '${@sp.common.util.SecurityUtil@getCurrentBuyerCompanyCdByEscapeSql()}'
+            </if>
+        </if>
+          LEFT JOIN
+          S_PRICE_REQ_ATTACH
+          ON
+              S_NEW_PRICE_REQ.PRICE_REQ_FILE_SEQ = S_PRICE_REQ_ATTACH.ATTACH_FILE_SEQ
+              AND S_PRICE_REQ_ATTACH.DELETE_FLG = '0' 
+      <where>
+            S_NEW_PRICE_REQ.DELETE_FLG = '0' 
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(titleName)">
+             AND S_NEW_PRICE_REQ.TITLE_NAME ${@fw.common.util.SearchModeUtil@getSearchSQL("fw.domain.sp.pricerevision.pricerevisioninfo.PriceRevReqInfoSearchCondition","titleName")}  
+            </if>
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(searchObject.searchObject)">
+                 <if test="searchObject.searchObject != &quot;9&quot;">
+                      AND S_NEW_PRICE_REQ.DPO_FLG = #{searchObject.searchObject}
+                 </if>  
+            </if>           
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateFrom.dateOfymd)">
+              AND S_NEW_PRICE_REQ.PRICE_REQ_DATE >= #{revisionReqDateFrom.dateOfymd, jdbcType=VARCHAR}
+            </if>
+            <if test="@org.apache.commons.lang.StringUtils@isNotBlank(revisionReqDateTo.dateOfymd)">
+              AND S_NEW_PRICE_REQ.PRICE_REQ_DATE &lt;= #{revisionReqDateTo.dateOfymd, jdbcType=VARCHAR}
+            </if>
+      </where>
+        ORDER BY ${searchCondition.columnOrder.columnOrder()}
+    </select>
+    
+    <sql id="pageHeader">
+       SELECT * FROM (
+    </sql>
+    <sql id="pageRoot">
+        ) WHERE  ROWNUM &lt;=${@fw.common.util.PropertiesUtil@getLong("DOWNLOAD_MAXCNT")}
+    </sql>
+</mapper>

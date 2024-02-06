@@ -1,0 +1,320 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('QUOT_REQ_INFO')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$quotReqSearchCondition)
+#set($checkBoxsIsSelectMessageParam=["#customSpringMessage('QUOT_REQ_INFO')"])
+#parse("./common/common_js.vm")
+var oldPage;
+function onLoad() {
+    #if($quotReqList.quotReqListItemList.size()!=0)
+        function  block(){
+            parent.document.getElementById('none').style.display='';
+        }
+        block();
+    #else
+        function  none(){
+            parent.document.getElementById('none').style.display='none';
+        }
+        none();
+    #end
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+        #set( $quotReqParam1 = ["#customSpringMessage('QUOT_REQ_INFO')"])
+        alert('#customMessageArgs("I002",$quotReqParam1)');
+    }
+
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+}
+//data画面(ページがある)
+function dataLoadHasPage(){
+    changeFontSize();
+    paging()
+    setSortImg();
+}
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    var checkBoxs = document.getElementsByName('Chk');
+    for(var i=0;i<checkBoxs.length;i++){
+        var checkBox = checkBoxs[i];
+        if(checkBox.checked){
+            count++;
+        }
+    }
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           parent.document.Body.PageNo.value = oldPage;
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+        #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+        #end
+
+        #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+        #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+        #end
+         oldPage = parseInt(parent.document.Body.PageNo.value);
+    #end
+}
+function update() {
+    if (!checkBoxsIsSelect('Chk')) {
+    return false;
+    }
+
+    #set( $quotReqParam2 = ["#customSpringMessage('QUOT_REQ_INFO')","#customSpringMessage('NEW_CHECK')"])
+    if( !confirm("#customMessageArgs("W001",$quotReqParam2)") ) {
+        return;
+    }
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newConfirm";
+    getObj('BodyForm').submit();
+}
+
+function allupdate(){
+    #set( $quotReqParam3 = ["#customSpringMessage('QUOT_REQ_INFO')","#customSpringMessage('NEW_ALL_COUNT_CHECK')"])
+    if( !confirm("#customMessageArgs("W001",$quotReqParam3)") ) {
+            return;
+    }
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=newConfirmAll";
+    getObj('BodyForm').submit();
+}
+
+function openDetail(quotReqSeq,type) {
+    if(type==2){
+    poppage('${flowExecutionUrl}&_eventId=detailPrice&&type=detailLink&&quotReqSeq='+quotReqSeq,'DETAIL','800','700');
+    }else{
+    poppage('${flowExecutionUrl}&_eventId=detail&&type=detailLink&&quotReqSeq='+quotReqSeq,'DETAIL','800','700');
+    }
+}
+
+function chkHead(obj) {
+    #foreach ( $item in $quotReqList.quotReqListItemList)
+        var checkName = "check$velocityCount";
+        if(getObj(checkName)!=null){
+            getObj(checkName).checked = obj.checked;
+            var status = '';
+            if(obj.checked) {
+                status = '1';
+                $("tr:[id=Row_$velocityCount]").css("backgroundColor","#ff9");
+            } else {
+                #if($velocityCount % 2 == 0)
+                    $("tr:[id=Row_$velocityCount]").css("backgroundColor","#dce4ef");
+                #else
+                    $("tr:[id=Row_$velocityCount]").css("backgroundColor","#fff");
+                #end
+            }
+            document.getElementById("quotReqList[$velocityCount].checkDpoFlg").value = status;
+        }
+    #end
+}
+
+//check one
+function chkData(obj, index){
+    var status = '';
+
+    if(obj.checked == true){
+        $("tr:[id=Row_" + index+"]").css("backgroundColor","#ff9");
+        status = '1';
+    }else{
+        if (index % 2 != 0) {
+            $("tr:[id=Row_" + index+"]").css("backgroundColor","#fff");
+        } else {
+            $("tr:[id=Row_" + index+"]").css("backgroundColor","#dce4ef");
+        }
+    }
+    document.getElementById("quotReqList["+index+"].checkDpoFlg").value = status;
+}
+
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE', 1, 3);"><!-- テーブル幅と固定内容を設定(テーブルID,ヘッダ固定行数,固定列数)-->
+#if($!errorMessage && $!errorMessage!="")
+<div id="error" name="error" class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm"  method="post">
+#foreach($!quotreqItem in $quotReqList.quotReqListItemList)
+        #customFormHiddenInput("quotReqList[$velocityCount].quotReqSeq" "$!quotreqItem.quotReqIdentify.quotReqSeq")
+        #customFormHiddenInput("quotReqList[$velocityCount].lastUpdDate" "$!quotreqItem.quotReqIdentify.lastUpdDate")
+        #customFormHiddenInput("quotReqList[$velocityCount].accCd" "$!quotreqItem.quotReqIdentify.accCd")
+        #customFormHiddenInput("quotReqList[$velocityCount].custCd" "$!quotreqItem.quotReqIdentify.custCd")
+        #customFormHiddenInput("quotReqList[$velocityCount].quotReqNo" "$!quotreqItem.quotReqIdentify.quotReqNo")
+        #customFormHiddenInput("quotReqList[$velocityCount].revisionNumber" "$!quotreqItem.quotReqIdentify.revisionNumber")
+        #customFormHiddenInput("quotReqList[$velocityCount].correctCd" "$!quotreqItem.quotReqIdentify.correctCd")
+#end
+<table id="TABLE" class="ListArea" WIDTH="100%">
+    <thead>
+    #if($quotReqList.quotReqListItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall">No.</th>
+            <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th>
+            <th id="CheckCol_H" label="chk" class="BoxHeaderCenter FontSmall"><input name="ParentCheck" id="ParentCheck" type="checkbox" onclick="chkHead(this);"></th><!--全選択/全選択解除-->
+            <th  class="BoxHeaderCenter FontSmall"><img border="0" src="../../image/mrkAttache.gif" /></th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.CORRECT_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.CORRECT_CD')">
+            #* ----- 2013/01/21 DEL DAIKO_YAMAGUCHI
+            #customSpringMessage('DIVISION')
+            *#
+            ## +++++ 2013/01/21 ADD DAIKO_YAMAGUCHI START
+            #customSpringMessage('CORRECT_NAME')
+            ## +++++ 2013/01/21 ADD DAIKO_YAMAGUCHI -END-
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.APL_VERSION" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.APL_VERSION')">
+            #customSpringMessage('REVISION_NUMBER')
+            </th>
+            ## 2013.04.15 DEL DAIKO_WANG START
+            #*
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.QUOT_REQ_IND" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.QUOT_REQ_IND')">
+            #customSpringMessage('QUOT_REQ_IND')
+            *#
+            ## 2013.04.15 DEL DAIKO_WANG -END-
+            ##</th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.DPO_FLG" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.DPO_FLG')">
+            #customSpringMessage('STATUS')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.APL_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.APL_NO')">
+            #customSpringMessage('QUOT_REQ_NO')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.QUOT_REQ_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.QUOT_REQ_DATE')">
+            #customSpringMessage('QUOT_REQ_DATE')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.QUOT_RESP_LIMIT_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.QUOT_RESP_LIMIT_DATE')">
+            #customSpringMessage('QUOT_ANS_LIMIT')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.REQ_COMPANY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.REQ_COMPANY_CD')">
+            #customSpringMessage('BUYER_COMPANY')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="S_NEW_QUOT_REQ.TITLE_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_NEW_QUOT_REQ.TITLE_NAME')">
+            #customSpringMessage('TITLE_NAME')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="REQ_DELIV_DATE_FROM" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','REQ_DELIV_DATE_FROM')">
+            #customSpringMessage('REQ_DELIV_DATE')#customSpringMessage('FROM')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" id="REQ_DELIV_DATE_TO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','REQ_DELIV_DATE_TO')">
+            #customSpringMessage('REQ_DELIV_DATE')#customSpringMessage('TO')
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+    #foreach($!quotreqItem in $quotReqList.quotReqListItemList)
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">#set( $no = $velocityCount + 1 )$no</td>
+            <td class="BoxDetailCenter FontList">
+                <img id="DetailButton_0" class="Icon" src="../../image/btnDetailDisp.gif" style="margin-right:4px;" onclick="openDetail('#jsEscapeInHTML($!quotreqItem.quotReqIdentify.quotReqSeq)','#jsEscapeInHTML($!quotreqItem.quotReqInd)');">
+            </td>
+            <td id="CheckCol_0" class="BoxDetailCenter FontList">
+                #if($!quotreqItem.status=='0')
+                    #customFormHiddenInput("quotReqList[$velocityCount].checkDpoFlg" "")
+                    <input class="Icon" name="Chk" id="check$velocityCount" type="checkbox" onclick="chkData(this, '$velocityCount');"/>
+                #end
+            </td>
+            <td class="BoxDetailCenter FontList">
+                    #if($!quotreqItem.attachFlg == '1')
+                    <IMG BORDER="0" src="../../image/mrkAttache.gif">
+                    #end
+            </td>
+            #if($!quotreqItem.division == '3')
+                <td class="BoxDetailCenter FontList Red"> #out($!quotreqItem.division_PageValue)</td>
+            #elseif($!quotreqItem.division == '4')
+                <td class="BoxDetailCenter FontList Green"> #out($!quotreqItem.division_PageValue)</td>
+            #else
+                <td class="BoxDetailCenter FontList"> #out($!quotreqItem.division_PageValue)</td>
+            #end
+            #* ----- 2013/02/04 DEL DAIKO_YAMAGUCHI
+            #if($!quotreqItem.revisionNumber!= '1')
+            *#
+            <td class="BoxDetailCenter FontList">#out($!quotreqItem.revisionNumber)</td>
+            #* ----- 2013/02/04 DEL DAIKO_YAMAGUCHI
+            #else
+            <td class="BoxDetailCenter FontList"></td>
+            #end
+            *#
+            ## 2013.04.15 DEL DAIKO_WANG
+            ##<td class="BoxDetailCenter FontList">#out($!quotreqItem.quotReqInd_PageValue)</td>
+            <td class="BoxDetailCenter FontStatus">#out($!quotreqItem.status_PageValue)</td>
+            <td class="BoxDetailLeft FontSlipNo">#out($!quotreqItem.quotReqNo)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotreqItem.quotReqDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotreqItem.reqLimit.dateOfymdFormat)</td>
+            <td class="BoxDetailLeft FontList">#out($!quotreqItem.buyerCompany)</td>
+            <td class="BoxDetailLeft FontList">#out($!quotreqItem.titleName)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotreqItem.reqDelivDateFrom.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList">#out($!quotreqItem.reqDelivDateTo.dateOfymdFormat)</td>
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+</form>
+</body>
+</html>

@@ -1,0 +1,431 @@
+#**
+ * springMessage
+ *
+ * Macro to translate a message code into a message.
+ *#
+#macro( customSpringMessage $code )$customMacroRequestContext.getMessageNoHtmlEscape($code)#end
+
+#**
+ * springMessageText
+ *
+ * Macro to translate a message code into a message,
+ * using the given default text if no message found.
+ *#
+#macro( customSpringMessageText $code $text )$customMacroRequestContext.getMessageNoHtmlEscape($code, $text)#end
+#**
+ * 初期化
+ * getCustomDefault
+*#
+#macro(getCustomDefault)
+    #set($intType="Insert")
+    #set($updType="Update")
+    #**改定**#
+    #set($revisonType="Revison")
+    #**複写**#
+    #set($copyType="Copy")
+    #set($boolTrue="true")
+#end
+
+#**
+ * customFormSingleSelect
+ *
+ * Show a selectbox (dropdown) input element allowing a single value to be chosen
+ * from a list of options.
+ *
+ * The null check for $status.value leverages Velocity's 'quiet' notation rather
+ * than the more common #if($status.value) since this method evaluates to the
+ * boolean 'false' if the content of $status.value is the String "false" - not
+ * what we want.
+ *
+ * @param path the name of the field to bind to
+ * @param options a list (value=label) of all the available options
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+*#
+#macro( customFormSingleSelect $path $options $attributes )
+    #springBind($path)
+    <select id="${status.expression}" name="${status.expression}" ${attributes}>
+        #foreach($option in $options)
+            <option value="#out(${option.value})"
+            ## ----- 強化-01362-000 2013/05/14 DEL SBO_liqiang START -----
+            ##if("$!status.value" == "$option.value")
+            ## ----- 強化-01362-000 2013/05/14 DEL SBO_liqiang -END- -----
+            ## +++++ 強化-01362-000 2013/05/14 ADD SBO_liqiang START +++++
+            #if("$!status.value" == "#out($option.value)")
+            ## +++++ 強化-01362-000 2013/05/14 ADD SBO_liqiang -END- +++++
+                selected="selected"
+            #end>
+            #out(${option.text})</option>
+        #end
+    </select>
+#end
+
+#**
+ * customFormRadioButtons
+ *
+ * Show radio buttons.
+ *
+ * @param path the name of the field to bind to
+ * @param options a list (value=label) of all the available options
+ * @param separator the html tag or other character list that should be used to
+ *    separate each option.  Typically '&nbsp;' or '<br>'
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+*#
+#macro( customFormRadioButtons $path $options $separator $attributes )
+    #springBind($path)
+    #foreach($option in $options)
+        <input type="radio" name="${status.expression}" value="${option.value}"
+        #if("$!status.value" == "$option.value")
+            checked="checked"
+        #end
+        ${attributes}
+        #springCloseTag()
+        #out(${option.text}) ${separator}
+    #end
+#end
+
+#**
+ * springFormCheckboxes
+ *
+ * Show checkboxes.
+ *
+ * @param path the name of the field to bind to
+ * @param options a map (value=label) of all the available options
+ * @param separator the html tag or other character list that should be used to
+ *    separate each option.  Typically '&nbsp;' or '<br>'
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+*#
+#macro( customFormCheckboxes $path $options $separator $attributes )
+    #springBind($path)
+    #foreach($option in $options)
+        <input type="checkbox" name="${status.expression}" value="${option.value}"
+        #foreach($item in $status.value)
+            #if($item == $option.value) checked="checked" #end
+        #end
+         #springCloseTag()
+        #customFormSpan(${option.text} $attributes) #out(${separator})
+    #end
+#end
+
+#**
+ * springFormCheckbox
+ *
+ * Show a single checkbox.
+ *
+ * @param path the name of the field to bind to
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+ * @param value the value of the field to bind to
+*#
+#macro( customFormCheckbox $path $attributes $checkValue $noCheckValue)
+    #springBind($path)
+    <input type="hidden" name="${status.expression}" id="${status.expression}" value="$!{status.value}"/>
+    <input type="checkbox" id="_${status.expression}" name="_${status.expression}" #if("$!{status.value}"=="$checkValue") checked="checked" #end ${attributes} onclick="getObj('${status.expression}').value = getObj('_${status.expression}').checked?'$checkValue':'$noCheckValue';"/>
+#end
+#**
+ * customFormInput
+ *
+ * カスタムのテキストボックス
+ *
+ * @param path the name of the field to bind to
+ * @param inputClass cssname
+ * @param maxlength inputmaxlength
+ * @param size inputsize
+ * @param value the value of the field to bind to
+ * @param textType the value of the field to bind to
+*#
+#macro(customFormInput $path $attributes $value)
+    #springBind($path)
+     <input
+        id="${status.expression}"
+        name="${status.expression}"
+        value="#out($value)"
+        ${attributes}
+    >
+#end
+#**
+ * customFormSpan
+ *
+ * カスタムのスパン
+ *
+ * @param path
+ * @param value
+ * @param spanClass
+*#
+#macro(customFormSpan $value $spanAttributes)
+    <span ${spanAttributes}>
+        #out($!{value})
+    </span>
+#end
+
+#**
+ * customFormTable
+ *
+ * カスタムのスパン
+ *
+ * @param path
+ * @param value
+ * @param tdAttributes
+ * @param spanAttributes
+*#
+#macro(customFormTable $value $tdAttributes $spanAttributes)
+    <table class="NoBorder" width="100%">
+        <tr>
+            <td ${tdAttributes}>
+                #customFormSpan($value $spanAttributes)
+            </td>
+        </tr>
+    </table>
+#end
+
+#**
+ * customFormInputByType
+ *
+ * カスタムのスパン
+ *
+ * @param type
+ * @param path
+ * @param value
+ * @param inputClass
+ * @param maxlength
+ * @param size
+ * @param editEnable
+ * @param tdAttributes
+ * @param spanAttributes
+*#
+#macro(customFormInputByType $path $attributes $editEnable $tdAttributes $spanAttributes)
+    #getCustomDefault()
+    #if("$!intType" == "$!type")
+        #springFormInput($path $attributes)
+     #elseif("$!updType" == "$!type" || "$!revisonType" == "$!type")
+        #if("$!boolTrue" == "$!editEnable")
+            #springFormInput($path $attributes)
+        #else
+            #springBind($path)
+            #customFormTable("$!{status.value}" $tdAttributes $spanAttributes)
+        #end
+    #end
+#end
+
+#**
+ * customFormSingSelectByType
+ *
+ * カスタムのスパン
+ *
+ * @param type
+ * @param path
+ * @param options
+ * @param attributes
+ * @param value
+ * @param editEnable
+ * @param tdAttributes
+ * @param spanAttributes
+*#
+#macro(customFormSingSelectByType $path $options $attributes $editEnable $tdAttributes $spanAttributes)
+    #getCustomDefault()
+    #if("$!intType" == "$!type") ##新規の場合
+        #customFormSingleSelect($path $options $attributes)
+    #elseif("$!updType" == "$!type" || "$!revisonType" == "$!type") ##編集の場合
+        #if("$!boolTrue" == $editEnable)
+            #customFormSingleSelect($path $options $attributes)
+        #else
+           #springBind($path)
+           #customFormTable("$!{status.value}" $tdAttributes $spanAttributes)
+        #end
+    #end
+#end
+
+#**
+ * customFormRedMessageByType
+ *
+ * カスタムのメセッジ
+ * ※
+ * @param type タイプは削除、新規、修正などある
+ * @param spanAttributes
+ * @param isShow
+ * @param value
+*#
+#macro(customFormRedMessageByType $spanAttributes $isShow $value)
+        #getCustomDefault()
+        #if("$!intType" == "$!type")
+            #customFormSpan($value $spanAttributes)
+        #elseif(("$!updType" == "$!type" ||"$!revisonType" == "$!type" ) && "$!boolTrue" == $isShow)
+            #customFormSpan($value $spanAttributes)
+        #end
+    </span>
+#end
+
+#**
+ * customFormRadioButtonByType
+ *
+ * カスタムのメセッジ
+ *
+ * @param type タイプは削除、新規、修正などある
+ * @param path
+ * @param options
+ * @param separator
+ * @param attributes
+ * @param value
+ * @param editEnable
+ * @param tableClass
+ * @param tdClass
+ * @param spanClass
+*#
+#macro(customFormRadioButtonByType $path $options $separator $attributes $editEnable $tdAttributes $spanAttributes)
+    #getCustomDefault()
+    #if("$!intType" == "$!type")
+        #customFormRadioButtons($path $options $separator $attributes)
+    #elseif("$!updType" == "$!type")
+        #if("$!boolTrue" == $editEnable)
+            #customFormRadioButtons($path $options $separator $attributes)
+        #else
+           #springBind($path)
+           #customFormTable("$!{status.value}" $tdAttributes $spanAttributes)
+        #end
+    #end
+#end
+
+#**
+ * customFormTermFlgByType
+ *
+ * カスタムの廃止表示
+ *
+ * @param type タイプは削除、新規、修正などある
+ * @param message
+ * @param path
+ * @param attributes
+ * @param attributes
+*#
+#macro(customFormSingCheckboxByType $message $path $attributes $termList $spanAttributes)
+    #getCustomDefault()
+    #if("$!updType" == "$!type")
+        #set($checkValue = "")
+        #set($noCheckValue = "")
+        #foreach($term in $termList)
+            #if($term.text == "#customSpringMessage($!{message})")
+                #set($checkValue = $term.value)
+            #else
+                #set($noCheckValue = $term.value)
+            #end
+        #end
+        #customFormCheckbox($path $attributes $checkValue $noCheckValue)
+        #customFormSpan("#customSpringMessage($!{message})" $spanAttributes)
+    #end
+#end
+
+#**
+ * customFormSingCheckbox
+ *
+ * カスタムのCheckbox表示
+ *
+ * @param message
+ * @param path
+ * @param attributes
+ * @param attributes
+*#
+#macro(customFormSingCheckbox $id $path $itemList $spanAttributes)
+    #set($checkValue = "")
+    #set($noCheckValue = "")
+    #set($chktext = "")
+    #foreach($term in $itemList)
+        #if($term.name == $!id)
+            #set($checkValue = $term.value)
+            #set($chktext = "${term.text}")
+        #else
+            #set($noCheckValue = $term.value)
+        #end
+    #end
+    #customFormCheckbox($path $attributes $checkValue $noCheckValue)
+    #customFormSpan($chktext $spanAttributes)
+#end
+
+#**
+ * customMessageArgs
+ *
+ * Macro to translate a message code with arguments into a message.
+*#
+
+## ----- ＩＴ２-01540-000 2013/06/24 DEL SBO_pangzhen START -----
+## #macro( customMessageArgs $code $args )$code \n\n $customMacroRequestContext.getMessageNoHtmlEscape($code, $args)#end
+## ----- ＩＴ２-01540-000 2013/06/24 DEL SBO_pangzhen -END- -----
+## +++++ ＩＴ２-01540-000 2013/06/24 ADD SBO_pangzhen START +++++
+#macro( customMessageArgs $code $args )$code \n\n #jsEscape($customMacroRequestContext.getMessageNoHtmlEscape($code, $args))#end
+## +++++ ＩＴ２-01540-000 2013/06/24 ADD SBO_pangzhen START +++++
+
+
+#**
+ * customFormHiddenInput
+ *
+ * Generate a form input field of type 'hidden' and bind it to an attribute
+ * of a command or bean.
+ *
+ * @param path the name of the field to bind to
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+ *
+ *#
+#macro( customFormHiddenInput $id $value)
+
+    <input type="hidden" id="$id" name="$id" value="#out($value)" />
+#end
+
+#**
+ * customFormPasswordInput
+ *
+ * Display a form input field of type 'password' and bind it to an attribute
+ * of a command or bean.  No value will ever be specified for this field regardless
+ * of whether one exists or not.  For hopefully obvious reasons!
+ *
+ * @param path the name of the field to bind to
+ * @param attributes any additional attributes for the element (such as class
+ *    or CSS styles or size
+ *
+ *#
+#macro( customFormPasswordInput $path $attributes )
+    #springBind($path)
+    <input type="password" id="${status.expression}" name="${status.expression}" value="$!status.value" ${attributes}#springCloseTag()
+#end
+
+## +++++ 2013/02/03 ADD DAIKO_YAMAGUCHI START
+#**
+ * correctIndColor
+ *
+ * 訂正区分によって、cssのクラスを変更する
+ *#
+#macro( correctIndColor $correctInd )
+#if($correctInd.change)Green
+#elseif($correctInd.cancel)Red
+#end
+#end
+## +++++ 2013/02/03 ADD DAIKO_YAMAGUCHI -END-
+
+#macro( out $value $htmlEscape )
+#if("$!htmlEscape" != "")$customMacroRequestContext.out($value, $htmlEscape)
+#else$customMacroRequestContext.out($value, true)#end
+#end
+
+## +++++ ＩＴ２-01540-000 2013/06/24 ADD SBO_pangzhen START +++++
+#macro( jsEscape $value )
+$customMacroRequestContext.jsEscape($value, false)#end
+
+#macro( jsEscapeInHTML $value )
+$customMacroRequestContext.jsEscape($value, true)#end
+## +++++ ＩＴ２-01540-000 2013/06/24 ADD SBO_pangzhen -END- +++++
+
+#macro ( isActiveProfile $profileName)
+$customMacroRequestContext.isActiveProfile($profileName)
+#end
+
+#macro ( optionalMenuList $type)
+#foreach($menu in $customMacroRequestContext.getOptionalMenu($type))
+#parse($menu.vmPath)
+#end
+#end
+
+#macro ( optionalScriptList $type)
+#foreach($script in $customMacroRequestContext.getOptionalScript($type))
+#parse($script.vmPath)
+#end
+#end

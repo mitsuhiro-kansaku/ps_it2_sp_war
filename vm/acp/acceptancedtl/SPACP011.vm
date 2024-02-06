@@ -1,0 +1,207 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#springMessage('FAX_IND_ACCPAY')</title>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" TYPE="text/javascript">
+<!--
+#set($searchCondition=$acceptanceItemInfoSearchCondition)
+#parse("./common/common_js.vm")
+
+function onLoad() {
+    TableSort.init();
+    dataLoadHasPage();
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+    var count = #jsEscape($acceptList.acceptanceItemInfoItemList.size());
+
+    if(count == 0 && errorMsg == ""){
+        var errorMsg = '#customMessageArgs("I004","")';
+    }else if(count != 0 && errorMsg.indexOf("I004") != -1){
+        var errorMsg = "";
+    }
+
+    if (errorMsg != ""){
+        return;
+    }
+}
+
+function openDetail(fiscalYearMonth, buyerCompany, buyerSectionCd, currencyCd, accCd) {
+    poppage('${flowExecutionUrl}&_eventId=detail&&fiscalYearMonth1='+fiscalYearMonth+'&&buyerCompany='+encodeURIComponent(buyerCompany)+'&&buyerSectionCd='+encodeURIComponent(buyerSectionCd)+'&&currencyCd='+encodeURIComponent(currencyCd)+'&&accCd='+encodeURIComponent(accCd),'DETAIL','800','700');
+}
+//-->
+</script>
+
+</head>
+<body id="BODY" class="DataArea" onload="onLoad();setTablefix('#TABLE', 1, 2)"><!-- テーブル幅と固定内容を設定(テーブルID,ヘッダ固定行数,固定列数)-->
+#if($!errorMessage && $!errorMessage!="")
+<div class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm"  method="post">
+<table id="TABLE" class="ListArea" WIDTH="100%">
+    <thead>
+    #if($acceptList.acceptanceItemInfoItemList.size()!=0)
+        <tr id="Header">
+            <th class="BoxHeaderCenter FontSmall" width="1%">No.</th>
+            <th class="BoxHeaderCenter FontSmall" width="3%">#customSpringMessage('DETAIL')</th>
+            <th label="case" class="BoxHeaderCenter FontSmall" width="4%"
+                id="ACCDETAIL.FISCAL_MONTH" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','ACCDETAIL.FISCAL_MONTH')">
+            #customSpringMessage('FISCAL_YEAR_MONTH')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" width="14%"
+                id="S_ORDER.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_COMPANY_NAME')">
+            #customSpringMessage('BUYER_COMPANY')
+            </th>
+            <th label="case" class="BoxHeaderCenter FontSmall" width="14%" id="S_ORDER.BUYER_SECTION_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_SECTION_NAME')">
+            #customSpringMessage('BUYER_SECTION')
+            </th>
+            #if ($!acceptList.accNameDispInd != '0')
+                #if ($!acceptList.accNameDispInd == '3')
+            <th class="BoxHeaderCenter FontSmall" width="8%">
+                #else
+            <th class="BoxHeaderCenter FontSmall" width="14%">
+                #end
+                #customSpringMessage('ACC_NAME')
+            </th>
+            #end
+            <th label="case" class="BoxHeaderCenter FontSmall" width="3%"
+                id="ACCDETAIL.CURRENCY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','ACCDETAIL.CURRENCY_CD')">
+            #customSpringMessage('CURRENCY_CD')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="7%">
+            #customSpringMessage('TAX_IND')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="7%" id="amount">
+            #customSpringMessage('AMOUNT')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="6%" id="amount">
+            #customSpringMessage('CONSUMPT_AMOUNT')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="7%" id="amount">
+            #customSpringMessage('TOTAL_AMOUNT')
+            </th>
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="7%" id="amount">
+            #customSpringMessage('TOTAL_AMOUNT_OUT_TAX')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="6%" id="amount">
+            #customSpringMessage('CONSUMPT_AMOUNT_TOTAL')
+            </th>
+            <th class="BoxHeaderCenter FontSmall" width="7%" id="amount">
+            #customSpringMessage('TOTAL_AMOUNT_IN_TAX')
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+
+    #foreach($!acceptItem in $acceptList.acceptanceItemInfoItemList)
+        #if($velocityCount % 2 == 0)
+            <tr id="Row_$velocityCount" bgcolor="#dce4ef">
+        #else
+            <tr id="Row_$velocityCount" bgcolor="#ffffff">
+        #end
+            <td class="BoxDetailCenter FontList">$foreach.count</td>
+            <td class="BoxDetailCenter FontList">
+                <img id="DetailButton_$foreach.index" class="Icon" src="../../image/btnDetailDisp.gif" style="margin-right:4px;" onclick="openDetail('#jsEscapeInHTML($!acceptItem.acceptanceItemIdentify.fiscalYearMonth.dateOfym)','#jsEscapeInHTML($!acceptItem.acceptanceItemIdentify.buyerCompany)','#jsEscapeInHTML($!acceptItem.acceptanceItemIdentify.buyerSectionCd)','#jsEscapeInHTML($!acceptItem.acceptanceItemIdentify.currencyCd)','#jsEscapeInHTML($!acceptItem.acceptanceItemIdentify.accCd)');">
+            </td>
+            <td class="BoxDetailCenter FontList">#out($!acceptItem.acceptanceItemIdentify.fiscalYearMonth.dateOfymFormat)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptItem.buyerCompany)</td>
+            <td class="BoxDetailLeft FontList">#out($!acceptItem.buyerSectionName)</td>
+        #if ($!acceptList.accNameDispInd == "1")
+            <td class="BoxDetailLeft FontList">#out($!acceptItem.accName)</td>
+        #end
+        #if ($!acceptList.accNameDispInd == "2")
+            <td class="BoxDetailLeft FontList">#out($!acceptItem.accAbbrName)</td>
+        #end
+        #if ($!acceptList.accNameDispInd == "3")
+            <td class="BoxDetailCenter FontList">#out($!acceptItem.accCd)</td>
+        #end
+            <td class="BoxDetailCenter FontList">#out($!acceptItem.currencyCd)</td>
+            <td class="BoxDetailCenter FontCurrSmall">
+                #foreach($!amountItem in $acceptItem.acceptAmountItemList)
+                    <div class="FontCurrSmall">
+                    #out($!amountItem.getTaxIndAndRate())
+                    </div>
+                #end
+            </td>
+        	#if ($!acceptItem.amount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                #foreach($!amountItem in $acceptItem.acceptAmountItemList)
+                    <div class="FontCurrSmall">
+                    #out($!amountItem.acceptAmount.amountMarkDispForSP)
+                    </div>
+                #end
+                </td>
+            #if($!acceptItem.consumptAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                #foreach($!amountItem in $acceptItem.acceptAmountItemList)
+                    <div class="FontCurrSmall">
+                    #out($!amountItem.consumptAmount.amountMarkDispForSP)
+                    </div>
+                #end
+                </td>
+            #if($!acceptItem.totalAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                #foreach($!amountItem in $acceptItem.acceptAmountItemList)
+                    <div class="FontCurrSmall">
+                    #out($!amountItem.amountSum.amountMarkDispForSP)
+                    </div>
+                #end
+                </td>
+            #if($!acceptItem.amount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                    #out($!acceptItem.amount.amountMarkDispForSP)
+                </td>
+            #if($!acceptItem.consumptAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                    #out($!acceptItem.consumptAmount.amountMarkDispForSP)
+                </td>
+            #if($!acceptItem.totalAmount.moneyDisp)
+                <td class="BoxDetailRight FontCurrSmall" nowrap>
+            #else
+                <td class="BoxDetailCenter FontCurrSmall" nowrap>
+            #end
+                    #out($!acceptItem.totalAmount.amountMarkDispForSP)
+                </td>
+        </tr>
+    #end
+    </tbody>
+    #end
+</table>
+</form>
+</body>
+</html>

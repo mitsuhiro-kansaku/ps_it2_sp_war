@@ -1,0 +1,17 @@
+<!doctype html>
+<HTML LANG="ja">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<HEAD>
+<SCRIPT LANGUAGE="javascript" TYPE="text/javascript">
+<!--
+function onLoad() {
+    top.location.href = "$!requestContext.contextPath/layout/sessiontimeout";
+}
+
+//-->
+</SCRIPT>
+</HEAD>
+
+<BODY ONLOAD="onLoad();">
+</BODY>
+</HTML>

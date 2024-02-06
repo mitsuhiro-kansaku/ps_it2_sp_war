@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+    parent="base">
+    <var name="domain" class="fw.domain.sp.usermaster.UserMasterCondManagement" />
+
+<!-- TODO 14/11/07 add パスワード暗号化 daiko t.watanabe start  -->
+    <on-start>
+        <evaluate expression="SPLGN020Service.init()"
+            result="flowScope.domain" />
+    </on-start>
+<!-- TODO 14/11/07 add パスワード暗号化 daiko t.watanabe end  -->
+
+    <view-state id="SPLGN020" view="lgn/password/SPLGN020" model="domain">
+        <transition on="save" validate="true">
+            <evaluate expression="SPLGN020Service.update(domain)"/>
+            <set name="flowScope.isSuccess" value="true" />
+        </transition>
+        <transition on="back" to="home" validate="false" />
+    </view-state>
+</flow>

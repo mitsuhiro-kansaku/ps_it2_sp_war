@@ -1,0 +1,492 @@
+<!doctype html>
+<html LANG="ja">
+<head>
+<title>#customSpringMessage('SHIPMENT')</title> <!-- 出荷 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<link rel="stylesheet" href="../../include/searchbox.css" type="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery.tablefix.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" TYPE="text/javascript" src="../../include/tablesort.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/searchbox.js"></script>
+
+<script language="javascript" TYPE="text/javascript">
+<!--
+
+#parse("./common/common_js.vm")
+var isClickable = false;
+
+// 初期化
+function onLoad() {
+
+    fillHidden();
+    parentButtonEnable();
+    TableSort.init();
+    dataLoadHasPage();
+
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        isClickable = true;
+        return;
+    }
+
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        #if($alertMessage.indexOf('W009') != -1)
+            if (confirm("$alertMessage")) {
+                updateConfirm();
+            }
+        #else
+        	buttonUsableForList(alertMessage);
+            alert(alertMessage);
+        #end
+    }
+
+    // 出荷処理が成功の場合
+    var hasDeliveryed = '#jsEscape($!hasDeliveryed)';
+    if(hasDeliveryed == 'true'){
+        #set( $infoParam = ["#customSpringMessage('SHIPMENT')"])
+        alert('#customMessageArgs("I005", $infoParam)');
+        parent.iframeChange("${flowExecutionUrl}&_eventId=page");
+        return;
+    }
+
+    // 取消処理が成功の場合
+    var hasDeleted = '#jsEscape($!hasDeleted)';
+    if(hasDeleted == 'true') {
+        #set( $infoParam = ["#customSpringMessage('SHIPMENT')"])
+        alert('#customMessageArgs("I003", $infoParam)');
+        parent.iframeChange("${flowExecutionUrl}&_eventId=page");
+        return;
+    }
+
+    // 詳細画面遷移
+    var isShowDetail = '#jsEscape($!isShowDetail)';
+    if(isShowDetail) {
+        poppage('${flowExecutionUrl}&_eventId=detail', 'DETAIL', '800', '700');
+    }
+
+    // 備考入力画面遷移
+    var isShowRemark = '#jsEscape($!isShowRemark)';
+    if(isShowRemark) {
+        poppage('${flowExecutionUrl}&_eventId=remarkInput', 'REMARK', '700', '500');
+        iframeChange("${flowExecutionUrl}&_eventId=remarkInput",
+                     "REMARK");
+        return;
+    }
+
+    #if($shipmentList.shipmentItemList.size() != 0)
+        parent.window.document.getElementById("ExecSection").style.display = "";
+    #end
+
+    isClickable = true;
+}
+
+function fillHidden(){
+    #foreach($!shipmentItem in $!shipmentList.shipmentItemList)
+        getObj("shipmentItemList[$velocityCount].notes").value= "#jsEscape($!shipmentItem.notes)";
+    #end
+}
+
+// 詳細画面遷移
+function openDetail(shipmentSeq, lastUpdDate, exclusiveSlipNo, exclusiveLastUpdDate) {
+    parent.iframeChange('${flowExecutionUrl}&_eventId=detailValidate',
+                        'shipmentSeq', shipmentSeq,
+                        'exclusiveSlipNo', exclusiveSlipNo,
+                        'exclusiveLastUpdDate', exclusiveLastUpdDate,
+                        "HIDDENAREA");
+}
+
+// 備考入力画面遷移
+function inputRemark(shipmentSeq,lineNo,deliverySeq, exclusiveSlipNo, exclusiveLastUpdDate) {
+    var notes = getObj("shipmentItemList["+lineNo+"].notes").value;
+    parent.iframeChange("${flowExecutionUrl}&_eventId=remarkValidate",
+                        'shipmentSeq',shipmentSeq,
+                        'lineNo',lineNo,
+                        'notes',notes,
+                        'deliverySeq',deliverySeq,
+                        'exclusiveSlipNo', exclusiveSlipNo,
+                        'exclusiveLastUpdDate', exclusiveLastUpdDate,
+                        "HIDDENAREA");
+}
+
+//check /uncheck all
+$(function(){
+    $(document).delegate('#ParentCheck','change',function() {
+        var chk = $(this).prop("checked");
+        var status = 0;
+        $("input:[type=checkbox][name^=selectStatus_]").prop("checked",chk)
+
+        if(chk){
+            $("tr:[id^=Row_]").css("background-color","#ffff99");
+            status = 1;
+        }else{
+            $("tr:[id^=Row_]").each(function(){
+                var count = $(this).attr("id").substring(4);
+                if (Number(count) % 2 != 0) {
+                    $(this).css("background-color","#ffffff");
+                } else {
+                    $(this).css("background-color","#dce4ef");
+                }
+            });
+        }
+        #foreach ( $!shipmentItem in $!shipmentList.shipmentItemList)
+            getObj('shipmentItemList[$velocityCount].checkStatus').value=status;
+        #end
+    });
+});
+
+// 行選択
+function selectRow(no, obj) {
+    var status = 0;
+    if (obj.checked) {
+        $("tr:[id=Row_"+no+"]").css("background-color","#ff9");
+        status = 1;
+    } else {
+        if (no % 2 == 0) {
+            $("tr:[id=Row_"+no+"]").css("background-color","#dce4ef");
+        } else {
+            $("tr:[id=Row_"+no+"]").css("background-color","#fff");
+        }
+    }
+    document.getElementById("shipmentItemList["+no+"].checkStatus").value = status;
+}
+
+// 出荷処理ボタンを押下
+function update() {
+    if(!isClickable) {
+        return;
+    }
+
+    var count = 0;
+    #foreach($item in $shipmentList.shipmentItemList)
+        var checkName = "selectStatus_$velocityCount";
+        if(getObj(checkName) != null && getObj(checkName).checked) {
+            count++;
+        }
+    #end
+
+    if(count == 0) {
+        #set( $infoParam = ["#customSpringMessage('SHIPMENT')"])
+        alert("#nothingSelectedMessage()");
+    } else {
+        #set( $shipmanagementParam = ["#customSpringMessage('SHIP_MANAGEMENT')", "#customSpringMessage('ACTION_RUN')"])
+
+        if(!confirm("#customMessageArgs("W001", $shipmanagementParam)") ) {
+            return;
+        }
+        buttonDisable();
+        parentButtonDisable();
+        getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=shippingProcessing";
+        getObj("BodyForm").submit();
+    }
+}
+
+//  出荷処理（メッセージ確認時）
+function updateConfirm(){
+
+    #foreach ($!shipmentItem in $!shipmentList.shipmentItemList)
+        getObj('shipmentItemList[$velocityCount].checkStatus').value='$!shipmentItem.checkStatus';
+    #end
+
+    buttonDisable();
+    parentButtonDisable();
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=shippingProcessing&checkPass=1";
+    getObj("BodyForm").submit();
+}
+
+// 取消ボタンを押下
+function deleteDetail(index) {
+    if(!isClickable) {
+        return;
+    }
+
+    #set( $shipmanagementParam = ["#customSpringMessage('SHIP_MANAGEMENT')", "#customSpringMessage('ACTION_CANCEL')"])
+
+    if(!confirm("#customMessageArgs("W001", $shipmanagementParam)") ) {
+        return;
+    }
+    buttonDisable();
+    parentButtonDisable();
+    getObj("BodyForm").action = "${flowExecutionUrl}&_eventId=deleteDetail&lineNo=" + index;
+    getObj("BodyForm").submit();
+}
+
+function setApr(notes,lineNo,lastUpdDate) {
+    var dataArea = parent.document.getElementById('DATAAREA').contentWindow;
+    var dataAreaDocument;
+    if(dataArea != null){
+        var dataAreaDocument = dataArea.document;
+    } else {
+        return;
+    }
+    var id = "shipmentItemList["+lineNo+"].notes";
+    dataAreaDocument.getElementById(id).value = notes;
+}
+
+//data画面(ページがある)
+function dataLoadHasPage(){
+    changeFontSize();
+    paging();
+    setSortImg();
+}
+var oldPage;
+
+// いずれかの選択チェックボックスがONの場合
+function pageChange(pageNnm, pageno){
+    var count = 0;
+    #foreach($item in $shipmentList.shipmentItemList)
+        var checkName = "selectStatus_$velocityCount";
+        if(getObj(checkName) != null && getObj(checkName).checked) {
+            count++;
+        }
+    #end
+    if(count!=0){
+       if( !confirm("#customMessageArgs("W004","")") ) {
+           parent.document.Body.PageNo.value = oldPage;
+           return false;
+       }
+    }
+    parent.iframeChange('${flowExecutionUrl}&_eventId=page','pageNow',pageNnm);
+    return true;
+}
+function paging(){
+    #if($searchCondition)
+        parent.setText("COUNT","#jsEscape($!searchCondition.searchCondition.page.totalRows)");
+        parent.setText("PAGECOUNT","#jsEscape($!searchCondition.searchCondition.page.totalPages)");
+
+        parent.document.Body.PageNo.options.length = "#jsEscape($!searchCondition.searchCondition.page.totalPages)";
+        for(i=1; i<=parent.document.Body.PageNo.options.length; i++) {
+            parent.document.Body.PageNo.options[i-1] = new Option(i,i);
+        }
+        var pageNow=parseInt("#jsEscape($!searchCondition.searchCondition.page.pageNow)");
+        parent.document.Body.PageNo.selectedIndex = pageNow-1;
+        parent.document.Body.PageNo.onchange= new Function(" var num=parent.document.Body.PageNo.selectedIndex+1;pageChange(num)");
+
+        #if($!searchCondition.searchCondition.page.hasPreviousPage=="true")
+            parent.document.Body.PageFirst.style.display="none";
+            parent.document.Body.PageFirstOn.style.display="";
+            parent.document.Body.PageFirstOn.onclick = new Function("pageChange(1)");
+            parent.document.Body.PagePrev.style.display="none";
+            parent.document.Body.PagePrevOn.style.display="";
+            parent.document.Body.PagePrevOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')-1;pageChange(num)");
+         #else
+            parent.document.Body.PageFirst.style.display="";
+            parent.document.Body.PageFirstOn.style.display="none";
+            parent.document.Body.PagePrev.style.display="";
+            parent.document.Body.PagePrevOn.style.display="none";
+         #end
+
+         #if($!searchCondition.searchCondition.page.hasNextPage=="true")
+            parent.document.Body.PageNext.style.display="none";
+            parent.document.Body.PageNextOn.style.display="";
+            parent.document.Body.PageNextOn.onclick = new Function("var num=parseInt('#jsEscape($!searchCondition.searchCondition.page.pageNow)')+1;pageChange(num)");
+            parent.document.Body.PageLast.style.display="none";
+            parent.document.Body.PageLastOn.style.display="";
+            parent.document.Body.PageLastOn.onclick = new Function("pageChange(#jsEscape($!{searchCondition.searchCondition.page.totalPages}))");
+         #else
+            parent.document.Body.PageNext.style.display="";
+            parent.document.Body.PageNextOn.style.display="none";
+            parent.document.Body.PageLast.style.display="";
+            parent.document.Body.PageLastOn.style.display="none";
+         #end
+         oldPage = parseInt(parent.document.Body.PageNo.value);
+    #end
+}
+//-->
+</script>
+</head>
+
+<body class="DataArea" onload="onLoad();setTablefix('#SPSHP020ICHIRANTABLEFIX', 1, 4);" >
+#if($!errorMessage && $!errorMessage!="")
+<div id="error" name="error" class="error">
+    $!errorMessage
+</div>
+#end
+<form id="BodyForm" name="BodyForm" method="post" action="${flowExecutionUrl}&_eventId=update">
+    <div id="show">
+    #set( $index = 0)
+    #foreach($!shipmentItem in $!shipmentList.shipmentItemList)
+        #customFormHiddenInput("shipmentItemList[$index].checkStatus" "0")
+        #customFormHiddenInput("shipmentItemList[$velocityCount].notes" "$!shipmentItem.notes")
+        #customFormHiddenInput("shipmentItemList[$velocityCount].shipmentIdentify.lastUpdDate" "$!shipmentItem.shipmentIdentify.lastUpdDate")
+        #set( $index = $index + 1 )
+    #end
+    </div>
+    <!-- ＊＊＊＊＊　カレンダーボックス　＊＊＊＊＊ -->
+    <iframe id="CALENDARBOX" class="CALENDARBOX" framespacing="0" scrolling="no" frameborder="0" src="../../sbxCalendar/body.vm"></iframe>
+    <table id="SPSHP020ICHIRANTABLEFIX" class="ListArea" WIDTH="100%">
+    <thead>
+        #if($!shipmentList.shipmentItemList.size() != 0)
+            <tr id="Header">
+                <th class="BoxHeaderCenter FontSmall">No.</th><!-- No. -->
+                <th class="BoxHeaderCenter FontSmall">#customSpringMessage('DETAIL')</th> <!-- 詳細 -->
+                <th label="chk" class="BoxHeaderCenter FontSmall">
+                    <input name="ParentCheck" id="ParentCheck" type="checkbox">
+                </th>
+                #if($!searchCondition.searchObject == '2')
+                    <th class="BoxHeaderCenter FontSmall">#customSpringMessage('ACTION_CANCEL')</th><!-- 取消 -->
+                #end
+                <th class="BoxHeaderCenter FontSmall">#customSpringMessage('NOTES_INPUT')</th> <!-- 備考入力 -->
+                <!-- 納品キー番号 -->
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.DELIV_KEY_NO" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.DELIV_KEY_NO')">
+                    #customSpringMessage('DELIV_KEY_NO')
+                </th>
+                <th class="BoxHeaderCenter FontSmall">
+                    <!-- 品名 -->
+                    <span id="S_ORDER.ITEM_NAME" class="BoxHeaderSortItem" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ITEM_NAME')">
+                        #customSpringMessage('ITEM_NAME')
+                    </span>
+                    <br />
+                    <!-- 品名コード -->
+                    <span id="S_ORDER.CUST_ITEM_CD" class="BoxHeaderSortItem" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CUST_ITEM_CD')">
+                        #customSpringMessage('ITEM_CD')
+                    </span>
+                    <br />
+                    <!-- 型式 -->
+                    <span id="S_ORDER.KATASHIKI" class="BoxHeaderSortItem" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.KATASHIKI')">
+                        #customSpringMessage('KATASHIKI')
+                    </span>
+                </th>
+                <!-- 出荷数量 -->
+                <th class="BoxHeaderCenter FontSmall" id="S_DELIVERY.SHIPMENT_VOL">
+                    #customSpringMessage('SHIPMENT_VOL')<span class="FontWarn">&nbsp;※</span>
+                </th>
+                <th class="BoxHeaderCenter FontSmall">
+                <!-- 注文数量 -->
+                    #customSpringMessage('ORDER_VOL')
+                    <br />
+                    <!-- 未出荷数量 -->
+                    <span id="S_ORDER.REMAINING_VOL" class="BoxHeaderSortItem" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.REMAINING_VOL')">
+                        #customSpringMessage('NOT_SHIPMENT_AMOUNT')
+                    </span>
+                </th>
+                <!-- 単位 -->
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_DELIVERY.UNIT_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_DELIVERY.UNIT_NAME')">
+                    #customSpringMessage('UNIT')
+                </th>
+                <th class="BoxHeaderCenter FontSmall">
+                    <!-- 出荷日 -->
+                    <span id="S_DELIVERY.SHIPMENT_DATE">
+                        #customSpringMessage('SHIPMENT_DATE')<span class="FontWarn">&nbsp;※</span>
+                    </span>
+                    <br/>
+                    <!-- 着荷予定日 -->
+                    <span id="S_DELIVERY.ARVEXP_DATE">
+                        #customSpringMessage('ARVEXP_DATE')<span class="FontWarn">&nbsp;※</span>
+                    </span>
+                </th>
+                <!-- 注文日 -->
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.ORDER_FIRST_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.ORDER_FIRST_DATE')">
+                    #customSpringMessage('ORDER_DATE')
+                </th>
+                <!-- 注文納期 -->
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.DELIVERY_DATE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.DELIVERY_DATE')">
+                    #customSpringMessage('ORDER_DELIV_DATE')
+                </th>
+                <!-- 発注企業 -->
+                <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.BUYER_COMPANY_NAME" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.BUYER_COMPANY_NAME')">
+                    #customSpringMessage('BUYER_COMPANY')
+                </th>
+                <!-- 通貨コード -->
+                 <th label="case" class="BoxHeaderCenter FontSmall" id="S_ORDER.CURRENCY_CD" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.CURRENCY_CD')">
+                    #customSpringMessage('CURRENCY_CD')
+                </th>
+                <!-- 注文単価 -->
+                <th label="num" class="BoxHeaderCenter FontSmall" id="S_ORDER.UNIT_PRICE" onclick="parent.iframeChange('${flowExecutionUrl}&_eventId=order','column','S_ORDER.UNIT_PRICE')">
+                    #customSpringMessage('ORDER_UNIT_PRICE')
+                </th>
+            </tr>
+    </thead>
+    <tbody id="Tbody">
+        #set($index = 0)
+        #foreach($!shipmentItem in $!shipmentList.shipmentItemList)
+            <tr id="Row_$velocityCount" #if($velocityCount % 2 == 0) bgcolor="#dce4ef" #else bgcolor="#ffffff" #end>
+            <td class="BoxDetailCenter FontList">#set( $index = $index + 1 )$index</td>
+            <td class="BoxDetailCenter">
+                <img id="DetailButton_$velocityCount" class="Icon" src="../../image/btnDetailDisp.gif"
+                    onclick="openDetail(#jsEscapeInHTML($!shipmentList.shipmentItemList[$velocityCount].shipmentIdentify.shipmentSeq), #jsEscapeInHTML($!shipmentList.shipmentItemList[$velocityCount].shipmentIdentify.lastUpdDate),
+                                        '#jsEscapeInHTML($!shipmentItem.shipmentIdentify.exclusiveSlipId.slipNo)','#jsEscapeInHTML($!shipmentItem.shipmentIdentify.exclusiveSlipId.lastUpdDate)');"/>
+            </td>
+
+            <td class="BoxDetailCenter">
+                <input type="checkbox" onclick="selectRow($velocityCount, this)" class="Icon" name="selectStatus_$velocityCount" id="selectStatus_$velocityCount">
+            </td>
+            #if($!searchCondition.searchObject == '2')
+                <td class="BoxDetailCenter">
+                #if($!shipmentList.shipmentItemList[$velocityCount].partDelivNo == $!shipmentList.shipmentItemList[$velocityCount].maxPartDelivNo)
+                    <input TYPE="BUTTON" class="SmallButton" VALUE="#customSpringMessage('ACTION_CANCEL')" onclick="deleteDetail($velocityCount)">
+                #end
+                </td>
+            #end
+            <td class="BoxDetailCenter">
+                <input type="button" class="SmallButton" value="#customSpringMessage('NOTES_INPUT')"
+                                onclick="inputRemark('#jsEscapeInHTML($!shipmentList.shipmentItemList[$velocityCount].delivKeyNo)',$velocityCount, $!shipmentList.shipmentItemList[$velocityCount].shipmentIdentify.shipmentSeq,
+                                                     '#jsEscapeInHTML($!shipmentItem.shipmentIdentify.exclusiveSlipId.slipNo)','#jsEscapeInHTML($!shipmentItem.shipmentIdentify.exclusiveSlipId.lastUpdDate)');"/><!-- 備考入力 -->
+            </td>
+            <td class="BoxDetailLeft FontSlipNo" nowrap>#out($!shipmentList.shipmentItemList[$velocityCount].delivKeyNo)</td>
+            <td class="BoxDetailLeft FontList" nowrap>
+                #out($!shipmentList.shipmentItemList[$velocityCount].itemName)
+                <br/>
+                #out($!shipmentList.shipmentItemList[$velocityCount].itemCd)
+                <br/>
+                #out($!shipmentList.shipmentItemList[$velocityCount].katashiki)
+            </td>
+            <td class="BoxDetailRight" nowrap>
+                #springFormInput("shipmentList.shipmentItemList[$velocityCount].shipmentVol.volFormat", "class='SmallRight noIME' size='18' maxlength='13' onblur='editVal(this)' onfocus='deleteComma(this);'")
+            </td>
+            <td class="BoxDetailRight" nowrap>
+                #out($!shipmentList.shipmentItemList[$velocityCount].originVol.volFormat)
+                <br/>
+                #out($!shipmentList.shipmentItemList[$velocityCount].notShipmentVol.volFormat)
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap>#out($!shipmentList.shipmentItemList[$velocityCount].unit)</td>
+            <td class="BoxDetailRight" nowrap>
+                #springFormInput("shipmentList.shipmentItemList[$velocityCount].shipmentDate.dateOfymdFormat", "class='Small noIME' maxlength='8' type='text' size='12' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1, getObj('shipmentItemList[$velocityCount].shipmentDate.dateOfymdFormat'));">
+                <br/>
+                #springFormInput("shipmentList.shipmentItemList[$velocityCount].arvexpDate.dateOfymdFormat" "class='Small noIME' maxlength='8' type='text' size='12' onblur='dateOnBlur(this);' onfocus='dateOnFocus(this);' ")
+                <img class="Icon" src="../../image/btnCalendar.gif" onclick="initSearchBox(1, getObj('shipmentItemList[$velocityCount].arvexpDate.dateOfymdFormat'));">
+            </td>
+            <td class="BoxDetailCenter FontList" nowrap>#out($!shipmentList.shipmentItemList[$velocityCount].orderDate.dateOfymdFormat)</td>
+            <td class="BoxDetailCenter FontList" nowrap>#out($!shipmentList.shipmentItemList[$velocityCount].orderDelivDate.dateOfymdFormat)</td>
+            <td class="BoxDetailLeft FontList" nowrap>#out($!shipmentList.shipmentItemList[$velocityCount].buyerCompany)</td>
+            <td class="BoxDetailCenter FontList">#out($!shipmentList.shipmentItemList[$velocityCount].currencyCd)</td>
+            #if ($!shipmentList.shipmentItemList[$velocityCount].orderUnitPrice.moneyDisp)
+            <td class="BoxDetailRight FontCurrSmall" nowrap>
+                #out($!shipmentList.shipmentItemList[$velocityCount].orderUnitPrice.amountMarkDispForSP)
+                #if($!shipmentList.shipmentItemList[$velocityCount].unitPriceInd == '0')
+                    <BR><font class="FontMini" color=red>【#customSpringMessage('PROV_PRICE')】</font>
+                #end
+            </td>
+            #else
+            <td class="BoxDetailCenter FontCurrSmall" nowrap>
+                #out($!shipmentList.shipmentItemList[$velocityCount].orderUnitPrice.amountMarkDispForSP)
+            </td>
+            #end
+        </tr>
+        #end
+    </tbody>
+    #end
+    </table>
+    <table id="WAIT" class="NoBorder" style="display:none;width:100%;">
+        <tr>
+            <td style="text-align:center;">
+                <br>
+                <img src="../../image/wait.gif"><br><span class="FontMini"><br>#customSpringMessage('SEARCH_MESSAGE')</span>
+            </td>
+        </tr>
+    </table><!--問い合わせ中...-->
+</form>
+</body>
+</html>

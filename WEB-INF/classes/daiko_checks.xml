@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.3//EN" "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!--
+    This configuration file was written by the eclipse-cs plugin configuration editor
+-->
+<!--
+    Checkstyle-Configuration: Daiko Checks
+    Description: none
+-->
+<module name="Checker">
+  <property name="severity" value="error"/>
+  <module name="TreeWalker">
+    <!-- 2. 命名規約 -->
+    <!-- 2.2 パッケージ -->
+    <!-- 2.2.1 パッケージ名はすべて小文字にする -->
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+    </module>
+    <!-- 2.2.3 パッケージ名は省略しない -->
+    <module name="PackageDeclaration"/>
+    <!-- 2.3 クラス・インタフェース -->
+    <!-- 2.3.4 クラス・インタフェース名は単語の先頭を大文字にする。 -->
+    <module name="TypeName"/>
+    <!-- 2.4 メソッド -->
+    <!-- 2.4.3 メソッド名先頭文字の小文字のチェック -->
+    <module name="MethodName"/>
+    <!-- 2.5 変数全般 -->
+    <!-- 2.5.2 変数名先頭文字の小文字のチェック -->
+    <module name="MemberName"/>
+    <!-- 2.5.4 定数名の大文字チェック -->
+    <module name="ConstantName"/>
+    <!-- 2.6 パラメータ命名 -->
+    <!-- 2.6.1 パラメータ名先頭文字の小文字のチェック -->
+    <module name="ParameterName"/>
+    <!-- 3. フォーマット -->
+    <!-- 3.1 全般 -->
+    <!-- 3.1.1 Javaソースファイルは、コンパイル単位要素を適切な順序で記述する -->
+    <module name="DeclarationOrder"/>
+    <!-- 3.3 空白 -->
+    <!-- 3.3.3 メソッド名と左括弧の間にスペースが挿入してはいけない -->
+    <module name="GenericWhitespace"/>
+    <!-- 3.4 改行 -->
+    <!-- 3.4.1 1行が100文字を超える場合は適切な位置で折り返す-->
+    <!-- ファイル行数、文字数などをチェックします -->
+    <!-- 長すぎる行は避ける-->
+    <module name="LineLength">
+      <property name="max" value="100"/>
+      <property name="tabWidth" value="4"/>
+    </module>
+    <!-- 3.4.2 1つの行には1つの文のみを記述する -->
+    <!-- 1行に2つ以上のステートメントを記述しない -->
+    <module name="MultipleVariableDeclarations"/>
+    <!-- 3.6 制御文 -->
+    <!-- 3.6.1 条件文には「{}」を記述する。 -->
+    <module name="NeedBraces"/>
+    <!-- 3.6.2 本体が空の制御文を記述しない。 -->
+    <!-- 空のブロックをチェックします。 -->
+    <!-- ステートメントがない空の「{}」ブロックを記述しない -->
+    <!-- 空のcatchブロックを記述しない -->
+    <module name="EmptyBlock"/>
+    <!-- Javadoc コメント -->
+    <!-- Javadoc内に、次のタグ、@return @param @throwsあるいは、@exception @seeあるいは、@inheritDocが存在しているかをチェックします。-->
+    <!-- メソッドに対してドキュメンテーションコメントを記述する-->
+    <module name="JavadocMethod"/>
+    <!-- クラス・インタフェースに対してドキュメンテーションコメントを記述する。-->
+    <module name="JavadocType">
+      <property name="authorFormat" value="\S"/>
+      <property name="versionFormat" value="\S"/>
+    </module>
+    <!-- クラスとインタフェースの変数のコメントは必要です。 -->
+    <module name="JavadocVariable"/>
+    <!-- メソッドは150行を超えてはいけない -->
+    <module name="MethodLength">
+      <property name="tokens" value="METHOD_DEF"/>
+    </module>
+    <!-- メソッドやコンストラクタで使用されるパラメータ数を制限すること。 --> 
+    <module name="ParameterNumber">
+      <property name="tokens" value="METHOD_DEF"/>
+    </module>
+    <!-- 中括弧「{}」は閉じるときだけ改行する -->
+    <!-- 「{」の後にステートメントを記述しない -->
+    <!-- 制御文(if,else,while,for,do-while)の｢{}｣は省略しない -->
+    <module name="LeftCurly"/>
+    <!-- コーディング上の問題 -->
+    <!-- equals()やhashCode()をオーバーライドするクラスをチェックします。 -->
+    <module name="EqualsHashCode"/>
+    <!-- ソースの可読性を考慮し、String s = Integer.toString(i =2);のような代入表現をチェックします。-->
+    <module name="InnerAssignment"/>
+    <!-- マジックナンバーは存在しないようにすること。 -->
+    <module name="MagicNumber"/>
+    <!-- 「for文」を利用した繰返し処理の中でカウンタ変数の値を変更しない -->
+    <module name="ModifiedControlVariable"/>
+    <!-- 冗長なthrows の指定をチェックします。 -->
+    <module name="RedundantThrows"/>
+    <!-- 無駄な複雑なboolean return文にしないこと。 -->
+    <module name="SimplifyBooleanReturn"/>
+    <!-- 文字列の比較ではequals()メソッドを使用する -->
+    <module name="StringLiteralEquality"/>
+    <!-- “文字列リテラル”.equals(文字列オブジェクト)を使用する -->
+    <!-- 文字列リテラルと変数の比較には、文字列リテラルの「equals()」メソッドを利用する -->
+    <module name="EqualsAvoidNull"/>
+    <!-- ネストされたif-elseのブロックの深さが３以下にすること。 -->
+    <module name="NestedIfDepth">
+      <property name="max" value="3"/>
+    </module>
+    <!-- ネストされたtryのブロックは１以下にすること。 -->
+    <module name="NestedTryDepth"/>
+    <!-- super.clone() を呼び出す、clone()メソッドをオーバーライドしているかチェックします。-->
+    <module name="SuperClone"/>
+    <!-- super.finalize() を呼び出す、finalize()メソッドをオーバーライドしているかチェックします。 -->
+    <module name="SuperFinalize"/>
+    <!-- catch句では詳細な例外を捕らえる。  -->
+    <module name="IllegalCatch"/>
+    <!-- public あるいは、protected で戻り値型にvoid 指定のsetUp(),tearDown()メソッドが引数なしで正しく定義されているかチェックします。また、public でstatic なsuite()メソッドが戻り値型に、returnjunit.framewotk.Test を指定し、引数なしで正しく定義されているかチェックします。 -->
+    <module name="JUnitTestCase"/>
+    <!-- パラメータへの代入を禁止すること。 -->
+    <module name="ParameterAssignment"/>
+    <!-- リテラル値は原則として使用しない。 -->
+    <module name="MultipleStringLiterals">
+      <property name="allowedDuplicates" value="2"/>
+    </module>
+    <!-- switch文にはdefault句を記述する -->
+    <module name="MissingSwitchDefault"/>
+    <!-- 行末に記述するコメントにしないこと。 -->
+    <module name="TrailingComment"/>
+    <!-- ホワイトスペース -->
+    <!-- メソッド名と始め中括弧の間にスペースが挿入できない --> 
+    <!-- 「for」文のセミコロンの後には空白文字を入れる --> 
+    <module name="MethodParamPad"/>
+    <!-- 括弧使用時のパディングについてチェックします。左の括弧の後ろのパディングが対象です。 -->
+    <module name="ParenPad"/>
+    <!-- Typecast の括弧のパディングについてチェックします。左の括弧の後ろのパディングが対象です。 -->
+    <module name="TypecastParenPad"/>
+    <!-- 指定されたtoken の後にホワイトスペースが存在することをチェックします。-->
+    <module name="WhitespaceAfter"/>
+    <!-- インポート -->
+    <!-- 使用しないクラス・インタフェースをインポートしない。 -->
+    <module name="UnusedImports"/>
+    <!-- パッケージ全体をインポートしない。 -->
+    <module name="AvoidStarImport"/>
+    <!-- staticインポートを使用しない -->
+    <module name="AvoidStaticImport"/>
+    <!-- java.langパッケージおよび同一パッケージ内のクラス・インタフェースをインポートしない。 -->
+    <module name="RedundantImport"/>
+    <!-- 継承されないクラスはfinalで宣言する -->
+    <module name="FinalClass"/>
+    <!-- オーバーライドしたメソッドには@Overrideを付ける -->
+    <module name="MissingOverride"/>
+    <!-- 算術演算子（「+」「-」「*」「/」「%」の前後には空白文字を入れる -->
+    <!-- 代入演算子（「=」「+=」「-=」「*=」「/=」「%=」の前後には空白文字を入れる -->
+    <!-- 関係演算子（「<」「>」「>=」「<=」「==」「!=」）の前後には空白を入れる -->
+    <!-- ビット演算子（「|」「&」「^」「<<」「>>」）の前後には空白文字を入れる -->
+    <!-- 論理演算子（「||」「&&」）の前後には空白文字を入れる -->
+    <module name="WhitespaceAround">
+      <property name="tokens" value="PLUS,MINUS,STAR,DIV,MOD,ASSIGN,PLUS_ASSIGN,MINUS_ASSIGN,STAR_ASSIGN,DIV_ASSIGN,MOD_ASSIGN,GENERIC_START,LT,GT,LE,GE,EQUAL,NOT_EQUAL,BOR,BAND,BXOR,SL,SR,LOR,LAND"/>
+    </module>
+    <module name="NoWhitespaceAfter">
+      <property name="tokens" value="INC,DEC"/>
+    </module>
+    <!-- 配列宣言は「型名[]」にする -->
+    <module name="ArrayTypeStyle"/>
+    <!-- 循環的複雑さを大きくしない（4以上） -->
+    <!-- <module name="NestedForDepth">
+      <property name="max" value="4"/>
+    </module>-->
+    <!-- アプリケーションから「finalize()」を呼び出さない -->
+    <module name="NoFinalizer"/>
+    <!-- 「finalize()」をオーバーライドした場合は「super.finalize()」を呼び出す -->
+    <module name="SuperFinalize"/>
+    <!-- 3.4.2: 1つの行には1つの文のみを記述する    33 -->
+    <module name="OneStatementPerLine"/>
+    <!-- 「Exception」クラスのオブジェクトを生成してスローしない -->
+    <module name="IllegalThrows">
+      <property name="severity" value="error"/>
+      <property name="illegalClassNames" value="java.lang.Throwable, java.lang.Error, java.lang.RuntimeException,java.lang.Exception"/>
+    </module>
+    <!--6.17.1 同一の文字列リテラルが単一ファイル中に複数回出現にしないこと。 -->
+    <module name="MultipleStringLiterals">
+      <property name="severity" value="error"/>
+    </module>
+    <module name="MultipleStringLiterals">
+      <property name="ignoreOccurrenceContext" value="COMMA,SEMI,COLON,LNOT,NOT_EQUAL,QUESTION,DIV,DIV_ASSIGN,ELLIPSIS,DOT,BXOR,BXOR_ASSIGN,BNOT,POST_DEC,DEC,MINUS,UNARY_MINUS,LPAREN,RPAREN,RBRACK,LCURLY,RCURLY,AT,STAR,STAR_ASSIGN,TYPE_EXTENSION_AND,BAND,LAND,BAND_ASSIGN,MOD,MOD_ASSIGN,PLUS,UNARY_PLUS,POST_INC,INC,PLUS_ASSIGN,LT,GENERIC_START,SL,SL_ASSIGN,LE,ASSIGN,MINUS_ASSIGN,EQUAL,GENERIC_END,GT,GE,SR,SR_ASSIGN,BSR,BSR_ASSIGN,BOR,BOR_ASSIGN,LOR,ANNOTATION,ABSTRACT,IDENT,ANNOTATION_ARRAY_INIT,ANNOTATION_DEF,ANNOTATION_FIELD_DEF,ANNOTATIONS,ANNOTATION_MEMBER_VALUE_PAIR,ARRAY_DECLARATOR,INDEX_OP,ARRAY_INIT,LITERAL_ASSERT,TYPE,TYPE_ARGUMENT,TYPE_PARAMETER,LITERAL_BOOLEAN,LITERAL_BREAK,LITERAL_BYTE,LITERAL_CASE,LITERAL_CATCH,CHAR_LITERAL,LITERAL_CHAR,CLASS_DEF,LITERAL_CLASS,CTOR_CALL,CTOR_DEF,LITERAL_CONTINUE,LITERAL_DEFAULT,LITERAL_DO,LITERAL_DOUBLE,NUM_DOUBLE,LITERAL_ELSE,EMPTY_STAT,EOF,ENUM_CONSTANT_DEF,ENUM_DEF,ENUM,EXPR,ELIST,EXTENDS_CLAUSE,LITERAL_FALSE,FINAL,LITERAL_FINALLY,LITERAL_FLOAT,NUM_FLOAT,FOR_EACH_CLAUSE,LITERAL_FOR,FOR_CONDITION,FOR_INIT,FOR_ITERATOR,CASE_GROUP,LITERAL_IF,IMPLEMENTS_CLAUSE,IMPORT,INSTANCE_INIT,LITERAL_INSTANCEOF,NUM_INT,INTERFACE_DEF,LITERAL_INTERFACE,LITERAL_INT,LABELED_STAT,DO_WHILE,LITERAL_LONG,NUM_LONG,TYPE_LOWER_BOUNDS,METHOD_CALL,METHOD_DEF,MODIFIERS,LITERAL_NATIVE,LITERAL_NEW,LITERAL_NULL,OBJBLOCK,PACKAGE_DEF,PARAMETER_DEF,PARAMETERS,LITERAL_PRIVATE,LITERAL_PROTECTED,LITERAL_PUBLIC,LITERAL_RETURN,LITERAL_SHORT,SLIST,STATIC_IMPORT,STATIC_INIT,LITERAL_STATIC,STRICTFP,STRING_LITERAL,SUPER_CTOR_CALL,LITERAL_SUPER,LITERAL_SWITCH,LITERAL_SYNCHRONIZED,LITERAL_THIS,LITERAL_THROW,LITERAL_THROWS,LITERAL_TRANSIENT,LITERAL_TRUE,LITERAL_TRY,TYPE_ARGUMENTS,TYPECAST,TYPE_PARAMETERS,WILDCARD_TYPE,TYPE_UPPER_BOUNDS,VARIABLE_DEF,LITERAL_VOID,LITERAL_VOLATILE,LITERAL_WHILE"/>
+    </module>
+    <module name="NoWhitespaceBefore">
+      <property name="allowLineBreaks" value="true"/>
+      <property name="tokens" value="SEMI,DOT,POST_DEC,POST_INC"/>
+    </module>
+    <!-- ブール式の複雑さは4です。（最大許容値は3です） -->
+    <module name="BooleanExpressionComplexity"/>
+  </module>
+  <!-- 3.6.5 タブは利用せず、空白文字を利用する -->
+  <module name="FileTabCharacter"/>
+  <!-- クラス・インタフェースは2000行を超えてはいけない -->
+  <module name="FileLength"/>
+</module>

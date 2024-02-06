@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<title>#customSpringMessage('USER_COND')</title><!-- ユーザー設定 -->
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-script-type" content="text/javascript">
+<link id="CSS_FONT" rel="stylesheet" href="../../include/FontS.css" type="text/css">
+<link rel="stylesheet" href="../../include/Layout.css" type="text/css">
+<link rel="stylesheet" href="../../include/Color.css" type="text/css">
+<LINK REL="stylesheet" HREF="../../include/searchbox.css" TYPE="text/css">
+<link rel="stylesheet" href="../../include/ime.css" type="text/css">
+<script language="javascript" type="text/javascript" src="../../include/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/check.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/date.js"></script>
+<script language="javascript" type="text/javascript" src="../../include/jquery-1.7.2.min.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+#parse("./common/common_js.vm")
+function onLoad() {
+	setFocusForInput();
+    top.document.title = document.title;
+    var alertMessage = "$!alertMessage";
+    if (alertMessage != ""){
+        buttonUsableForList(alertMessage);
+        alert(alertMessage);
+    }
+    var errorMsg = "$!errorMessage";
+    if (errorMsg != ""){
+        return;
+    }
+    var isSuccess = '#jsEscape($!isSuccess)';
+    if(isSuccess == 'true'){
+         #set( $args = ["#customSpringMessage('USER_COND')"]);//<!--ログインユーザ情報-->
+         alert("#customMessageArgs("I002",$args)");
+         top.iframeChange("${flowExecutionUrl}&_eventId=home");
+    }
+}
+
+function exec() {
+    #set( $args = ["#customSpringMessage('USER_COND')","#customSpringMessage('UPDATE')"]);//<!--ログインユーザ情報--><!--更新-->
+    if( !confirm("#customMessageArgs("W001",$args)") ) {
+        return ;
+    }
+    buttonDisable();
+    getObj("Body").submit();
+}
+
+//-->
+</script>
+</head>
+<body class="Transparent" topmargin="0" leftmargin="0" marginwidth="0" marginheight="0" onload="onLoad();">
+<form id="Body" name="Body" action="${flowExecutionUrl}&_eventId=save" method="post">
+    <br/>
+    <table width="70%" height="0" align="center">
+        <tr class="error">
+            <td>$!errorMessage</td>
+        </tr>
+        <tr>
+            <td class="FontSmallBold DarkBlue">
+                #customSpringMessage('SPLGN020_HEADER_COMMENT')
+            </td>
+        </tr>
+    </table>
+    <table class="DTL_BOX" width="70%" align="center">
+        <tr>
+            <td class="DTL_TITLE_BOX">
+                <table class="NoBorder" width="100%">
+                    <tr>
+                        <td class="FontBigBold"><span class="DarkBlue">#customSpringMessage('USER_COND')</span></td><!--ユーザー設定 -->
+                        <td class="FontSmall" align="right">
+                            <input type="button"  class="MiddleButton" value="#customSpringMessage('ACTION_REGISTER')" onClick="javascript:exec();"><!--登　録 -->
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td class="DTL_INTER_BOX">
+                <table class="NoBorder" width="100%">
+                    <tr>
+                        <td class="DTL_OUTHEAD"  width="30%">
+                            <div class="DTL_INHEAD">
+                                <span class="FontSmallBold">#customSpringMessage('NOW_PASSWORD')</span><span class="FontWarn">&nbsp;※</span><!-- 現在のパスワード-->
+                            </div>
+                        </td>
+                        <td class="DTL_OUTHEAD">
+                            <div class="DTL_INBODY">
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe start
+                                #springFormPasswordInput("domain.passwordNow" "size=40 maxLength=128 class='Middle'")
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe end
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTHEAD"  width="30%">
+                            <div class="DTL_INHEAD">
+                                <span class="FontSmallBold">#customSpringMessage('NEW_PASSWORD')</span><span class="FontWarn">&nbsp;※</span><!--新しいパスワード -->
+                            </div>
+                        </td>
+                        <td class="DTL_OUTHEAD">
+                            <div class="DTL_INBODY">
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe start
+                                #springFormPasswordInput("domain.passwordNew" "size=40 maxLength=128 class='Middle'")
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe start
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="DTL_OUTHEAD"  width="30%">
+                            <div class="DTL_INHEAD">
+                                <span class="FontSmallBold">#customSpringMessage('PASSWORD_CONFIRMATION')</span><span class="FontWarn">&nbsp;※</span><!--パスワードの確認 -->
+                            </div>
+                        </td>
+                        <td class="DTL_OUTHEAD">
+                            <div class="DTL_INBODY">
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe start
+                                #springFormPasswordInput("domain.passwordConfirmation" "size=40 maxLength=128 class='Middle'")
+## TODO 14/11/11 mod パスワード暗号化 daiko t.watanabe end
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="FontWarn">#customSpringMessage('NEW_PASSWORD_ERROR_COMMENT')</span></td><!--※ 新しいパスワードに入力が行われなかった場合、パスワードは変更されません。-->
+                    </tr>
+## TODO 14/11/04 add パスワード暗号化 daiko t.watanabe start
+                    ## パスワード有効期限チェック機能が有効な場合のみ
+                    #if ($!domain.passwordValidEnabled)
+                    <tr>
+                        <td class="DTL_OUTHEAD" width="30%">
+                            <div class="DTL_INHEAD">
+                                <span class="FontSmallBold">#customSpringMessage('PASSWORD_LIMIT_TIME')</span><!-- パスワード有効期限 -->
+                            </div>
+                        </td>
+                        <td class="DTL_OUTHEAD">
+                            <div class="DTL_INBODY">
+                                <table class="NoBorder" width="100%"><tr>
+                                    <td class="FontMiniAnkBold"><span class="Brown">#out($!domain.passwordValidEndTime.dateOfymdDispYMDHMS)</span></td>
+                                </tr></table>
+                            </div>
+                        </td>
+                    </tr>
+                    #end
+## TODO 14/11/04 add パスワード暗号化 daiko t.watanabe end
+                    <tr>
+                        <td class="DTL_OUTHEAD"  width="30%">
+                            <div class="DTL_INHEAD">
+                                <span class="FontSmallBold">#customSpringMessage('MAIL_ADDR')</span><!--メールアドレス -->
+                            </div>
+                        </td>
+                        <td class="DTL_OUTHEAD">
+                            <div class="DTL_INBODY">
+                                #springFormInput("domain.mailAddr.mail" "size=60 maxLength=100 class='Small noIME'")
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <hr>
+                <table class="NoBorder" style="width:100%;">
+                    <tr><td>#customSpringMessage('SPLGN020_FOOTER_COMMENT')</td></tr>
+                    <tr>
+                        <td class="DTL_MSGBOX" nowrap>
+                        </td>
+                        <td class="DTL_MSGBOX" align="right">
+                            <input type="button"  class="MiddleButton" value="#customSpringMessage('ACTION_REGISTER')" onClick="javascript:exec();"><!--登　録 -->
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>
